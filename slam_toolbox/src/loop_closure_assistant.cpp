@@ -126,6 +126,7 @@ void LoopClosureAssistant::publishGraph()
 {
   interactive_server_->clear();
   std::unordered_map<int, Eigen::Vector3d>* graph = solver_->getGraph();
+  std::vector<std::list<int>>* constraints = solver_->getConstraints();
 
   if (graph->size() == 0)
   {
@@ -142,12 +143,23 @@ void LoopClosureAssistant::publishGraph()
   visualization_msgs::MarkerArray marray;
   visualization_msgs::Marker m = vis_utils::toMarker(map_frame_,
     "slam_toolbox", 0.1);
+  visualization_msgs::Marker e = vis_utils::toEdgeMarker(map_frame_,
+    "slam_toolbox", 0.05);
 
   for (ConstGraphIterator it = graph->begin(); it != graph->end(); ++it)
   {
     m.id = it->first + 1;
     m.pose.position.x = it->second(0);
     m.pose.position.y = it->second(1);
+    // TODO Questo è un codice veloce per usare frecce invece che sfere come marker delle posizioni
+    /* Eigen::Quaterniond quat;
+    quat = Eigen::AngleAxisd(0, Eigen::Vector3d::UnitX()) * 
+           Eigen::AngleAxisd(0, Eigen::Vector3d::UnitY()) * 
+           Eigen::AngleAxisd(it->second(2), Eigen::Vector3d::UnitZ());
+    m.pose.orientation.x = 0.0;
+    m.pose.orientation.y = 0.0;
+    m.pose.orientation.z = (double)quat.z();
+    m.pose.orientation.w = (double)quat.w(); */
 
     if (interactive_mode && enable_interactive_mode_)
     {
@@ -161,6 +173,28 @@ void LoopClosureAssistant::publishGraph()
     else
     {
       marray.markers.push_back(m);
+
+      if (constraints->size() > it->first)
+      {
+        ListIterator listit = (*constraints)[it->first].begin();
+        for (listit; listit != (*constraints)[it->first].end(); ++listit)
+        {
+          e.points.clear();
+
+          geometry_msgs::Point p;
+          p.x = m.pose.position.x;
+          p.y = m.pose.position.y;
+          e.points.push_back(p);
+
+          p.x = graph->find(*listit)->second(0);
+          p.y = graph->find(*listit)->second(1);
+          e.points.push_back(p);
+
+          e.id = ((std::hash<double>()(m.id) ^ (std::hash<double>()((int)*listit) << 1)) >> 1);
+
+          marray.markers.push_back(e);
+        }
+      }
     }
   }
 

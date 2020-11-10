@@ -34,19 +34,22 @@ public:
   virtual ~CeresSolver();
 
 public:
-  virtual const karto::ScanSolver::IdPoseVector& GetCorrections() const; //Get corrected poses after optimization
-  virtual void Compute(); //Solve
-  virtual void Clear(); //Resets the corrections
-  virtual void Reset(); //Resets the solver plugin clean
+  virtual const karto::ScanSolver::IdPoseVector& GetCorrections() const;
+  virtual void Compute();
+  virtual void Clear();
+  virtual void Reset();
 
-  virtual void AddNode(karto::Vertex<karto::LocalizedRangeScan>* pVertex); //Adds a node to the solver
-  virtual void AddConstraint(karto::Edge<karto::LocalizedRangeScan>* pEdge); //Adds a constraint to the solver
-  virtual std::unordered_map<int, Eigen::Vector3d>* getGraph(); //Get graph stored
-  virtual void RemoveNode(kt_int32s id); //Removes a node from the solver correction table
-  virtual void RemoveConstraint(kt_int32s sourceId, kt_int32s targetId); // Removes constraints from the optimization problem
+  virtual void AddNode(karto::Vertex<karto::LocalizedRangeScan>* pVertex);
+  // virtual void AddNode(karto::Vertex<karto::Marker>* pVertex);
+  virtual void AddConstraint(karto::Edge<karto::LocalizedRangeScan>* pEdge); 
+  // virtual void AddConstraint(karto::Edge<karto::Marker>* pEdge);
+  virtual std::unordered_map<int, Eigen::Vector3d>* getGraph();
+  virtual std::vector<std::list<int>>* getConstraints();
+  virtual void RemoveNode(kt_int32s id);
+  virtual void RemoveConstraint(kt_int32s sourceId, kt_int32s targetId);
 
-  virtual void ModifyNode(const int& unique_id, Eigen::Vector3d pose); // change a node's pose
-  virtual void GetNodeOrientation(const int& unique_id, double& pose); // get a node's current pose yaw
+  virtual void ModifyNode(const int& unique_id, Eigen::Vector3d pose);
+  virtual void GetNodeOrientation(const int& unique_id, double& pose);
 
 private:
   // karto
@@ -57,14 +60,20 @@ private:
   ceres::Problem::Options options_problem_;
   ceres::LossFunction* loss_function_;
   ceres::Problem* problem_;
-  ceres::LocalParameterization* angle_local_parameterization_;
+  ceres::LocalParameterization* quaternion_local_parameterization_;
   bool was_constant_set_, debug_logging_;
 
   // graph
-  std::unordered_map<int, Eigen::Vector3d>* nodes_;
+  std::unordered_map<int, Eigen::Vector3d>* nodes2d_;
   std::unordered_map<size_t, ceres::ResidualBlockId>* blocks_;
   std::unordered_map<int, Eigen::Vector3d>::iterator first_node_;
   boost::mutex nodes_mutex_;
+  boost::mutex constraints_mutex_;
+
+  std::unordered_map<int, CeresPose3d>* nodes3d_;
+  std::unordered_map<int, CeresPose3d>::iterator first_node3d_;
+  std::vector<std::list<int>>* constraints_;
+
 };
 
 }

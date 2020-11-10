@@ -77,6 +77,7 @@ const kt_objecttype ObjectType_LaserRangeScan               = ObjectType_SensorD
 const kt_objecttype ObjectType_LocalizedRangeScan           = ObjectType_SensorData | 0x04;
 const kt_objecttype ObjectType_CameraImage                  = ObjectType_SensorData | 0x08;
 const kt_objecttype ObjectType_LocalizedRangeScanWithPoints = ObjectType_SensorData | 0x16;
+const kt_objecttype ObjectType_Marker                       = ObjectType_SensorData | 0x32;
 
 const kt_objecttype ObjectType_Header                       = ObjectType_Misc | 0x01;
 const kt_objecttype ObjectType_Parameters                   = ObjectType_Misc | 0x02;
@@ -1688,6 +1689,42 @@ namespace karto
     }
 
     /**
+     * Direclty return the heading (= the yaw) of the quaternion represented in Euler angles
+     * @return Return the heading of the quaternion represented in Euler angles
+     */
+    kt_double GetEulerHeading() const
+    {
+      // NOTA BENE La convenzione di roll, pitch, yaw usata è la seguente (seguendo la regola della mano destra): 
+      //  x = medio
+      //  y = pollice
+      //  z = indice
+      // Questa convenzione è DIVERSA da quella che uso io!
+
+      kt_double m_EulerHeading;
+      kt_double test = m_Values[0] * m_Values[1] + m_Values[2] * m_Values[3];
+
+      if (test > 0.499)
+      {
+        // singularity at north pole
+        m_EulerHeading = 2 * atan2(m_Values[0], m_Values[3]);
+      }
+      else if (test < -0.499)
+      {
+        // singularity at south pole
+        m_EulerHeading = -2 * atan2(m_Values[0], m_Values[3]);
+      }
+      else
+      {
+        kt_double sqy = m_Values[1] * m_Values[1];
+        kt_double sqz = m_Values[2] * m_Values[2];
+
+        m_EulerHeading = atan2(2 * m_Values[1] * m_Values[3] - 2 * m_Values[0] * m_Values[2], 1 - 2 * sqy - 2 * sqz);
+      }
+
+      return m_EulerHeading;
+    }
+
+    /**
      * Converts this quaternion into Euler angles
      * Source: http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/index.htm
      * @param rYaw
@@ -1696,12 +1733,18 @@ namespace karto
      */
     void ToEulerAngles(kt_double& rYaw, kt_double& rPitch, kt_double& rRoll) const
     {
+      // NOTA BENE La convenzione di roll, pitch, yaw usata è la seguente (seguendo la regola della mano destra): 
+      //  x = medio
+      //  y = pollice
+      //  z = indice
+      // Questa convenzione è DIVERSA da quella che uso io!
+
       kt_double test = m_Values[0] * m_Values[1] + m_Values[2] * m_Values[3];
 
       if (test > 0.499)
       {
         // singularity at north pole
-        rYaw = 2 * atan2(m_Values[0], m_Values[3]);;
+        rYaw = 2 * atan2(m_Values[0], m_Values[3]);
         rPitch = KT_PI_2;
         rRoll = 0;
       }
@@ -1733,6 +1776,12 @@ namespace karto
      */
     void FromEulerAngles(kt_double yaw, kt_double pitch, kt_double roll)
     {
+      // NOTA BENE La convenzione di roll, pitch, yaw usata è la seguente (seguendo la regola della mano destra): 
+      //  x = medio
+      //  y = pollice
+      //  z = indice
+      // Questa convenzione è DIVERSA da quella che uso io!
+
       kt_double angle;
 
       angle = yaw * 0.5;
@@ -2427,6 +2476,14 @@ namespace karto
       return rStream;
     }
 
+  friend class boost::serialization::access;
+	template<class Archive>
+	void serialize(Archive &ar, const unsigned int version)
+	{
+    ar & BOOST_SERIALIZATION_NVP(m_Position);
+    ar & BOOST_SERIALIZATION_NVP(m_Orientation);
+	}
+
   private:
     Vector3<kt_double> m_Position;
     Quaternion m_Orientation;
@@ -2597,14 +2654,15 @@ namespace karto
     inline std::string ToString() const
     {
       std::stringstream converter;
-      converter.precision(std::numeric_limits<double>::digits10);
+      converter.precision(std::numeric_limits<float>::digits10);
 
       for (int row = 0; row < 3; row++)
       {
         for (int col = 0; col < 3; col++)
         {
-          converter << m_Matrix[row][col] << " ";
+          converter << m_Matrix[row][col] << "\t";
         }
+        converter << "\n";
       }
 
       return converter.str();
@@ -5434,6 +5492,38 @@ namespace karto
   ////////////////////////////////////////////////////////////////////////////////////////
 
   /**
+   * Fake Marker object 
+   */
+  class Marker : public SensorData
+  {
+  public:
+    // @cond EXCLUDE
+    KARTO_Object(Marker)
+    // @endcond
+
+  public:
+    /**
+     * Constructs a marker
+     * @param rSensorName
+     */
+    Marker()
+    {
+    }
+
+    inline const Pose3& GetCorrectedPose() const
+    {
+      return m_CorrectedPose;
+    }
+
+  private:
+    Pose3 m_CorrectedPose;
+};
+
+  ////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////
+
+  /**
    * DrivePose representing the pose value of a drive sensor.
    */
   class DrivePose : public SensorData
@@ -7172,5 +7262,6 @@ BOOST_CLASS_EXPORT_KEY(karto::Parameter<kt_bool>);
 BOOST_CLASS_EXPORT_KEY(karto::Parameter<kt_int32u>);
 BOOST_CLASS_EXPORT_KEY(karto::Parameter<kt_int32s>);
 BOOST_CLASS_EXPORT_KEY(karto::Parameter<std::string>);
+BOOST_CLASS_EXPORT_KEY(karto::Parameter<karto::Pose3>);
 
 #endif  // karto_sdk_KARTO_H

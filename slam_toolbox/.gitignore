@@ -1,1 +1,3 @@
 snap_ws/*
+build/*
+.vscode/*

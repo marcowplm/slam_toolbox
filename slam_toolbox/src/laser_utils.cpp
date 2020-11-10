@@ -18,8 +18,6 @@
 
 #include "slam_toolbox/laser_utils.hpp"
 #include <cmath>
-#include <iostream>
-#include <typeinfo>
 
 namespace laser_utils
 {

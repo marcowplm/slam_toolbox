@@ -1981,6 +1981,7 @@ namespace karto
     {
       pSolver->Compute();
 
+      std::cout << "\nOutputting CorrectedPoses (Pose2D) after optimization: -----------------------" << std::endl;
       const_forEach(ScanSolver::IdPoseVector, &pSolver->GetCorrections())
       {
         LocalizedRangeScan* scan = m_pMapper->m_pMapperSensorManager->GetScan(iter->first);
@@ -1988,9 +1989,13 @@ namespace karto
         {
           continue;
         }
+        std::cout << "\nID scan: " << iter->first << std::endl;
+        std::cout << "Before:\t" << scan->GetCorrectedPose() << std::endl;
         scan->SetSensorPose(iter->second);
-      }
+        std::cout << "After:\t" << scan->GetCorrectedPose() << std::endl;
 
+      }
+      std::cout << "------------------------------------------------------------------------------" << std::endl;
       pSolver->Clear();
     }
   }
@@ -2669,7 +2674,7 @@ namespace karto
 
 		  // add scan to buffer and assign id
 		  m_pMapperSensorManager->AddScan(pScan);
-
+      
 		  if (m_pUseScanMatching->GetValue())
 		  {
 			  // add to graph
@@ -2686,6 +2691,18 @@ namespace karto
 					  m_pGraph->TryCloseLoop(pScan, *iter);
 				  }
 			  }
+
+        // TEST TEST TEST!!
+        // Serve per triggerare la Loop Closure dopo un certo numero di nodi aggiunti al grafo
+        /* count = count + 1;
+        std::cout << "\nCount: " << count << std::endl;
+        if (count == 5)
+        {
+          CorrectPoses();
+          count = 0;
+        } */
+        // END TEST END TEST END TEST!!!
+
 		  }
 
 		  m_pMapperSensorManager->SetLastScan(pScan);

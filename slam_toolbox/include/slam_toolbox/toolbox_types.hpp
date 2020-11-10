@@ -128,6 +128,9 @@ typedef std::unordered_map<int, Eigen::Vector3d>::const_iterator ConstGraphItera
 // TODO Inutile perchè sto usando CeresPose3d per le Pose3D. Lascio solo per scaramanzia
 // typedef std::unordered_map<int, karto::Pose3>::const_iterator ConstGraphIterator3;
 
+typedef std::vector<std::list<int>>::iterator ConstraintsIterator;
+typedef std::list<int>::iterator ListIterator;
+
 }  // end namespace
 
 #endif //SLAM_TOOLBOX_TOOLBOX_TYPES_H_

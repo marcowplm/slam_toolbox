@@ -48,6 +48,30 @@ inline visualization_msgs::Marker toMarker(
   return marker;
 }
 
+inline visualization_msgs::Marker toEdgeMarker(
+  const std::string& frame,
+  const std::string& ns,
+  const double& scale)
+{
+  visualization_msgs::Marker edge_marker;
+
+  edge_marker.header.frame_id = frame;
+  edge_marker.header.stamp = ros::Time::now();
+  edge_marker.ns = ns;
+  edge_marker.type = visualization_msgs::Marker::LINE_STRIP;
+  edge_marker.pose.position.z = 0.0;
+  edge_marker.pose.orientation.w = 1.;
+  edge_marker.scale.x = scale;
+  edge_marker.color.r = 0.0;
+  edge_marker.color.g = 0.0;
+  edge_marker.color.b = 1.0;
+  edge_marker.color.a = 1.;
+  edge_marker.action = visualization_msgs::Marker::ADD;
+  edge_marker.lifetime = ros::Duration(0.);
+
+  return edge_marker;
+}
+
 inline visualization_msgs::InteractiveMarker toInteractiveMarker(
   visualization_msgs::Marker& marker,
   const double& scale)

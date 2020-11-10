@@ -1022,6 +1022,14 @@ namespace karto
       std::cout << "getGraph method not implemented for this solver type. Graph visualization unavailable." << std::endl;
     }
 
+     /**
+     * Get list od constraints stored
+     */
+    virtual std::vector<std::list<int>>* getConstraints()
+    {
+      std::cout << "getConstraints method not implemented for this solver type. Graph visualization unavailable." << std::endl;
+    }
+
     /**
      * Modify a node's pose
      */
