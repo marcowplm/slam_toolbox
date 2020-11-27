@@ -7262,6 +7262,5 @@ BOOST_CLASS_EXPORT_KEY(karto::Parameter<kt_bool>);
 BOOST_CLASS_EXPORT_KEY(karto::Parameter<kt_int32u>);
 BOOST_CLASS_EXPORT_KEY(karto::Parameter<kt_int32s>);
 BOOST_CLASS_EXPORT_KEY(karto::Parameter<std::string>);
-BOOST_CLASS_EXPORT_KEY(karto::Parameter<karto::Pose3>);
 
 #endif  // karto_sdk_KARTO_H

@@ -312,6 +312,7 @@ class PoseGraph3dErrorTerm
 /*****************************************************************************/
 
 // Definisce una local parameterization per quaternioni che rappresentano orientamenti 2d
+// Non sono affatto sicuro che sia corretta!!
 class QuaternionAngleLocalParameterization
 {
  public:

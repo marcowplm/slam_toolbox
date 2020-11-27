@@ -174,6 +174,7 @@ void LoopClosureAssistant::publishGraph()
     {
       marray.markers.push_back(m);
 
+      // Codice per disegnare anche i constraints
       if (constraints->size() > it->first)
       {
         ListIterator listit = (*constraints)[it->first].begin();
