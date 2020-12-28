@@ -1,0 +1,14 @@
+<launch>
+  <include file="$(find apriltag_ros)/launch/continuous_detection.launch">
+    <arg name="camera_name" value="/camera/rgb"/>
+    <arg name="image_topic" value="image_raw"/>
+    <arg name="camera_frame" default="camera_rgb_optical_frame"/>
+  </include>
+
+  <rosparam command="load" file="$(find my_sim)/config/tags.yaml" ns="apriltag_ros_continuous_node" /> 
+
+  <node pkg="slam_toolbox" type="sync_tag_slam_toolbox_node" name="slam_toolbox" output="screen">
+    <rosparam command="load" file="$(find slam_toolbox)/config/mapper_params_online_sync_tag.yaml" />
+  </node>
+
+</launch>

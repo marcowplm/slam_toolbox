@@ -72,6 +72,30 @@ inline visualization_msgs::Marker toEdgeMarker(
   return edge_marker;
 }
 
+inline visualization_msgs::Marker toTagMarker(
+    const std::string &frame,
+    const std::string &ns,
+    const double &scale)
+{
+  visualization_msgs::Marker tag_marker;
+
+  tag_marker.header.frame_id = frame;
+  tag_marker.header.stamp = ros::Time::now();
+  tag_marker.ns = ns;
+  tag_marker.type = visualization_msgs::Marker::ARROW;
+  tag_marker.scale.x = scale;
+  tag_marker.scale.y = 0.05;
+  tag_marker.scale.z = 0.05;
+  tag_marker.color.r = 0.0;
+  tag_marker.color.g = 1.0;
+  tag_marker.color.b = 0.0;
+  tag_marker.color.a = 1.;
+  tag_marker.action = visualization_msgs::Marker::ADD;
+  tag_marker.lifetime = ros::Duration(0.);
+  
+  return tag_marker;
+}
+
 inline visualization_msgs::InteractiveMarker toInteractiveMarker(
   visualization_msgs::Marker& marker,
   const double& scale)

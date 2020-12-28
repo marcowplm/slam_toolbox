@@ -36,6 +36,7 @@
 #include "slam_toolbox/get_pose_helper.hpp"
 #include "slam_toolbox/map_saver.hpp"
 #include "slam_toolbox/loop_closure_assistant.hpp"
+#include "slam_toolbox/tag_assistant.hpp"
 
 #include <string>
 #include <map>
@@ -110,6 +111,7 @@ protected:
 
   // Storage for ROS parameters
   std::string odom_frame_, map_frame_, base_frame_, map_name_, scan_topic_;
+  std::string camera_frame_, tag_topic_;
   ros::Duration transform_timeout_, tf_buffer_dur_, minimum_time_interval_;
   int throttle_scans_;
 
@@ -127,6 +129,7 @@ protected:
   std::unique_ptr<map_saver::MapSaver> map_saver_;
   std::unique_ptr<loop_closure_assistant::LoopClosureAssistant> closure_assistant_;
   std::unique_ptr<laser_utils::ScanHolder> scan_holder_;
+  std::unique_ptr<tag_assistant::ApriltagAssistant> tag_assistant_;
 
   // Internal state
   std::vector<std::unique_ptr<boost::thread> > threads_;

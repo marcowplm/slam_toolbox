@@ -111,6 +111,7 @@ karto::LaserRangeFinder* LaserAssistant::makeLaser(const double& mountingYaw)
 
   // Check if we have a 360 laser, but incorrectly setup as to produce
   // measurements in range [0, 360] rather than appropriately as [0, 360)
+  
   // TODO sta schifezza della differenza minore di 0.5 serve solo a far funzionare il tutto con il mio turtlebot3 
   //      che ha un angle_increment diverso da quello corretto (e non ho capito perchè)
   if (angular_range > 6.10865 /*350 deg*/ && (angular_range / scan_.angle_increment + 1 - scan_.ranges.size()) < 0.5) {

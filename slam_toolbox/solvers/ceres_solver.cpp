@@ -200,7 +200,6 @@ void CeresSolver::Compute()
   const ros::Time start_time = ros::Time::now();
   ceres::Solver::Summary summary;
   ceres::Solve(options_, problem_, &summary);
-  std::cout << summary.FullReport() << '\n';
   if (debug_logging_)
   {
     std::cout << summary.FullReport() << '\n';
@@ -221,18 +220,18 @@ void CeresSolver::Compute()
   corrections_.reserve(nodes3d_->size());
   karto::Pose2 pose2d;
   ConstGraphIterator3d iter = nodes3d_->begin();
-  std::cout << "\nPrint 3D nodes after optimization: ---------------------------------------------" << std::endl;
+  /* std::cout << "\nPrint 3D nodes after optimization: ---------------------------------------------" << std::endl; */
   for ( iter; iter != nodes3d_->end(); ++iter )
   {
     pose2d.SetX(iter->second.p.x());
     pose2d.SetY(iter->second.p.y());
     pose2d.SetHeading(iter->second.GetEulerHeading());
     corrections_.push_back(std::make_pair(iter->first, pose2d));
-    std::cout << "\nCorrected node ID: " << iter->first << std::endl
+    /* std::cout << "\nCorrected node ID: " << iter->first << std::endl
               << "Position:\t\t" << iter->second.p.transpose() << std::endl
-              << "Orientation:\t" << iter->second.q.coeffs().transpose() << std::endl;
+              << "Orientation:\t" << iter->second.q.coeffs().transpose() << std::endl; */
   }
-  std::cout << "\n================================================================================" << std::endl;
+  /* std::cout << "\n================================================================================" << std::endl; */
   return;
 }
 
@@ -309,16 +308,23 @@ void CeresSolver::AddNode(karto::Vertex<karto::LocalizedRangeScan>* pVertex)
   if (nodes3d_->size() == 1)
   {
     first_node3d_ = nodes3d_->find(id);
-    std::cout << "\nSet first_node3d_->position\t" << first_node3d_->second.p.transpose() << std::endl;
-    std::cout << "Set first_node3d_->orientation\t" << first_node3d_->second.q.coeffs().transpose() << std::endl;
+    /* std::cout << "\nSet first_node3d_->position\t" << first_node3d_->second.p.transpose() << std::endl;
+    std::cout << "Set first_node3d_->orientation\t" << first_node3d_->second.q.coeffs().transpose() << std::endl; */
   }
+}
+
+/*****************************************************************************/
+void CeresSolver::AddNode(karto::Vertex<karto::LocalizedMarker>* pVertex)
+/*****************************************************************************/
+{
+  std::cout << ">>>>>>>>>> CeresSolver::AddNode! (per ora è vuota)" << std::endl;
 }
 
 /*****************************************************************************/
 void CeresSolver::AddConstraint(karto::Edge<karto::LocalizedRangeScan>* pEdge)
 /*****************************************************************************/
 {
-  std::cout << "\nAddConstraint(LocalizedRangeScan)-------------------------------------------------\n";
+  /* std::cout << "\nAddConstraint(LocalizedRangeScan)-------------------------------------------------\n"; */
   // get IDs in graph for this edge
   boost::mutex::scoped_lock lock(nodes_mutex_);
 
@@ -332,12 +338,12 @@ void CeresSolver::AddConstraint(karto::Edge<karto::LocalizedRangeScan>* pEdge)
   const int node2 = pEdge->GetTarget()->GetObject()->GetUniqueId();
   GraphIterator3d node2it = nodes3d_->find(node2);
 
-  std::cout << "\nNode1 ID: " << (int)node1it->first << std::endl;
+  /* std::cout << "\nNode1 ID: " << (int)node1it->first << std::endl;
   std::cout << "Position   \t" << node1it->second.p.transpose() <<std::endl;
   std::cout << "Orientation\t" << node1it->second.q.coeffs().transpose() <<std::endl;
   std::cout << "\nNode2 ID: " << (int)node2it->first << std::endl;
   std::cout << "Position   \t" << node2it->second.p.transpose() <<std::endl;
-  std::cout << "Orientation\t" << node2it->second.q.coeffs().transpose() <<std::endl;
+  std::cout << "Orientation\t" << node2it->second.q.coeffs().transpose() <<std::endl; */
 
   if (node1it == nodes3d_->end() || 
       node2it == nodes3d_->end() || 
@@ -364,11 +370,11 @@ void CeresSolver::AddConstraint(karto::Edge<karto::LocalizedRangeScan>* pEdge)
   precisionMatrix3(5,5) = precisionMatrix(2,2); // yaw
   Eigen::Matrix<double, 6, 6> sqrt_information = precisionMatrix3.llt().matrixL();
   
-  std::cout << "\n\ncovariance_matrix 2D (x, y, heading)\n" << pLinkInfo->GetCovariance() << std::endl;
+  /* std::cout << "\n\ncovariance_matrix 2D (x, y, heading)\n" << pLinkInfo->GetCovariance() << std::endl;
   std::cout << "\nsqrt_information (square root of precision matrix) (x, y, z, roll, pitch, yaw)\n" << sqrt_information << std::endl;
   std::cout << "\n\npose3d for cost function (t_ab_measured = diff btw node1 and node2):\n" 
             << "Position:\t\t" << pose3d.p.transpose() << std::endl
-            << "Orientation:\t" << pose3d.q.coeffs().transpose() << std::endl;
+            << "Orientation:\t" << pose3d.q.coeffs().transpose() << std::endl; */
 
   // populate residual and parameterization for heading normalization
   ceres::CostFunction* cost_function = PoseGraph3dErrorTerm::Create(pose3d, sqrt_information);
@@ -398,9 +404,16 @@ void CeresSolver::AddConstraint(karto::Edge<karto::LocalizedRangeScan>* pEdge)
     it->push_back(node2);
   }
   
-  std::cout << "----------------------------------------------------------------------------------\n" << std::endl;
+  /* std::cout << "----------------------------------------------------------------------------------\n" << std::endl; */
   
   return;
+}
+
+/*****************************************************************************/
+void CeresSolver::AddConstraint(karto::Edge<karto::LocalizedMarker>* pEdge)
+/*****************************************************************************/
+{
+  // fill me
 }
 
 /*****************************************************************************/

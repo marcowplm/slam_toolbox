@@ -40,9 +40,9 @@ public:
   virtual void Reset();
 
   virtual void AddNode(karto::Vertex<karto::LocalizedRangeScan>* pVertex);
-  // virtual void AddNode(karto::Vertex<karto::Marker>* pVertex);
+  virtual void AddNode(karto::Vertex<karto::LocalizedMarker>* pVertex);
   virtual void AddConstraint(karto::Edge<karto::LocalizedRangeScan>* pEdge); 
-  // virtual void AddConstraint(karto::Edge<karto::Marker>* pEdge);
+  virtual void AddConstraint(karto::Edge<karto::LocalizedMarker>* pEdge);
   virtual std::unordered_map<int, Eigen::Vector3d>* getGraph();
   virtual std::vector<std::list<int>>* getConstraints();
   virtual void RemoveNode(kt_int32s id);

@@ -30,6 +30,7 @@ find_package(catkin REQUIRED
     rviz
     map_server
     slam_toolbox_msgs
+    apriltag_ros
 )
 
 find_package(PkgConfig REQUIRED)
@@ -80,6 +81,7 @@ catkin_package(
       tf2_geometry_msgs
       interactive_markers
       slam_toolbox_msgs
+      apriltag_ros
     DEPENDS
       EIGEN3
       Boost
@@ -123,7 +125,7 @@ add_library(SlamToolboxPlugin ${SOURCE_FILES} ${HEADER_FILES})
 target_link_libraries(SlamToolboxPlugin ${rviz_DEFAULT_PLUGIN_LIBRARIES} ${QT_LIBRARIES} ${catkin_LIBRARIES})
 
 #### Tool lib for mapping
-add_library(toolbox_common src/slam_toolbox_common.cpp src/map_saver.cpp src/loop_closure_assistant.cpp src/laser_utils.cpp src/slam_mapper.cpp)
+add_library(toolbox_common src/slam_toolbox_common.cpp src/map_saver.cpp src/loop_closure_assistant.cpp src/laser_utils.cpp src/slam_mapper.cpp src/tag_assistant.cpp)
 target_link_libraries(toolbox_common kartoSlamToolbox ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 #### Mapping executibles
@@ -146,6 +148,11 @@ add_library(lifelong_slam_toolbox src/experimental/slam_toolbox_lifelong.cpp)
 target_link_libraries(lifelong_slam_toolbox toolbox_common kartoSlamToolbox ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 add_executable(lifelong_slam_toolbox_node src/experimental/slam_toolbox_lifelong_node.cpp )
 target_link_libraries(lifelong_slam_toolbox_node lifelong_slam_toolbox)
+
+add_library(sync_tag_slam_toolbox src/slam_toolbox_sync_tag.cpp)
+target_link_libraries(sync_tag_slam_toolbox toolbox_common kartoSlamToolbox ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+add_executable(sync_tag_slam_toolbox_node src/slam_toolbox_sync_tag_node.cpp )
+target_link_libraries(sync_tag_slam_toolbox_node sync_tag_slam_toolbox)
 
 #### Merging maps tool
 add_executable(merge_maps_kinematic src/merge_maps_kinematic.cpp)
@@ -171,6 +178,8 @@ install(TARGETS toolbox_common
                 lifelong_slam_toolbox_node
                 ceres_solver_plugin
                 merge_maps_kinematic
+                sync_tag_slam_toolbox
+                sync_tag_slam_toolbox_node
                 SlamToolboxPlugin
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

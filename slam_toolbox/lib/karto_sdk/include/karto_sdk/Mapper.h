@@ -49,9 +49,9 @@ namespace karto
     /**
      * Called with general message
      */
-    virtual void Info(const std::string& /*rInfo*/) {};
+    virtual void Info(const std::string & /*rInfo*/){};
     friend class boost::serialization::access;
-    template<class Archive>
+    template <class Archive>
     void serialize(Archive &ar, const unsigned int version)
     {
     }
@@ -66,9 +66,9 @@ namespace karto
     /**
      * Called with debug message
      */
-    virtual void Debug(const std::string& /*rInfo*/) {};
+    virtual void Debug(const std::string & /*rInfo*/){};
     friend class boost::serialization::access;
-    template<class Archive>
+    template <class Archive>
     void serialize(Archive &ar, const unsigned int version)
     {
     }
@@ -83,23 +83,23 @@ namespace karto
     /**
      * Called when checking for loop closures
      */
-    virtual void LoopClosureCheck(const std::string& /*rInfo*/) {};
+    virtual void LoopClosureCheck(const std::string & /*rInfo*/){};
 
     /**
      * Called when loop closure is starting
      */
-    virtual void BeginLoopClosure(const std::string& /*rInfo*/) {};
+    virtual void BeginLoopClosure(const std::string & /*rInfo*/){};
 
     /**
      * Called when loop closure is over
      */
-    virtual void EndLoopClosure(const std::string& /*rInfo*/) {};
+    virtual void EndLoopClosure(const std::string & /*rInfo*/){};
     friend class boost::serialization::access;
-    template<class Archive>
+    template <class Archive>
     void serialize(Archive &ar, const unsigned int version)
     {
     }
-  };  // MapperLoopClosureListener
+  }; // MapperLoopClosureListener
   BOOST_SERIALIZATION_ASSUME_ABSTRACT(MapperLoopClosureListener)
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -125,11 +125,11 @@ namespace karto
     {
     }
     friend class boost::serialization::access;
-    template<class Archive>
+    template <class Archive>
     void serialize(Archive &ar, const unsigned int version)
     {
     }
-  };  // EdgeLabel
+  }; // EdgeLabel
 
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -150,7 +150,7 @@ namespace karto
     LinkInfo()
     {
     }
-    LinkInfo(const Pose2& rPose1, const Pose2& rPose2, const Matrix3& rCovariance)
+    LinkInfo(const Pose2 &rPose1, const Pose2 &rPose2, const Matrix3 &rCovariance)
     {
       Update(rPose1, rPose2, rCovariance);
     }
@@ -169,7 +169,7 @@ namespace karto
      * @param rPose2
      * @param rCovariance
      */
-    void Update(const Pose2& rPose1, const Pose2& rPose2, const Matrix3& rCovariance)
+    void Update(const Pose2 &rPose1, const Pose2 &rPose2, const Matrix3 &rCovariance)
     {
       m_Pose1 = rPose1;
       m_Pose2 = rPose2;
@@ -189,7 +189,7 @@ namespace karto
      * Gets the first pose
      * @return first pose
      */
-    inline const Pose2& GetPose1()
+    inline const Pose2 &GetPose1()
     {
       return m_Pose1;
     }
@@ -198,7 +198,7 @@ namespace karto
      * Gets the second pose
      * @return second pose
      */
-    inline const Pose2& GetPose2()
+    inline const Pose2 &GetPose2()
     {
       return m_Pose2;
     }
@@ -207,7 +207,7 @@ namespace karto
      * Gets the pose difference
      * @return pose difference
      */
-    inline const Pose2& GetPoseDifference()
+    inline const Pose2 &GetPoseDifference()
     {
       return m_PoseDifference;
     }
@@ -216,7 +216,7 @@ namespace karto
      * Gets the link covariance
      * @return link covariance
      */
-    inline const Matrix3& GetCovariance()
+    inline const Matrix3 &GetCovariance()
     {
       return m_Covariance;
     }
@@ -228,28 +228,28 @@ namespace karto
     Matrix3 m_Covariance;
 
     friend class boost::serialization::access;
-    template<class Archive>
+    template <class Archive>
     void serialize(Archive &ar, const unsigned int version)
     {
-      ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(EdgeLabel);
-      ar & BOOST_SERIALIZATION_NVP(m_Pose1);
-      ar & BOOST_SERIALIZATION_NVP(m_Pose2);
-      ar & BOOST_SERIALIZATION_NVP(m_PoseDifference);
-      ar & BOOST_SERIALIZATION_NVP(m_Covariance);
+      ar &BOOST_SERIALIZATION_BASE_OBJECT_NVP(EdgeLabel);
+      ar &BOOST_SERIALIZATION_NVP(m_Pose1);
+      ar &BOOST_SERIALIZATION_NVP(m_Pose2);
+      ar &BOOST_SERIALIZATION_NVP(m_PoseDifference);
+      ar &BOOST_SERIALIZATION_NVP(m_Covariance);
     }
-  };  // LinkInfo
+  }; // LinkInfo
 
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
 
-  template<typename T>
+  template <typename T>
   class Edge;
 
   /**
    * Represents an object in a graph
    */
-  template<typename T>
+  template <typename T>
   class Vertex
   {
     friend class Edge<T>;
@@ -260,11 +260,11 @@ namespace karto
      * @param pObject
      */
     Vertex()
-      : m_pObject(NULL), m_Score(1.0)
+        : m_pObject(NULL), m_Score(1.0)
     {
     }
-    Vertex(T* pObject)
-      : m_pObject(pObject), m_Score(1.0)
+    Vertex(T *pObject)
+        : m_pObject(pObject), m_Score(1.0)
     {
     }
 
@@ -279,7 +279,7 @@ namespace karto
      * Gets edges adjacent to this vertex
      * @return adjacent edges
      */
-    inline const std::vector<Edge<T>*>& GetEdges() const
+    inline const std::vector<Edge<T> *> &GetEdges() const
     {
       return m_Edges;
     }
@@ -287,7 +287,7 @@ namespace karto
     /**
      * Removes an edge at a position
      */
-    inline void RemoveEdge(const int& idx)
+    inline void RemoveEdge(const int &idx)
     {
       m_Edges[idx] = NULL;
       m_Edges.erase(m_Edges.begin() + idx);
@@ -316,7 +316,7 @@ namespace karto
      * Gets the object associated with this vertex
      * @return the object
      */
-    inline T* GetObject() const
+    inline T *GetObject() const
     {
       return m_pObject;
     }
@@ -333,13 +333,13 @@ namespace karto
      * Gets a vector of the vertices adjacent to this vertex
      * @return adjacent vertices
      */
-    std::vector<Vertex<T>*> GetAdjacentVertices() const
+    std::vector<Vertex<T> *> GetAdjacentVertices() const
     {
-      std::vector<Vertex<T>*> vertices;
+      std::vector<Vertex<T> *> vertices;
 
-      const_forEach(typename std::vector<Edge<T>*>, &m_Edges)
+      const_forEach(typename std::vector<Edge<T> *>, &m_Edges)
       {
-        Edge<T>* pEdge = *iter;
+        Edge<T> *pEdge = *iter;
 
         if (pEdge == NULL)
         {
@@ -366,24 +366,24 @@ namespace karto
      * Adds the given edge to this vertex's edge list
      * @param pEdge edge to add
      */
-    inline void AddEdge(Edge<T>* pEdge)
+    inline void AddEdge(Edge<T> *pEdge)
     {
       m_Edges.push_back(pEdge);
     }
 
-    T* m_pObject;
-    std::vector<Edge<T>*> m_Edges;
+    T *m_pObject;
+    std::vector<Edge<T> *> m_Edges;
     kt_double m_Score;
 
     friend class boost::serialization::access;
-    template<class Archive>
+    template <class Archive>
     void serialize(Archive &ar, const unsigned int version)
     {
-      ar & BOOST_SERIALIZATION_NVP(m_pObject);
-      ar & BOOST_SERIALIZATION_NVP(m_Edges);
-      ar & BOOST_SERIALIZATION_NVP(m_Score);
+      ar &BOOST_SERIALIZATION_NVP(m_pObject);
+      ar &BOOST_SERIALIZATION_NVP(m_Edges);
+      ar &BOOST_SERIALIZATION_NVP(m_Score);
     }
-  };  // Vertex<T>
+  }; // Vertex<T>
 
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -392,7 +392,7 @@ namespace karto
   /**
    * Represents an edge in a graph
    */
-  template<typename T>
+  template <typename T>
   class Edge
   {
   public:
@@ -402,15 +402,11 @@ namespace karto
      * @param pTarget
      */
     Edge()
-      : m_pSource(NULL)
-      , m_pTarget(NULL)
-      , m_pLabel(NULL)
+        : m_pSource(NULL), m_pTarget(NULL), m_pLabel(NULL)
     {
     }
-    Edge(Vertex<T>* pSource, Vertex<T>* pTarget)
-      : m_pSource(pSource)
-      , m_pTarget(pTarget)
-      , m_pLabel(NULL)
+    Edge(Vertex<T> *pSource, Vertex<T> *pTarget)
+        : m_pSource(pSource), m_pTarget(pTarget), m_pLabel(NULL)
     {
       m_pSource->AddEdge(this);
       m_pTarget->AddEdge(this);
@@ -436,7 +432,7 @@ namespace karto
      * Gets the source vertex
      * @return source vertex
      */
-    inline Vertex<T>* GetSource() const
+    inline Vertex<T> *GetSource() const
     {
       return m_pSource;
     }
@@ -445,7 +441,7 @@ namespace karto
      * Gets the target vertex
      * @return target vertex
      */
-    inline Vertex<T>* GetTarget() const
+    inline Vertex<T> *GetTarget() const
     {
       return m_pTarget;
     }
@@ -454,7 +450,7 @@ namespace karto
      * Gets the link info
      * @return link info
      */
-    inline EdgeLabel* GetLabel()
+    inline EdgeLabel *GetLabel()
     {
       return m_pLabel;
     }
@@ -463,25 +459,25 @@ namespace karto
      * Sets the link payload
      * @param pLabel
      */
-    inline void SetLabel(EdgeLabel* pLabel)
+    inline void SetLabel(EdgeLabel *pLabel)
     {
       m_pLabel = pLabel;
     }
 
   private:
-    Vertex<T>* m_pSource;
-    Vertex<T>* m_pTarget;
-    EdgeLabel* m_pLabel;
+    Vertex<T> *m_pSource;
+    Vertex<T> *m_pTarget;
+    EdgeLabel *m_pLabel;
 
     friend class boost::serialization::access;
-    template<class Archive>
+    template <class Archive>
     void serialize(Archive &ar, const unsigned int version)
     {
-      ar & BOOST_SERIALIZATION_NVP(m_pSource);
-      ar & BOOST_SERIALIZATION_NVP(m_pTarget);
-      ar & BOOST_SERIALIZATION_NVP(m_pLabel);
+      ar &BOOST_SERIALIZATION_NVP(m_pSource);
+      ar &BOOST_SERIALIZATION_NVP(m_pTarget);
+      ar &BOOST_SERIALIZATION_NVP(m_pLabel);
     }
-  };  // class Edge<T>
+  }; // class Edge<T>
 
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -490,7 +486,7 @@ namespace karto
   /**
    * Visitor class
    */
-  template<typename T>
+  template <typename T>
   class Visitor
   {
   public:
@@ -499,33 +495,33 @@ namespace karto
      * @param pVertex
      * @return true if the visitor accepted the vertex, false otherwise
      */
-    virtual kt_bool Visit(Vertex<T>* pVertex) = 0;
+    virtual kt_bool Visit(Vertex<T> *pVertex) = 0;
     friend class boost::serialization::access;
-    template<class Archive>
+    template <class Archive>
     void serialize(Archive &ar, const unsigned int version)
     {
     }
-  };  // Visitor<T>
+  }; // Visitor<T>
   BOOST_SERIALIZATION_ASSUME_ABSTRACT(Visitor<LocalizedRangeScan>)
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
 
-  template<typename T>
+  template <typename T>
   class Graph;
 
   /**
   * Graph traversal algorithm
   */
-  template<typename T>
+  template <typename T>
   class GraphTraversal
   {
   public:
     GraphTraversal()
     {
     }
-    GraphTraversal(Graph<T>* pGraph)
-      : m_pGraph(pGraph)
+    GraphTraversal(Graph<T> *pGraph)
+        : m_pGraph(pGraph)
     {
     }
 
@@ -534,20 +530,19 @@ namespace karto
     }
 
   public:
-
-    virtual std::vector<T*> TraverseForScans(Vertex<T>* pStartVertex, Visitor<T>* pVisitor) = 0;
-    virtual std::vector<Vertex<T>*> TraverseForVertices(Vertex<T>* pStartVertex, Visitor<T>* pVisitor) = 0;
+    virtual std::vector<T *> TraverseForScans(Vertex<T> *pStartVertex, Visitor<T> *pVisitor) = 0;
+    virtual std::vector<Vertex<T> *> TraverseForVertices(Vertex<T> *pStartVertex, Visitor<T> *pVisitor) = 0;
 
   protected:
-    Graph<T>* m_pGraph;
+    Graph<T> *m_pGraph;
 
     friend class boost::serialization::access;
-    template<class Archive>
+    template <class Archive>
     void serialize(Archive &ar, const unsigned int version)
     {
-      ar & BOOST_SERIALIZATION_NVP(m_pGraph);
+      ar &BOOST_SERIALIZATION_NVP(m_pGraph);
     }
-  };  // GraphTraversal<T>
+  }; // GraphTraversal<T>
   BOOST_SERIALIZATION_ASSUME_ABSTRACT(GraphTraversal<LocalizedRangeScan>)
 
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -557,14 +552,14 @@ namespace karto
   /**
    * Graph
    */
-  template<typename T>
+  template <typename T>
   class Graph
   {
   public:
     /**
      * Maps names to vector of vertices
      */
-    typedef std::map<Name, std::map<int, Vertex<T>*> > VertexMap;
+    typedef std::map<Name, std::map<int, Vertex<T> *>> VertexMap;
 
   public:
     /**
@@ -588,8 +583,9 @@ namespace karto
      * @param rName
      * @param pVertex
      */
-    inline void AddVertex(const Name& rName, Vertex<T>* pVertex)
+    inline void AddVertex(const Name &rName, Vertex<T> *pVertex)
     {
+      std::cout << "\nGraph<T>::AddVertex:\tName: " << rName.ToString() << "\tStateId: " << pVertex->GetObject()->GetStateId() << std::endl;
       m_Vertices[rName].insert({pVertex->GetObject()->GetStateId(), pVertex});
     }
 
@@ -598,9 +594,9 @@ namespace karto
      * @param rName
      * @param pVertex
      */
-    inline void RemoveVertex(const Name& rName, const int& idx)
+    inline void RemoveVertex(const Name &rName, const int &idx)
     {
-      std::map<int, Vertex<LocalizedRangeScan>* >::iterator it = m_Vertices[rName].find(idx);
+      std::map<int, Vertex<LocalizedRangeScan> *>::iterator it = m_Vertices[rName].find(idx);
       if (it != m_Vertices[rName].end())
       {
         it->second = NULL;
@@ -608,8 +604,8 @@ namespace karto
       }
       else
       {
-        std::cout << "RemoveVertex: Failed to remove vertex " << idx 
-          << " because it doesnt exist in m_Vertices." << std::endl;
+        std::cout << "RemoveVertex: Failed to remove vertex " << idx
+                  << " because it doesnt exist in m_Vertices." << std::endl;
       }
     }
 
@@ -617,7 +613,7 @@ namespace karto
      * Adds an edge to the graph
      * @param pEdge
      */
-    inline void AddEdge(Edge<T>* pEdge)
+    inline void AddEdge(Edge<T> *pEdge)
     {
       m_Edges.push_back(pEdge);
     }
@@ -626,12 +622,11 @@ namespace karto
      * Removes an edge to the graph
      * @param pEdge
      */
-    inline void RemoveEdge(const int& idx)
+    inline void RemoveEdge(const int &idx)
     {
       m_Edges[idx] = NULL;
       m_Edges.erase(m_Edges.begin() + idx);
     }
-
 
     /**
      * Deletes the graph data
@@ -641,7 +636,7 @@ namespace karto
       forEachAs(typename VertexMap, &m_Vertices, indexIter)
       {
         // delete each vertex
-        typename std::map<int, Vertex<T>*>::iterator iter;
+        typename std::map<int, Vertex<T> *>::iterator iter;
         for (iter = indexIter->second.begin(); iter != indexIter->second.end(); ++iter)
         {
           delete iter->second;
@@ -650,7 +645,7 @@ namespace karto
       }
       m_Vertices.clear();
 
-      forEach(typename std::vector<Edge<T>*>, &m_Edges)
+      forEach(typename std::vector<Edge<T> *>, &m_Edges)
       {
         delete *iter;
         *iter = nullptr;
@@ -662,7 +657,7 @@ namespace karto
      * Gets the edges of this graph
      * @return graph edges
      */
-    inline const std::vector<Edge<T>*>& GetEdges() const
+    inline const std::vector<Edge<T> *> &GetEdges() const
     {
       return m_Edges;
     }
@@ -671,7 +666,7 @@ namespace karto
      * Gets the vertices of this graph
      * @return graph vertices
      */
-    inline const VertexMap& GetVertices() const
+    inline const VertexMap &GetVertices() const
     {
       return m_Vertices;
     }
@@ -685,20 +680,20 @@ namespace karto
     /**
      * Edges of this graph
      */
-    std::vector<Edge<T>*> m_Edges;
+    std::vector<Edge<T> *> m_Edges;
     /**
      * Serialization: class Graph
      */
     friend class boost::serialization::access;
-    template<class Archive>
+    template <class Archive>
     void serialize(Archive &ar, const unsigned int version)
     {
       std::cout << "Graph <- m_Edges; ";
-      ar & BOOST_SERIALIZATION_NVP(m_Edges);
+      ar &BOOST_SERIALIZATION_NVP(m_Edges);
       std::cout << "Graph <- m_Vertices\n";
-      ar & BOOST_SERIALIZATION_NVP(m_Vertices);
+      ar &BOOST_SERIALIZATION_NVP(m_Vertices);
     }
-  };  // Graph<T>
+  }; // Graph<T>
 
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -718,7 +713,7 @@ namespace karto
      * @param pMapper
      * @param rangeThreshold
      */
-    MapperGraph(Mapper* pMapper, kt_double rangeThreshold);
+    MapperGraph(Mapper *pMapper, kt_double rangeThreshold);
     MapperGraph()
     {
     }
@@ -732,7 +727,7 @@ namespace karto
      * Adds a vertex representing the given scan to the graph
      * @param pScan
      */
-    Vertex<LocalizedRangeScan>* AddVertex(LocalizedRangeScan* pScan);
+    Vertex<LocalizedRangeScan> *AddVertex(LocalizedRangeScan *pScan);
 
     /**
      * Creates an edge between the source scan vertex and the target scan vertex if it
@@ -742,23 +737,23 @@ namespace karto
      * @param rIsNewEdge set to true if the edge is new
      * @return edge between source and target scan vertices
      */
-    Edge<LocalizedRangeScan>* AddEdge(LocalizedRangeScan* pSourceScan,
-                                      LocalizedRangeScan* pTargetScan,
-                                      kt_bool& rIsNewEdge);
+    Edge<LocalizedRangeScan> *AddEdge(LocalizedRangeScan *pSourceScan,
+                                      LocalizedRangeScan *pTargetScan,
+                                      kt_bool &rIsNewEdge);
 
     /**
      * Link scan to last scan and nearby chains of scans
      * @param pScan
      * @param rCovariance uncertainty of match
      */
-    void AddEdges(LocalizedRangeScan* pScan, const Matrix3& rCovariance);
+    void AddEdges(LocalizedRangeScan *pScan, const Matrix3 &rCovariance);
 
     /**
      * Tries to close a loop using the given scan with the scans from the given device
      * @param pScan
      * @param rSensorName
      */
-    kt_bool TryCloseLoop(LocalizedRangeScan* pScan, const Name& rSensorName);
+    kt_bool TryCloseLoop(LocalizedRangeScan *pScan, const Name &rSensorName);
 
     /**
      * Optimizes scan poses
@@ -770,14 +765,14 @@ namespace karto
      * @param pScan
      * @param maxDistance
      */
-    LocalizedRangeScanVector FindNearLinkedScans(LocalizedRangeScan* pScan, kt_double maxDistance);
+    LocalizedRangeScanVector FindNearLinkedScans(LocalizedRangeScan *pScan, kt_double maxDistance);
 
     /**
      * Find "nearby" (no further than given distance away) vertices through graph links
      * @param pScan
      * @param maxDistance
      */
-    std::vector<Vertex<LocalizedRangeScan>*> FindNearLinkedVertices(LocalizedRangeScan* pScan, kt_double maxDistance);
+    std::vector<Vertex<LocalizedRangeScan> *> FindNearLinkedVertices(LocalizedRangeScan *pScan, kt_double maxDistance);
 
     /**
      * Find "nearby" (no further than given distance away) scans through graph links
@@ -791,19 +786,19 @@ namespace karto
      * @param pScan
      * @param maxDistance
      */
-    std::vector<Vertex<LocalizedRangeScan>*> FindNearByVertices(Name name, const Pose2 refPose, kt_double maxDistance);
+    std::vector<Vertex<LocalizedRangeScan> *> FindNearByVertices(Name name, const Pose2 refPose, kt_double maxDistance);
 
     /**
      * Find closest scan to pose
      * @param pScan
      */
-    Vertex<LocalizedRangeScan>* FindNearByScan(Name name, const Pose2 refPose);
+    Vertex<LocalizedRangeScan> *FindNearByScan(Name name, const Pose2 refPose);
 
     /**
      * Gets the graph's scan matcher
      * @return scan matcher
      */
-    inline ScanMatcher* GetLoopScanMatcher() const
+    inline ScanMatcher *GetLoopScanMatcher() const
     {
       return m_pLoopScanMatcher;
     }
@@ -814,18 +809,17 @@ namespace karto
      * @param pScan
      * @return vertex of scan
      */
-    inline Vertex<LocalizedRangeScan>* GetVertex(LocalizedRangeScan* pScan)
+    inline Vertex<LocalizedRangeScan> *GetVertex(LocalizedRangeScan *pScan)
     {
       Name rName = pScan->GetSensorName();
-      std::map<int, Vertex<LocalizedRangeScan>* >::iterator it = m_Vertices[rName].find(pScan->GetStateId());
+      std::map<int, Vertex<LocalizedRangeScan> *>::iterator it = m_Vertices[rName].find(pScan->GetStateId());
       if (it != m_Vertices[rName].end())
       {
         return it->second;
       }
       else
       {
-        std::cout << "GetVertex: Failed to get vertex, idx " << pScan->GetStateId() << 
-          " is not in m_Vertices." << std::endl;
+        std::cout << "GetVertex: Failed to get vertex, idx " << pScan->GetStateId() << " is not in m_Vertices." << std::endl;
         return nullptr;
       }
     }
@@ -835,7 +829,7 @@ namespace karto
      * @param rScans
      * @param rPose
      */
-    LocalizedRangeScan* GetClosestScanToPose(const LocalizedRangeScanVector& rScans, const Pose2& rPose) const;
+    LocalizedRangeScan *GetClosestScanToPose(const LocalizedRangeScanVector &rScans, const Pose2 &rPose) const;
 
     /**
      * Adds an edge between the two scans and labels the edge with the given mean and covariance
@@ -844,10 +838,10 @@ namespace karto
      * @param rMean
      * @param rCovariance
      */
-    void LinkScans(LocalizedRangeScan* pFromScan,
-                   LocalizedRangeScan* pToScan,
-                   const Pose2& rMean,
-                   const Matrix3& rCovariance);
+    void LinkScans(LocalizedRangeScan *pFromScan,
+                   LocalizedRangeScan *pToScan,
+                   const Pose2 &rMean,
+                   const Matrix3 &rCovariance);
 
     /**
      * Find nearby chains of scans and link them to scan if response is high enough
@@ -855,7 +849,7 @@ namespace karto
      * @param rMeans
      * @param rCovariances
      */
-    void LinkNearChains(LocalizedRangeScan* pScan, Pose2Vector& rMeans, std::vector<Matrix3>& rCovariances);
+    void LinkNearChains(LocalizedRangeScan *pScan, Pose2Vector &rMeans, std::vector<Matrix3> &rCovariances);
 
     /**
      * Link the chain of scans to the given scan by finding the closest scan in the chain to the given scan
@@ -864,17 +858,17 @@ namespace karto
      * @param rMean
      * @param rCovariance
      */
-    void LinkChainToScan(const LocalizedRangeScanVector& rChain,
-                         LocalizedRangeScan* pScan,
-                         const Pose2& rMean,
-                         const Matrix3& rCovariance);
+    void LinkChainToScan(const LocalizedRangeScanVector &rChain,
+                         LocalizedRangeScan *pScan,
+                         const Pose2 &rMean,
+                         const Matrix3 &rCovariance);
 
     /**
      * Find chains of scans that are close to given scan
      * @param pScan
      * @return chains of scans
      */
-    std::vector<LocalizedRangeScanVector> FindNearChains(LocalizedRangeScan* pScan);
+    std::vector<LocalizedRangeScanVector> FindNearChains(LocalizedRangeScan *pScan);
 
     /**
      * Compute mean of poses weighted by covariances
@@ -882,7 +876,7 @@ namespace karto
      * @param rCovariances
      * @return weighted mean
      */
-    Pose2 ComputeWeightedMean(const Pose2Vector& rMeans, const std::vector<Matrix3>& rCovariances) const;
+    Pose2 ComputeWeightedMean(const Pose2Vector &rMeans, const std::vector<Matrix3> &rCovariances) const;
 
     /**
      * Tries to find a chain of scan from the given device starting at the
@@ -892,44 +886,114 @@ namespace karto
      * @param rStartNum
      * @return chain that can possibly close a loop with given scan
      */
-    LocalizedRangeScanVector FindPossibleLoopClosure(LocalizedRangeScan* pScan,
-                                                     const Name& rSensorName,
-                                                     kt_int32u& rStartNum);
+    LocalizedRangeScanVector FindPossibleLoopClosure(LocalizedRangeScan *pScan,
+                                                     const Name &rSensorName,
+                                                     kt_int32u &rStartNum);
 
   private:
     /**
      * Mapper of this graph
      */
-    Mapper* m_pMapper;
+    Mapper *m_pMapper;
 
     /**
      * Scan matcher for loop closures
      */
-    ScanMatcher* m_pLoopScanMatcher;
+    ScanMatcher *m_pLoopScanMatcher;
 
     /**
      * Traversal algorithm to find near linked scans
      */
-    GraphTraversal<LocalizedRangeScan>* m_pTraversal;
+    GraphTraversal<LocalizedRangeScan> *m_pTraversal;
 
     /**
      * Serialization: class MapperGraph
      */
     friend class boost::serialization::access;
-    template<class Archive>
+    template <class Archive>
     void serialize(Archive &ar, const unsigned int version)
     {
       std::cout << "MapperGraph <- Graph; ";
-      ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Graph<LocalizedRangeScan>);
+      ar &BOOST_SERIALIZATION_BASE_OBJECT_NVP(Graph<LocalizedRangeScan>);
       std::cout << "MapperGraph <- m_pMapper; ";
-      ar & BOOST_SERIALIZATION_NVP(m_pMapper);
+      ar &BOOST_SERIALIZATION_NVP(m_pMapper);
       std::cout << "MapperGraph <- m_pLoopScanMatcher; ";
-      ar & BOOST_SERIALIZATION_NVP(m_pLoopScanMatcher);
+      ar &BOOST_SERIALIZATION_NVP(m_pLoopScanMatcher);
       std::cout << "MapperGraph <- m_pTraversal\n";
-      ar & BOOST_SERIALIZATION_NVP(m_pTraversal);
+      ar &BOOST_SERIALIZATION_NVP(m_pTraversal);
     }
 
-  };  // MapperGraph
+  }; // MapperGraph
+
+  ////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * Graph for markers
+   */
+  class KARTO_EXPORT MarkerGraph : public Graph<LocalizedMarker>
+  {
+  public:
+    /**
+     * Graph for graph SLAM
+     * @param pMapper
+     */
+    MarkerGraph(Mapper *pMapper);
+
+    MarkerGraph()
+    {
+    }
+
+    /**
+     * Destructor
+     */
+    virtual ~MarkerGraph();
+
+  public:
+    /**
+     * Adds a vertex representing the given marker to the graph
+     * @param pMarker
+     */
+    Vertex<LocalizedMarker> *AddVertex(LocalizedMarker *pMarker);
+
+    /**
+     * Creates an edge between the source marker vertex and the target marker vertex if it
+     * does not already exist; otherwise return the existing edge
+     * @param pSourceMarker
+     * @param pTargetMarker
+     * @param rIsNewEdge set to true if the edge is new
+     * @return edge between source and target marker vertices
+     */
+    Edge<LocalizedMarker> *AddEdge(LocalizedMarker *pSourceMarker,
+                                   LocalizedMarker *pTargetMarker,
+                                   kt_bool &rIsNewEdge);
+
+    LocalizedMarkerMap GetLocalizedMarkers();
+
+  private:
+    LocalizedMarkerMap m_Markers;
+
+    /**
+     * Mapper of this graph
+     */
+    Mapper *m_pMapper;
+
+     /**
+     * Serialization: class MarkerGraph
+     */
+    friend class boost::serialization::access;
+    template <class Archive>
+    void serialize(Archive &ar, const unsigned int version)
+    {
+      std::cout << "MarkerGraph <- Graph; ";
+      ar &BOOST_SERIALIZATION_BASE_OBJECT_NVP(Graph<LocalizedMarker>);
+      std::cout << "MarkerGraph <- m_pMapper; ";
+      ar &BOOST_SERIALIZATION_NVP(m_pMapper);
+    }
+
+  }; // MarkerGraph
+
 
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -944,7 +1008,7 @@ namespace karto
     /**
      * Vector of id-pose pairs
      */
-    typedef std::vector<std::pair<kt_int32s, Pose2> > IdPoseVector;
+    typedef std::vector<std::pair<kt_int32s, Pose2>> IdPoseVector;
 
     /**
      * Default constructor
@@ -970,12 +1034,19 @@ namespace karto
      * Get corrected poses after optimization
      * @return optimized poses
      */
-    virtual const IdPoseVector& GetCorrections() const = 0;
+    virtual const IdPoseVector &GetCorrections() const = 0;
 
     /**
      * Adds a node to the solver
      */
-    virtual void AddNode(Vertex<LocalizedRangeScan>* /*pVertex*/)
+    virtual void AddNode(Vertex<LocalizedRangeScan> * /*pVertex*/)
+    {
+    }
+
+    /**
+     * Adds a node of type LocalizedMarker to the solver
+     */
+    virtual void AddNode(Vertex<LocalizedMarker> * /*pVertex*/)
     {
     }
 
@@ -989,7 +1060,14 @@ namespace karto
     /**
      * Adds a constraint to the solver
      */
-    virtual void AddConstraint(Edge<LocalizedRangeScan>* /*pEdge*/)
+    virtual void AddConstraint(Edge<LocalizedRangeScan> * /*pEdge*/)
+    {
+    }
+
+    /**
+     * Adds a constraint of type LocalizedMarker to the solver
+     */
+    virtual void AddConstraint(Edge<LocalizedMarker> * /*pEdge*/)
     {
     }
 
@@ -1017,15 +1095,15 @@ namespace karto
     /**
      * Get graph stored
      */
-    virtual std::unordered_map<int, Eigen::Vector3d>* getGraph()
+    virtual std::unordered_map<int, Eigen::Vector3d> *getGraph()
     {
       std::cout << "getGraph method not implemented for this solver type. Graph visualization unavailable." << std::endl;
     }
 
-     /**
+    /**
      * Get list od constraints stored
      */
-    virtual std::vector<std::list<int>>* getConstraints()
+    virtual std::vector<std::list<int>> *getConstraints()
     {
       std::cout << "getConstraints method not implemented for this solver type. Graph visualization unavailable." << std::endl;
     }
@@ -1033,24 +1111,24 @@ namespace karto
     /**
      * Modify a node's pose
      */
-    virtual void ModifyNode(const int& unique_id, Eigen::Vector3d pose)
+    virtual void ModifyNode(const int &unique_id, Eigen::Vector3d pose)
     {
       std::cout << "ModifyNode method not implemented for this solver type. Manual loop closure unavailable." << std::endl;
     };
     /**
      * Get node's yaw
      */
-    virtual void GetNodeOrientation(const int& unique_id, double& pose)
+    virtual void GetNodeOrientation(const int &unique_id, double &pose)
     {
       std::cout << "GetNodeOrientation method not implemented for this solver type." << std::endl;
     };
 
     friend class boost::serialization::access;
-    template<class Archive>
+    template <class Archive>
     void serialize(Archive &ar, const unsigned int version)
     {
     }
-  };  // ScanSolver
+  }; // ScanSolver
   BOOST_SERIALIZATION_ASSUME_ABSTRACT(ScanSolver)
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -1069,9 +1147,8 @@ namespace karto
     {
       if (m_pKernel)
       {
-        delete [] m_pKernel;
+        delete[] m_pKernel;
       }
-
     }
 
   public:
@@ -1086,7 +1163,7 @@ namespace karto
     CorrelationGrid()
     {
     }
-    static CorrelationGrid* CreateGrid(kt_int32s width,
+    static CorrelationGrid *CreateGrid(kt_int32s width,
                                        kt_int32s height,
                                        kt_double resolution,
                                        kt_double smearDeviation)
@@ -1096,7 +1173,7 @@ namespace karto
       // +1 in case of roundoff
       kt_int32u borderSize = GetHalfKernelSize(smearDeviation, resolution) + 1;
 
-      CorrelationGrid* pGrid = new CorrelationGrid(width, height, borderSize, resolution, smearDeviation);
+      CorrelationGrid *pGrid = new CorrelationGrid(width, height, borderSize, resolution, smearDeviation);
 
       return pGrid;
     }
@@ -1107,7 +1184,7 @@ namespace karto
      * @param boundaryCheck
      * @return grid index
      */
-    virtual kt_int32s GridIndex(const Vector2<kt_int32s>& rGrid, kt_bool boundaryCheck = true) const
+    virtual kt_int32s GridIndex(const Vector2<kt_int32s> &rGrid, kt_bool boundaryCheck = true) const
     {
       kt_int32s x = rGrid.GetX() + m_Roi.GetX();
       kt_int32s y = rGrid.GetY() + m_Roi.GetY();
@@ -1119,7 +1196,7 @@ namespace karto
      * Get the Region Of Interest (ROI)
      * @return region of interest
      */
-    inline const Rectangle2<kt_int32s>& GetROI() const
+    inline const Rectangle2<kt_int32s> &GetROI() const
     {
       return m_Roi;
     }
@@ -1128,7 +1205,7 @@ namespace karto
      * Sets the Region Of Interest (ROI)
      * @param roi
      */
-    inline void SetROI(const Rectangle2<kt_int32s>& roi)
+    inline void SetROI(const Rectangle2<kt_int32s> &roi)
     {
       m_Roi = roi;
     }
@@ -1137,7 +1214,7 @@ namespace karto
      * Smear cell if the cell at the given point is marked as "occupied"
      * @param rGridPoint
      */
-    inline void SmearPoint(const Vector2<kt_int32s>& rGridPoint)
+    inline void SmearPoint(const Vector2<kt_int32s> &rGridPoint)
     {
       assert(m_pKernel != NULL);
 
@@ -1152,7 +1229,7 @@ namespace karto
       // apply kernel
       for (kt_int32s j = -halfKernel; j <= halfKernel; j++)
       {
-        kt_int8u* pGridAdr = GetDataPointer(Vector2<kt_int32s>(rGridPoint.GetX(), rGridPoint.GetY() + j));
+        kt_int8u *pGridAdr = GetDataPointer(Vector2<kt_int32s>(rGridPoint.GetX(), rGridPoint.GetY() + j));
 
         kt_int32s kernelConstant = (halfKernel) + m_KernelSize * (j + halfKernel);
 
@@ -1184,9 +1261,7 @@ namespace karto
      */
     CorrelationGrid(kt_int32u width, kt_int32u height, kt_int32u borderSize,
                     kt_double resolution, kt_double smearDeviation)
-      : Grid<kt_int8u>(width + borderSize * 2, height + borderSize * 2)
-      , m_SmearDeviation(smearDeviation)
-      , m_pKernel(NULL)
+        : Grid<kt_int8u>(width + borderSize * 2, height + borderSize * 2), m_SmearDeviation(smearDeviation), m_pKernel(NULL)
     {
       GetCoordinateConverter()->SetScale(1.0 / resolution);
 
@@ -1282,7 +1357,7 @@ namespace karto
     kt_int32s m_KernelSize;
 
     // Cached kernel for smearing
-    kt_int8u* m_pKernel;
+    kt_int8u *m_pKernel;
 
     // region of interest
     Rectangle2<kt_int32s> m_Roi;
@@ -1290,20 +1365,20 @@ namespace karto
      * Serialization: class CorrelationGrid
      */
     friend class boost::serialization::access;
-    template<class Archive>
+    template <class Archive>
     void serialize(Archive &ar, const unsigned int version)
     {
-      ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Grid<kt_int8u>);
-      ar & BOOST_SERIALIZATION_NVP(m_SmearDeviation);
-      ar & BOOST_SERIALIZATION_NVP(m_KernelSize);
+      ar &BOOST_SERIALIZATION_BASE_OBJECT_NVP(Grid<kt_int8u>);
+      ar &BOOST_SERIALIZATION_NVP(m_SmearDeviation);
+      ar &BOOST_SERIALIZATION_NVP(m_KernelSize);
       if (Archive::is_loading::value)
       {
         m_pKernel = new kt_int8u[m_KernelSize * m_KernelSize];
       }
-      ar & boost::serialization::make_array<kt_int8u>(m_pKernel, m_KernelSize * m_KernelSize);
-      ar & BOOST_SERIALIZATION_NVP(m_Roi);
+      ar &boost::serialization::make_array<kt_int8u>(m_pKernel, m_KernelSize * m_KernelSize);
+      ar &BOOST_SERIALIZATION_NVP(m_Roi);
     }
-  };  // CorrelationGrid
+  }; // CorrelationGrid
   BOOST_SERIALIZATION_ASSUME_ABSTRACT(CorrelationGrid)
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -1327,12 +1402,12 @@ namespace karto
     /**
      * Parallelize scan matching
      */
-    void operator() (const kt_double& y) const;
+    void operator()(const kt_double &y) const;
 
     /**
      * Create a scan matcher with the given parameters
      */
-    static ScanMatcher* Create(Mapper* pMapper,
+    static ScanMatcher *Create(Mapper *pMapper,
                                kt_double searchSize,
                                kt_double resolution,
                                kt_double smearDeviation,
@@ -1348,10 +1423,10 @@ namespace karto
      * @param doRefineMatch whether to do finer-grained matching if coarse match is good (default is true)
      * @return strength of response
      */
-    template<class T = LocalizedRangeScanVector>
-    kt_double MatchScan(LocalizedRangeScan* pScan,
-                        const T& rBaseScans,
-                        Pose2& rMean, Matrix3& rCovariance,
+    template <class T = LocalizedRangeScanVector>
+    kt_double MatchScan(LocalizedRangeScan *pScan,
+                        const T &rBaseScans,
+                        Pose2 &rMean, Matrix3 &rCovariance,
                         kt_bool doPenalize = true,
                         kt_bool doRefineMatch = true);
 
@@ -1371,15 +1446,15 @@ namespace karto
      * @param doingFineMatch whether to do a finer search after coarse search
      * @return strength of response
      */
-    kt_double CorrelateScan(LocalizedRangeScan* pScan,
-                            const Pose2& rSearchCenter,
-                            const Vector2<kt_double>& rSearchSpaceOffset,
-                            const Vector2<kt_double>& rSearchSpaceResolution,
+    kt_double CorrelateScan(LocalizedRangeScan *pScan,
+                            const Pose2 &rSearchCenter,
+                            const Vector2<kt_double> &rSearchSpaceOffset,
+                            const Vector2<kt_double> &rSearchSpaceResolution,
                             kt_double searchAngleOffset,
                             kt_double searchAngleResolution,
                             kt_bool doPenalize,
-                            Pose2& rMean,
-                            Matrix3& rCovariance,
+                            Pose2 &rMean,
+                            Matrix3 &rCovariance,
                             kt_bool doingFineMatch);
 
     /**
@@ -1392,13 +1467,13 @@ namespace karto
      * @param searchAngleResolution
      * @param rCovariance
      */
-    void ComputePositionalCovariance(const Pose2& rBestPose,
+    void ComputePositionalCovariance(const Pose2 &rBestPose,
                                      kt_double bestResponse,
-                                     const Pose2& rSearchCenter,
-                                     const Vector2<kt_double>& rSearchSpaceOffset,
-                                     const Vector2<kt_double>& rSearchSpaceResolution,
+                                     const Pose2 &rSearchCenter,
+                                     const Vector2<kt_double> &rSearchSpaceOffset,
+                                     const Vector2<kt_double> &rSearchSpaceResolution,
                                      kt_double searchAngleResolution,
-                                     Matrix3& rCovariance);
+                                     Matrix3 &rCovariance);
 
     /**
      * Computes the angular covariance of the best pose
@@ -1409,18 +1484,18 @@ namespace karto
      * @param searchAngleResolution
      * @param rCovariance
      */
-    void ComputeAngularCovariance(const Pose2& rBestPose,
+    void ComputeAngularCovariance(const Pose2 &rBestPose,
                                   kt_double bestResponse,
-                                  const Pose2& rSearchCenter,
+                                  const Pose2 &rSearchCenter,
                                   kt_double searchAngleOffset,
                                   kt_double searchAngleResolution,
-                                  Matrix3& rCovariance);
+                                  Matrix3 &rCovariance);
 
     /**
      * Gets the correlation grid data (for debugging)
      * @return correlation grid
      */
-    inline CorrelationGrid* GetCorrelationGrid() const
+    inline CorrelationGrid *GetCorrelationGrid() const
     {
       return m_pCorrelationGrid;
     }
@@ -1431,8 +1506,8 @@ namespace karto
      * @param rScans scans whose points will mark cells in grid as being occupied
      * @param viewPoint do not add points that belong to scans "opposite" the view point
      */
-    void AddScans(const LocalizedRangeScanVector& rScans, Vector2<kt_double> viewPoint);
-    void AddScans(const LocalizedRangeScanMap& rScans, Vector2<kt_double> viewPoint);
+    void AddScans(const LocalizedRangeScanVector &rScans, Vector2<kt_double> viewPoint);
+    void AddScans(const LocalizedRangeScanMap &rScans, Vector2<kt_double> viewPoint);
 
     /**
      * Marks cells where scans' points hit as being occupied.  Can smear points as they are added.
@@ -1440,7 +1515,7 @@ namespace karto
      * @param viewPoint do not add points that belong to scans "opposite" the view point
      * @param doSmear whether the points will be smeared
      */
-    void AddScan(LocalizedRangeScan* pScan, const Vector2<kt_double>& rViewPoint, kt_bool doSmear = true);
+    void AddScan(LocalizedRangeScan *pScan, const Vector2<kt_double> &rViewPoint, kt_bool doSmear = true);
 
     /**
      * Compute which points in a scan are on the same side as the given viewpoint
@@ -1448,7 +1523,7 @@ namespace karto
      * @param rViewPoint
      * @return points on the same side
      */
-    PointVectorDouble FindValidPoints(LocalizedRangeScan* pScan, const Vector2<kt_double>& rViewPoint) const;
+    PointVectorDouble FindValidPoints(LocalizedRangeScan *pScan, const Vector2<kt_double> &rViewPoint) const;
 
     /**
      * Get response at given position for given rotation (only look up valid points)
@@ -1462,21 +1537,17 @@ namespace karto
     /**
      * Default constructor
      */
-    ScanMatcher(Mapper* pMapper)
-      : m_pMapper(pMapper)
-      , m_pCorrelationGrid(NULL)
-      , m_pSearchSpaceProbs(NULL)
-      , m_pGridLookup(NULL)
-      , m_doPenalize(false)
+    ScanMatcher(Mapper *pMapper)
+        : m_pMapper(pMapper), m_pCorrelationGrid(NULL), m_pSearchSpaceProbs(NULL), m_pGridLookup(NULL), m_doPenalize(false)
     {
     }
 
   private:
-    Mapper* m_pMapper;
-    CorrelationGrid* m_pCorrelationGrid;
-    Grid<kt_double>* m_pSearchSpaceProbs;
-    GridIndexLookup<kt_int8u>* m_pGridLookup;
-    std::pair<kt_double, Pose2>* m_pPoseResponse;
+    Mapper *m_pMapper;
+    CorrelationGrid *m_pCorrelationGrid;
+    Grid<kt_double> *m_pSearchSpaceProbs;
+    GridIndexLookup<kt_int8u> *m_pGridLookup;
+    std::pair<kt_double, Pose2> *m_pPoseResponse;
     std::vector<kt_double> m_xPoses;
     std::vector<kt_double> m_yPoses;
     Pose2 m_rSearchCenter;
@@ -1489,29 +1560,30 @@ namespace karto
      * Serialization: class ScanMatcher
      */
     friend class boost::serialization::access;
-    template<class Archive>
+    template <class Archive>
     void serialize(Archive &ar, const unsigned int version)
     {
-      ar & BOOST_SERIALIZATION_NVP(m_pMapper);
-      ar & BOOST_SERIALIZATION_NVP(m_pCorrelationGrid);
-      ar & BOOST_SERIALIZATION_NVP(m_pSearchSpaceProbs);
-      ar & BOOST_SERIALIZATION_NVP(m_pGridLookup);
-      ar & BOOST_SERIALIZATION_NVP(m_xPoses);
-      ar & BOOST_SERIALIZATION_NVP(m_yPoses);
-      ar & BOOST_SERIALIZATION_NVP(m_rSearchCenter);
-      ar & BOOST_SERIALIZATION_NVP(m_searchAngleResolution);
-      ar & BOOST_SERIALIZATION_NVP(m_nAngles);
-      ar & BOOST_SERIALIZATION_NVP(m_searchAngleResolution);;
-      ar & BOOST_SERIALIZATION_NVP(m_doPenalize);
+      ar &BOOST_SERIALIZATION_NVP(m_pMapper);
+      ar &BOOST_SERIALIZATION_NVP(m_pCorrelationGrid);
+      ar &BOOST_SERIALIZATION_NVP(m_pSearchSpaceProbs);
+      ar &BOOST_SERIALIZATION_NVP(m_pGridLookup);
+      ar &BOOST_SERIALIZATION_NVP(m_xPoses);
+      ar &BOOST_SERIALIZATION_NVP(m_yPoses);
+      ar &BOOST_SERIALIZATION_NVP(m_rSearchCenter);
+      ar &BOOST_SERIALIZATION_NVP(m_searchAngleResolution);
+      ar &BOOST_SERIALIZATION_NVP(m_nAngles);
+      ar &BOOST_SERIALIZATION_NVP(m_searchAngleResolution);
+      ;
+      ar &BOOST_SERIALIZATION_NVP(m_doPenalize);
       kt_int32u poseResponseSize = static_cast<kt_int32u>(m_xPoses.size() * m_yPoses.size() * m_nAngles);
       if (Archive::is_loading::value)
       {
         m_pPoseResponse = new std::pair<kt_double, Pose2>[poseResponseSize];
       }
-      ar & boost::serialization::make_array<std::pair<kt_double, Pose2>>(m_pPoseResponse, poseResponseSize);
+      ar &boost::serialization::make_array<std::pair<kt_double, Pose2>>(m_pPoseResponse, poseResponseSize);
     }
 
-  };  // ScanMatcher
+  }; // ScanMatcher
 
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -1524,21 +1596,20 @@ namespace karto
    */
   class KARTO_EXPORT MapperSensorManager //: public SensorManager // was commented out, works with it in, but I'll leave out for now...
   {
-    typedef std::map<Name, ScanManager*> ScanManagerMap;
+    typedef std::map<Name, ScanManager *> ScanManagerMap;
 
   public:
     /**
      * Constructor
      */
     MapperSensorManager(kt_int32u runningBufferMaximumSize, kt_double runningBufferMaximumDistance)
-      : m_RunningBufferMaximumSize(runningBufferMaximumSize)
-      , m_RunningBufferMaximumDistance(runningBufferMaximumDistance)
-      , m_NextScanId(0)
+        : m_RunningBufferMaximumSize(runningBufferMaximumSize), m_RunningBufferMaximumDistance(runningBufferMaximumDistance), m_NextScanId(0)
     {
     }
 
-    MapperSensorManager(){
-	}
+    MapperSensorManager()
+    {
+    }
 
     /**
      * Destructor
@@ -1554,7 +1625,7 @@ namespace karto
      * nothing if device already registered
      * @param rSensorName
      */
-    void RegisterSensor(const Name& rSensorName);
+    void RegisterSensor(const Name &rSensorName);
 
     /**
      * Gets scan from given sensor with given ID
@@ -1562,7 +1633,7 @@ namespace karto
      * @param scanIndex
      * @return localized range scan
      */
-    LocalizedRangeScan* GetScan(const Name& rSensorName, kt_int32s scanIndex);
+    LocalizedRangeScan *GetScan(const Name &rSensorName, kt_int32s scanIndex);
 
     /**
      * Gets names of all sensors
@@ -1584,30 +1655,29 @@ namespace karto
      * @param rSensorName
      * @return last localized range scan of sensor
      */
-    LocalizedRangeScan* GetLastScan(const Name& rSensorName);
+    LocalizedRangeScan *GetLastScan(const Name &rSensorName);
 
     /**
      * Sets the last scan of device of given scan
      * @param pScan
      */
-    void SetLastScan(LocalizedRangeScan* pScan);
+    void SetLastScan(LocalizedRangeScan *pScan);
 
     /**
      * Gets the scan with the given unique id
      * @param id
      * @return scan
      */
-    inline LocalizedRangeScan* GetScan(kt_int32s id)
+    inline LocalizedRangeScan *GetScan(kt_int32s id)
     {
-      std::map<int, LocalizedRangeScan*>::iterator it = m_Scans.find(id);
+      std::map<int, LocalizedRangeScan *>::iterator it = m_Scans.find(id);
       if (it != m_Scans.end())
       {
         return it->second;
       }
       else
       {
-        std::cout << "GetScan: id " << id << 
-          " does not exist in m_scans, cannot retrieve it." << std::endl;
+        std::cout << "GetScan: id " << id << " does not exist in m_scans, cannot retrieve it." << std::endl;
         return nullptr;
       }
     }
@@ -1616,43 +1686,43 @@ namespace karto
      * Adds scan to scan vector of device that recorded scan
      * @param pScan
      */
-    void AddScan(LocalizedRangeScan* pScan);
+    void AddScan(LocalizedRangeScan *pScan);
 
     /**
      * Adds scan to running scans of device that recorded scan
      * @param pScan
      */
-    void AddRunningScan(LocalizedRangeScan* pScan);
+    void AddRunningScan(LocalizedRangeScan *pScan);
 
     /**
      * Finds and replaces a scan from m_scans with NULL
      * @param pScan
      */
-    void RemoveScan(LocalizedRangeScan* pScan);
+    void RemoveScan(LocalizedRangeScan *pScan);
 
     /**
      * Gets scans of device
      * @param rSensorName
      * @return scans of device
      */
-    LocalizedRangeScanMap& GetScans(const Name& rSensorName);
+    LocalizedRangeScanMap &GetScans(const Name &rSensorName);
 
     /**
      * Gets running scans of device
      * @param rSensorName
      * @return running scans of device
      */
-    LocalizedRangeScanVector& GetRunningScans(const Name& rSensorName);
+    LocalizedRangeScanVector &GetRunningScans(const Name &rSensorName);
 
     /**
      * Clears running scans of device
      */
-    void ClearRunningScans(const Name& rSensorName);
+    void ClearRunningScans(const Name &rSensorName);
 
     /**
      * Gets the running scan buffer of device
      */
-    kt_int32u GetRunningScanBufferSize(const Name& rSensorName);
+    kt_int32u GetRunningScanBufferSize(const Name &rSensorName);
 
     /**
      * Gets all scans of all devices
@@ -1670,7 +1740,7 @@ namespace karto
      * Get scan manager for localized range scan
      * @return ScanManager
      */
-    inline ScanManager* GetScanManager(LocalizedRangeScan* pScan)
+    inline ScanManager *GetScanManager(LocalizedRangeScan *pScan)
     {
       return GetScanManager(pScan->GetSensorName());
     }
@@ -1680,7 +1750,7 @@ namespace karto
      * @param rSensorName
      * @return ScanManager
      */
-    inline ScanManager* GetScanManager(const Name& rSensorName)
+    inline ScanManager *GetScanManager(const Name &rSensorName)
     {
       if (m_ScanManagers.find(rSensorName) != m_ScanManagers.end())
       {
@@ -1690,18 +1760,18 @@ namespace karto
       return NULL;
     }
 
-	friend class boost::serialization::access;
-	template<class Archive>
-	void serialize(Archive &ar, const unsigned int version)
-	{
-    std::cout << "MapperSensorManager <- m_ScanManagers; ";
-    ar & BOOST_SERIALIZATION_NVP(m_ScanManagers);
-    ar & BOOST_SERIALIZATION_NVP(m_RunningBufferMaximumSize);
-    ar & BOOST_SERIALIZATION_NVP(m_RunningBufferMaximumDistance);
-    ar & BOOST_SERIALIZATION_NVP(m_NextScanId);
-    std::cout << "MapperSensorManager <- m_Scans\n";
-    ar & BOOST_SERIALIZATION_NVP(m_Scans);
-	}
+    friend class boost::serialization::access;
+    template <class Archive>
+    void serialize(Archive &ar, const unsigned int version)
+    {
+      std::cout << "MapperSensorManager <- m_ScanManagers; ";
+      ar &BOOST_SERIALIZATION_NVP(m_ScanManagers);
+      ar &BOOST_SERIALIZATION_NVP(m_RunningBufferMaximumSize);
+      ar &BOOST_SERIALIZATION_NVP(m_RunningBufferMaximumDistance);
+      ar &BOOST_SERIALIZATION_NVP(m_NextScanId);
+      std::cout << "MapperSensorManager <- m_Scans\n";
+      ar &BOOST_SERIALIZATION_NVP(m_Scans);
+    }
 
   private:
     // map from device ID to scan data
@@ -1712,8 +1782,8 @@ namespace karto
 
     kt_int32s m_NextScanId;
 
-    std::map<int, LocalizedRangeScan*> m_Scans;
-  };  // MapperSensorManager
+    std::map<int, LocalizedRangeScan *> m_Scans;
+  }; // MapperSensorManager
 
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -1879,10 +1949,14 @@ namespace karto
 
   struct LocalizationScanVertex
   {
-    LocalizationScanVertex(){return;};
-    LocalizationScanVertex(const LocalizationScanVertex& obj){scan = obj.scan; vertex = obj.vertex;};
-    LocalizedRangeScan* scan;
-    Vertex<LocalizedRangeScan>* vertex;
+    LocalizationScanVertex() { return; };
+    LocalizationScanVertex(const LocalizationScanVertex &obj)
+    {
+      scan = obj.scan;
+      vertex = obj.vertex;
+    };
+    LocalizedRangeScan *scan;
+    Vertex<LocalizedRangeScan> *vertex;
   };
 
   typedef std::queue<LocalizationScanVertex> LocalizationScanVertices;
@@ -1890,6 +1964,7 @@ namespace karto
   class KARTO_EXPORT Mapper : public Module
   {
     friend class MapperGraph;
+    friend class MarkerGraph;
     friend class ScanMatcher;
 
   public:
@@ -1902,7 +1977,7 @@ namespace karto
      * Constructor a mapper with a name
      * @param rName mapper name
      */
-    Mapper(const std::string& rName);
+    Mapper(const std::string &rName);
 
     /**
      * Destructor
@@ -1920,13 +1995,13 @@ namespace karto
      * Save map to file
      * @param filename
      */
-    void SaveToFile(const std::string& filename);
+    void SaveToFile(const std::string &filename);
 
     /**
      * Load map from file
      * @param filename
      */
-    void LoadFromFile(const std::string& filename);
+    void LoadFromFile(const std::string &filename);
 
     /**
      * Resets the mapper.
@@ -1945,19 +2020,21 @@ namespace karto
      *
      * @return true if the scan was added successfully, false otherwise
      */
-    virtual kt_bool Process(LocalizedRangeScan* pScan);
+    virtual kt_bool Process(LocalizedRangeScan *pScan);
 
     /**
      * Process an Object
      */
-    virtual kt_bool Process(Object* pObject);
+    virtual kt_bool Process(Object *pObject);
 
     // processors
-    kt_bool ProcessAtDock(LocalizedRangeScan* pScan);
-    kt_bool ProcessAgainstNode(LocalizedRangeScan* pScan,  const int& nodeId);
-    kt_bool ProcessAgainstNodesNearBy(LocalizedRangeScan* pScan);
-    kt_bool ProcessLocalization(LocalizedRangeScan* pScan);
-    kt_bool RemoveNodeFromGraph(Vertex<LocalizedRangeScan>*);
+    kt_bool ProcessAtDock(LocalizedRangeScan *pScan);
+    kt_bool ProcessAgainstNode(LocalizedRangeScan *pScan, const int &nodeId);
+    kt_bool ProcessAgainstNodesNearBy(LocalizedRangeScan *pScan);
+    kt_bool ProcessLocalization(LocalizedRangeScan *pScan);
+    kt_bool RemoveNodeFromGraph(Vertex<LocalizedRangeScan> *);
+
+    kt_bool ProcessMarker(LocalizedMarker *pMarker);
 
     /**
      * Returns all processed scans added to the mapper.
@@ -1971,49 +2048,55 @@ namespace karto
      * Add a listener to mapper
      * @param pListener
      */
-    void AddListener(MapperListener* pListener);
+    void AddListener(MapperListener *pListener);
 
     /**
      * Remove a listener to mapper
      * @param pListener
      */
-    void RemoveListener(MapperListener* pListener);
+    void RemoveListener(MapperListener *pListener);
 
     /**
      * Set scan optimizer used by mapper when closing the loop
      * @param pSolver
      */
-    void SetScanSolver(ScanSolver* pSolver);
+    void SetScanSolver(ScanSolver *pSolver);
 
     /**
      * Gets scan optimizer used by mapper when closing the loop
      * @return pSolver
      */
-    ScanSolver* getScanSolver();
+    ScanSolver *getScanSolver();
 
     /**
      * Get scan link graph
      * @return graph
      */
-    virtual MapperGraph* GetGraph() const;
+    virtual MapperGraph *GetGraph() const;
+
+    /**
+     * Get marker link graph
+     * @return graph
+     */
+    virtual MarkerGraph *GetMarkerGraph() const;
 
     /**
      * Gets the sequential scan matcher
      * @return sequential scan matcher
      */
-    virtual ScanMatcher* GetSequentialScanMatcher() const;
+    virtual ScanMatcher *GetSequentialScanMatcher() const;
 
     /**
      * Gets the loop scan matcher
      * @return loop scan matcher
      */
-    virtual ScanMatcher* GetLoopScanMatcher() const;
+    virtual ScanMatcher *GetLoopScanMatcher() const;
 
     /**
      * Gets the device manager
      * @return device manager
      */
-    inline MapperSensorManager* GetMapperSensorManager() const
+    inline MapperSensorManager *GetMapperSensorManager() const
     {
       return m_pMapperSensorManager;
     }
@@ -2023,7 +2106,7 @@ namespace karto
      * @param pScan
      * @param rSensorName
      */
-    inline kt_bool TryCloseLoop(LocalizedRangeScan* pScan, const Name& rSensorName)
+    inline kt_bool TryCloseLoop(LocalizedRangeScan *pScan, const Name &rSensorName)
     {
       return m_pGraph->TryCloseLoop(pScan, rSensorName);
     }
@@ -2043,7 +2126,7 @@ namespace karto
      * @return true if the scan is "sufficiently far" from the last scan added or
      * the scan is the first scan to be added
      */
-    kt_bool HasMovedEnough(LocalizedRangeScan* pScan, LocalizedRangeScan* pLastScan) const;
+    kt_bool HasMovedEnough(LocalizedRangeScan *pScan, LocalizedRangeScan *pLastScan) const;
 
   public:
     /////////////////////////////////////////////
@@ -2053,31 +2136,31 @@ namespace karto
      * Fire a general message to listeners
      * @param rInfo
      */
-    void FireInfo(const std::string& rInfo) const;
+    void FireInfo(const std::string &rInfo) const;
 
     /**
      * Fire a debug message to listeners
      * @param rInfo
      */
-    void FireDebug(const std::string& rInfo) const;
+    void FireDebug(const std::string &rInfo) const;
 
     /**
      * Fire a message upon checking for loop closure to listeners
      * @param rInfo
      */
-    void FireLoopClosureCheck(const std::string& rInfo) const;
+    void FireLoopClosureCheck(const std::string &rInfo) const;
 
     /**
      * Fire a message before loop closure to listeners
      * @param rInfo
      */
-    void FireBeginLoopClosure(const std::string& rInfo) const;
+    void FireBeginLoopClosure(const std::string &rInfo) const;
 
     /**
      * Fire a message after loop closure to listeners
      * @param rInfo
      */
-    void FireEndLoopClosure(const std::string& rInfo) const;
+    void FireEndLoopClosure(const std::string &rInfo) const;
 
     // FireRunningScansUpdated
 
@@ -2089,12 +2172,12 @@ namespace karto
     /**
      * Restrict the copy constructor
      */
-    Mapper(const Mapper&);
+    Mapper(const Mapper &);
 
     /**
      * Restrict the assignment operator
      */
-    const Mapper& operator=(const Mapper&);
+    const Mapper &operator=(const Mapper &);
 
   public:
     void SetUseScanMatching(kt_bool val) { m_pUseScanMatching->SetValue(val); }
@@ -2102,16 +2185,16 @@ namespace karto
   protected:
     kt_bool m_Initialized;
 
-    ScanMatcher* m_pSequentialScanMatcher;
+    ScanMatcher *m_pSequentialScanMatcher;
 
-    MapperSensorManager* m_pMapperSensorManager;
+    MapperSensorManager *m_pMapperSensorManager;
 
-    MapperGraph* m_pGraph;
-    ScanSolver* m_pScanOptimizer;
+    MapperGraph *m_pGraph;
+    MarkerGraph *m_pMarkerGraph;
+    ScanSolver *m_pScanOptimizer;
     LocalizationScanVertices m_LocalizationScanVertices;
 
-
-    std::vector<MapperListener*> m_Listeners;
+    std::vector<MapperListener *> m_Listeners;
 
     /**
      * When set to true, the mapper will use a scan matching algorithm. In most real-world situations
@@ -2121,12 +2204,12 @@ namespace karto
      * set this to false to improve results.
      * Default value is true.
      */
-    Parameter<kt_bool>* m_pUseScanMatching;
+    Parameter<kt_bool> *m_pUseScanMatching;
 
     /**
      * Default value is true.
      */
-    Parameter<kt_bool>* m_pUseScanBarycenter;
+    Parameter<kt_bool> *m_pUseScanBarycenter;
 
     /**
      * Sets the minimum time between scans. If a new scan's time stamp is
@@ -2139,7 +2222,7 @@ namespace karto
      * when there is a need to process scans while the robot is stationary.
      * Default value is 3600 (seconds), effectively disabling this parameter.
      */
-    Parameter<kt_double>* m_pMinimumTimeInterval;
+    Parameter<kt_double> *m_pMinimumTimeInterval;
 
     /**
      * Sets the minimum travel between scans.  If a new scan's position is more than minimumTravelDistance
@@ -2149,7 +2232,7 @@ namespace karto
      * has moved a reasonable amount.
      * Default value is 0.2 (meters).
      */
-    Parameter<kt_double>* m_pMinimumTravelDistance;
+    Parameter<kt_double> *m_pMinimumTravelDistance;
 
     /**
      * Sets the minimum heading change between scans. If a new scan's heading is more than minimumTravelHeading
@@ -2159,7 +2242,7 @@ namespace karto
      * has moved a reasonable amount.
      * Default value is 10 degrees.
      */
-    Parameter<kt_double>* m_pMinimumTravelHeading;
+    Parameter<kt_double> *m_pMinimumTravelHeading;
 
     /**
      * Scan buffer size is the length of the scan chain stored for scan matching.
@@ -2169,40 +2252,40 @@ namespace karto
      * should be 20 / 0.3 = 67.)
      * Default value is 67.
      */
-    Parameter<kt_int32u>* m_pScanBufferSize;
+    Parameter<kt_int32u> *m_pScanBufferSize;
 
     /**
      * Scan buffer maximum scan distance is the maximum distance between the first and last scans
      * in the scan chain stored for matching.
      * Default value is 20.0.
      */
-    Parameter<kt_double>* m_pScanBufferMaximumScanDistance;
+    Parameter<kt_double> *m_pScanBufferMaximumScanDistance;
 
     /**
      * Scans are linked only if the correlation response value is greater than this value.
      * Default value is 0.4
      */
-    Parameter<kt_double>* m_pLinkMatchMinimumResponseFine;
+    Parameter<kt_double> *m_pLinkMatchMinimumResponseFine;
 
     /**
      * Maximum distance between linked scans.  Scans that are farther apart will not be linked
      * regardless of the correlation response value.
      * Default value is 6.0 meters.
      */
-    Parameter<kt_double>* m_pLinkScanMaximumDistance;
+    Parameter<kt_double> *m_pLinkScanMaximumDistance;
 
     /**
      * Enable/disable loop closure.
      * Default is enabled.
      */
-    Parameter<kt_bool>* m_pDoLoopClosing;
+    Parameter<kt_bool> *m_pDoLoopClosing;
 
     /**
      * Scans less than this distance from the current position will be considered for a match
      * in loop closure.
      * Default value is 4.0 meters.
      */
-    Parameter<kt_double>* m_pLoopSearchMaximumDistance;
+    Parameter<kt_double> *m_pLoopSearchMaximumDistance;
 
     /**
      * When the loop closure detection finds a candidate it must be part of a large
@@ -2210,26 +2293,26 @@ namespace karto
      * to close the loop.
      * Default value is 10.
      */
-    Parameter<kt_int32u>* m_pLoopMatchMinimumChainSize;
+    Parameter<kt_int32u> *m_pLoopMatchMinimumChainSize;
 
     /**
      * The co-variance values for a possible loop closure have to be less than this value
      * to consider a viable solution. This applies to the coarse search.
      * Default value is 0.16.
      */
-    Parameter<kt_double>* m_pLoopMatchMaximumVarianceCoarse;
+    Parameter<kt_double> *m_pLoopMatchMaximumVarianceCoarse;
 
     /**
      * If response is larger then this, then initiate loop closure search at the coarse resolution.
      * Default value is 0.7.
      */
-    Parameter<kt_double>* m_pLoopMatchMinimumResponseCoarse;
+    Parameter<kt_double> *m_pLoopMatchMinimumResponseCoarse;
 
     /**
      * If response is larger then this, then initiate loop closure search at the fine resolution.
      * Default value is 0.7.
      */
-    Parameter<kt_double>* m_pLoopMatchMinimumResponseFine;
+    Parameter<kt_double> *m_pLoopMatchMinimumResponseFine;
 
     //////////////////////////////////////////////////////////////////////////////
     //    CorrelationParameters correlationParameters;
@@ -2238,20 +2321,19 @@ namespace karto
      * The size of the search grid used by the matcher.
      * Default value is 0.3 meters which tells the matcher to use a 30cm x 30cm grid.
      */
-    Parameter<kt_double>* m_pCorrelationSearchSpaceDimension;
+    Parameter<kt_double> *m_pCorrelationSearchSpaceDimension;
 
     /**
      * The resolution (size of a grid cell) of the correlation grid.
      * Default value is 0.01 meters.
      */
-    Parameter<kt_double>* m_pCorrelationSearchSpaceResolution;
+    Parameter<kt_double> *m_pCorrelationSearchSpaceResolution;
 
     /**
      * The point readings are smeared by this value in X and Y to create a smoother response.
      * Default value is 0.03 meters.
      */
-    Parameter<kt_double>* m_pCorrelationSearchSpaceSmearDeviation;
-
+    Parameter<kt_double> *m_pCorrelationSearchSpaceSmearDeviation;
 
     //////////////////////////////////////////////////////////////////////////////
     //    CorrelationParameters loopCorrelationParameters;
@@ -2260,19 +2342,19 @@ namespace karto
      * The size of the search grid used by the matcher.
      * Default value is 0.3 meters which tells the matcher to use a 30cm x 30cm grid.
      */
-    Parameter<kt_double>* m_pLoopSearchSpaceDimension;
+    Parameter<kt_double> *m_pLoopSearchSpaceDimension;
 
     /**
      * The resolution (size of a grid cell) of the correlation grid.
      * Default value is 0.01 meters.
      */
-    Parameter<kt_double>* m_pLoopSearchSpaceResolution;
+    Parameter<kt_double> *m_pLoopSearchSpaceResolution;
 
     /**
      * The point readings are smeared by this value in X and Y to create a smoother response.
      * Default value is 0.03 meters.
      */
-    Parameter<kt_double>* m_pLoopSearchSpaceSmearDeviation;
+    Parameter<kt_double> *m_pLoopSearchSpaceSmearDeviation;
 
     //////////////////////////////////////////////////////////////////////////////
     // ScanMatcherParameters;
@@ -2280,70 +2362,73 @@ namespace karto
     // Variance of penalty for deviating from odometry when scan-matching.
     // The penalty is a multiplier (less than 1.0) is a function of the
     // delta of the scan position being tested and the odometric pose
-    Parameter<kt_double>* m_pDistanceVariancePenalty;
-    Parameter<kt_double>* m_pAngleVariancePenalty;
+    Parameter<kt_double> *m_pDistanceVariancePenalty;
+    Parameter<kt_double> *m_pAngleVariancePenalty;
 
     // The range of angles to search during a coarse search and a finer search
-    Parameter<kt_double>* m_pFineSearchAngleOffset;
-    Parameter<kt_double>* m_pCoarseSearchAngleOffset;
+    Parameter<kt_double> *m_pFineSearchAngleOffset;
+    Parameter<kt_double> *m_pCoarseSearchAngleOffset;
 
     // Resolution of angles to search during a coarse search
-    Parameter<kt_double>* m_pCoarseAngleResolution;
+    Parameter<kt_double> *m_pCoarseAngleResolution;
 
     // Minimum value of the penalty multiplier so scores do not
     // become too small
-    Parameter<kt_double>* m_pMinimumAnglePenalty;
-    Parameter<kt_double>* m_pMinimumDistancePenalty;
+    Parameter<kt_double> *m_pMinimumAnglePenalty;
+    Parameter<kt_double> *m_pMinimumDistancePenalty;
 
     // whether to increase the search space if no good matches are initially found
-    Parameter<kt_bool>* m_pUseResponseExpansion;
+    Parameter<kt_bool> *m_pUseResponseExpansion;
 
     friend class boost::serialization::access;
-    template<class Archive>
+    template <class Archive>
     void serialize(Archive &ar, const unsigned int version)
     {
       std::cout << "Mapper <- Module\n";
-      ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Module);
-      ar & BOOST_SERIALIZATION_NVP(m_Initialized);
+      ar &BOOST_SERIALIZATION_BASE_OBJECT_NVP(Module);
+      ar &BOOST_SERIALIZATION_NVP(m_Initialized);
       std::cout << "Mapper <- m_pSequentialScanMatcher\n";
-      ar & BOOST_SERIALIZATION_NVP(m_pSequentialScanMatcher);
+      ar &BOOST_SERIALIZATION_NVP(m_pSequentialScanMatcher);
       std::cout << "Mapper <- m_pGraph\n";
-      ar & BOOST_SERIALIZATION_NVP(m_pGraph);
+      ar &BOOST_SERIALIZATION_NVP(m_pGraph);
+      std::cout << "Mapper <- m_pMarkerGraph\n";
+      ar &BOOST_SERIALIZATION_NVP(m_pMarkerGraph);
       std::cout << "Mapper <- m_pMapperSensorManager\n";
-      ar & BOOST_SERIALIZATION_NVP(m_pMapperSensorManager);
+      ar &BOOST_SERIALIZATION_NVP(m_pMapperSensorManager);
       std::cout << "Mapper <- m_Listeners\n";
-      ar & BOOST_SERIALIZATION_NVP(m_Listeners);
-      ar & BOOST_SERIALIZATION_NVP(m_pUseScanMatching);
-      ar & BOOST_SERIALIZATION_NVP(m_pUseScanBarycenter);
-      ar & BOOST_SERIALIZATION_NVP(m_pMinimumTimeInterval);
-      ar & BOOST_SERIALIZATION_NVP(m_pMinimumTravelDistance);
-      ar & BOOST_SERIALIZATION_NVP(m_pMinimumTravelHeading);
-      ar & BOOST_SERIALIZATION_NVP(m_pScanBufferSize);
-      ar & BOOST_SERIALIZATION_NVP(m_pScanBufferMaximumScanDistance);
-      ar & BOOST_SERIALIZATION_NVP(m_pLinkMatchMinimumResponseFine);
-      ar & BOOST_SERIALIZATION_NVP(m_pLinkScanMaximumDistance);
-      ar & BOOST_SERIALIZATION_NVP(m_pDoLoopClosing);
-      ar & BOOST_SERIALIZATION_NVP(m_pLoopSearchMaximumDistance);
-      ar & BOOST_SERIALIZATION_NVP(m_pLoopMatchMinimumChainSize);
-      ar & BOOST_SERIALIZATION_NVP(m_pLoopMatchMaximumVarianceCoarse);
-      ar & BOOST_SERIALIZATION_NVP(m_pLoopMatchMinimumResponseCoarse);
-      ar & BOOST_SERIALIZATION_NVP(m_pLoopMatchMinimumResponseFine);
-      ar & BOOST_SERIALIZATION_NVP(m_pCorrelationSearchSpaceDimension);
-      ar & BOOST_SERIALIZATION_NVP(m_pCorrelationSearchSpaceResolution);
-      ar & BOOST_SERIALIZATION_NVP(m_pCorrelationSearchSpaceSmearDeviation);
-      ar & BOOST_SERIALIZATION_NVP(m_pLoopSearchSpaceDimension);
-      ar & BOOST_SERIALIZATION_NVP(m_pLoopSearchSpaceResolution);
-      ar & BOOST_SERIALIZATION_NVP(m_pLoopSearchSpaceSmearDeviation);
-      ar & BOOST_SERIALIZATION_NVP(m_pDistanceVariancePenalty);
-      ar & BOOST_SERIALIZATION_NVP(m_pAngleVariancePenalty);
-      ar & BOOST_SERIALIZATION_NVP(m_pFineSearchAngleOffset);
-      ar & BOOST_SERIALIZATION_NVP(m_pCoarseSearchAngleOffset);
-      ar & BOOST_SERIALIZATION_NVP(m_pCoarseAngleResolution);
-      ar & BOOST_SERIALIZATION_NVP(m_pMinimumAnglePenalty);
-      ar & BOOST_SERIALIZATION_NVP(m_pMinimumDistancePenalty);
-      ar & BOOST_SERIALIZATION_NVP(m_pUseResponseExpansion);
+      ar &BOOST_SERIALIZATION_NVP(m_Listeners);
+      ar &BOOST_SERIALIZATION_NVP(m_pUseScanMatching);
+      ar &BOOST_SERIALIZATION_NVP(m_pUseScanBarycenter);
+      ar &BOOST_SERIALIZATION_NVP(m_pMinimumTimeInterval);
+      ar &BOOST_SERIALIZATION_NVP(m_pMinimumTravelDistance);
+      ar &BOOST_SERIALIZATION_NVP(m_pMinimumTravelHeading);
+      ar &BOOST_SERIALIZATION_NVP(m_pScanBufferSize);
+      ar &BOOST_SERIALIZATION_NVP(m_pScanBufferMaximumScanDistance);
+      ar &BOOST_SERIALIZATION_NVP(m_pLinkMatchMinimumResponseFine);
+      ar &BOOST_SERIALIZATION_NVP(m_pLinkScanMaximumDistance);
+      ar &BOOST_SERIALIZATION_NVP(m_pDoLoopClosing);
+      ar &BOOST_SERIALIZATION_NVP(m_pLoopSearchMaximumDistance);
+      ar &BOOST_SERIALIZATION_NVP(m_pLoopMatchMinimumChainSize);
+      ar &BOOST_SERIALIZATION_NVP(m_pLoopMatchMaximumVarianceCoarse);
+      ar &BOOST_SERIALIZATION_NVP(m_pLoopMatchMinimumResponseCoarse);
+      ar &BOOST_SERIALIZATION_NVP(m_pLoopMatchMinimumResponseFine);
+      ar &BOOST_SERIALIZATION_NVP(m_pCorrelationSearchSpaceDimension);
+      ar &BOOST_SERIALIZATION_NVP(m_pCorrelationSearchSpaceResolution);
+      ar &BOOST_SERIALIZATION_NVP(m_pCorrelationSearchSpaceSmearDeviation);
+      ar &BOOST_SERIALIZATION_NVP(m_pLoopSearchSpaceDimension);
+      ar &BOOST_SERIALIZATION_NVP(m_pLoopSearchSpaceResolution);
+      ar &BOOST_SERIALIZATION_NVP(m_pLoopSearchSpaceSmearDeviation);
+      ar &BOOST_SERIALIZATION_NVP(m_pDistanceVariancePenalty);
+      ar &BOOST_SERIALIZATION_NVP(m_pAngleVariancePenalty);
+      ar &BOOST_SERIALIZATION_NVP(m_pFineSearchAngleOffset);
+      ar &BOOST_SERIALIZATION_NVP(m_pCoarseSearchAngleOffset);
+      ar &BOOST_SERIALIZATION_NVP(m_pCoarseAngleResolution);
+      ar &BOOST_SERIALIZATION_NVP(m_pMinimumAnglePenalty);
+      ar &BOOST_SERIALIZATION_NVP(m_pMinimumDistancePenalty);
+      ar &BOOST_SERIALIZATION_NVP(m_pUseResponseExpansion);
       std::cout << "**Finished serializing Mapper**\n";
     }
+
   public:
     /* Abstract methods for parameter setters and getters */
 
@@ -2424,6 +2509,6 @@ namespace karto
     void setParamUseResponseExpansion(bool b);
   };
   BOOST_SERIALIZATION_ASSUME_ABSTRACT(Mapper)
-}  // namespace karto
+} // namespace karto
 
-#endif  // karto_sdk_MAPPER_H
+#endif // karto_sdk_MAPPER_H

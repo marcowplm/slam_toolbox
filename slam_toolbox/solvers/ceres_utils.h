@@ -195,11 +195,10 @@ struct CeresPose3d
     if (euler(0) != 0 || euler(1) != 0)
     {
       std::cout << "\n\nGetEulerHeading: Pitch e/o Roll sono diversi da zero! "
-                << "Questo non dovrebbe succedere!! "
-                << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n" << std::endl;
-      std::cout << "\nRoll: " << euler(0) << std::endl;
-      std::cout << "\nPitch: " << euler(1) << std::endl;
-    }
+                << "Questo non dovrebbe succedere!!" << std::endl
+                << "Roll: "  << euler(0)             << std::endl
+                << "Pitch: " << euler(1)             << std::endl;
+    }            
 
     return euler(2); 
   }

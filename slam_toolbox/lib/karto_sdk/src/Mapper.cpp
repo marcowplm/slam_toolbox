@@ -30,22 +30,25 @@
 #include "karto_sdk/Mapper.h"
 
 BOOST_CLASS_EXPORT(karto::MapperGraph);
+BOOST_CLASS_EXPORT(karto::MarkerGraph);
 BOOST_CLASS_EXPORT(karto::Graph<karto::LocalizedRangeScan>);
 BOOST_CLASS_EXPORT(karto::EdgeLabel);
 BOOST_CLASS_EXPORT(karto::LinkInfo);
 BOOST_CLASS_EXPORT(karto::Edge<karto::LocalizedRangeScan>);
 BOOST_CLASS_EXPORT(karto::Vertex<karto::LocalizedRangeScan>);
-BOOST_CLASS_EXPORT(karto::MapperSensorManager)
-BOOST_CLASS_EXPORT(karto::Mapper)
+BOOST_CLASS_EXPORT(karto::Edge<karto::LocalizedMarker>);
+BOOST_CLASS_EXPORT(karto::Vertex<karto::LocalizedMarker>);
+BOOST_CLASS_EXPORT(karto::MapperSensorManager);
+BOOST_CLASS_EXPORT(karto::Mapper);
 namespace karto
 {
 
   // enable this for verbose debug information
   // #define KARTO_DEBUG
 
-  #define MAX_VARIANCE            500.0
-  #define DISTANCE_PENALTY_GAIN   0.2
-  #define ANGLE_PENALTY_GAIN      0.2
+#define MAX_VARIANCE 500.0
+#define DISTANCE_PENALTY_GAIN 0.2
+#define ANGLE_PENALTY_GAIN 0.2
 
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -61,14 +64,11 @@ namespace karto
      * Default constructor
      */
     ScanManager(kt_int32u runningBufferMaximumSize, kt_double runningBufferMaximumDistance)
-      : m_pLastScan(NULL)
-      , m_RunningBufferMaximumSize(runningBufferMaximumSize)
-      , m_RunningBufferMaximumDistance(runningBufferMaximumDistance)
-      , m_NextStateId(0)
+        : m_pLastScan(NULL), m_RunningBufferMaximumSize(runningBufferMaximumSize), m_RunningBufferMaximumDistance(runningBufferMaximumDistance), m_NextStateId(0)
     {
     }
 
-	ScanManager(){}
+    ScanManager() {}
 
     /**
      * Destructor
@@ -83,7 +83,7 @@ namespace karto
      * Adds scan to vector of processed scans tagging scan with given unique id
      * @param pScan
      */
-    inline void AddScan(LocalizedRangeScan* pScan, kt_int32s uniqueId)
+    inline void AddScan(LocalizedRangeScan *pScan, kt_int32s uniqueId)
     {
       // assign state id to scan
       pScan->SetStateId(m_NextStateId);
@@ -101,7 +101,7 @@ namespace karto
      * @param deviceId
      * @return last localized range scan
      */
-    inline LocalizedRangeScan* GetLastScan()
+    inline LocalizedRangeScan *GetLastScan()
     {
       return m_pLastScan;
     }
@@ -110,7 +110,7 @@ namespace karto
      * Sets the last scan
      * @param pScan
      */
-    void SetLastScan(LocalizedRangeScan* pScan)
+    void SetLastScan(LocalizedRangeScan *pScan)
     {
       m_pLastScan = pScan;
     }
@@ -119,7 +119,7 @@ namespace karto
      * Gets scans
      * @return scans
      */
-    inline LocalizedRangeScanMap& GetScans()
+    inline LocalizedRangeScanMap &GetScans()
     {
       return m_Scans;
     }
@@ -128,7 +128,7 @@ namespace karto
      * Gets running scans
      * @return running scans
      */
-    inline LocalizedRangeScanVector& GetRunningScans()
+    inline LocalizedRangeScanVector &GetRunningScans()
     {
       return m_RunningScans;
     }
@@ -137,7 +137,7 @@ namespace karto
      * Gets running scan buffer size
      * @return running scan buffer size
      */
-    inline kt_int32u& GetRunningScanBufferSize()
+    inline kt_int32u &GetRunningScanBufferSize()
     {
       return m_RunningBufferMaximumSize;
     }
@@ -146,7 +146,7 @@ namespace karto
      * Adds scan to vector of running scans
      * @param pScan
      */
-    void AddRunningScan(LocalizedRangeScan* pScan)
+    void AddRunningScan(LocalizedRangeScan *pScan)
     {
       m_RunningScans.push_back(pScan);
 
@@ -168,12 +168,12 @@ namespace karto
         squaredDistance = frontScanPose.GetPosition().SquaredDistance(backScanPose.GetPosition());
       }
     }
-    
+
     /**
      * Finds and replaces a scan from m_scans with NULL
      * @param pScan
      */
-    void RemoveScan(LocalizedRangeScan* pScan)
+    void RemoveScan(LocalizedRangeScan *pScan)
     {
       LocalizedRangeScanMap::iterator it = m_Scans.find(pScan->GetStateId());
       if (it != m_Scans.end())
@@ -206,32 +206,32 @@ namespace karto
 
   private:
     friend class boost::serialization::access;
-    template<class Archive>
+    template <class Archive>
     void serialize(Archive &ar, const unsigned int version)
     {
-      ar & BOOST_SERIALIZATION_NVP(m_Scans);
-      ar & BOOST_SERIALIZATION_NVP(m_RunningScans);
-      ar & BOOST_SERIALIZATION_NVP(m_pLastScan);
-      ar & BOOST_SERIALIZATION_NVP(m_RunningBufferMaximumSize);
-      ar & BOOST_SERIALIZATION_NVP(m_RunningBufferMaximumDistance);
-      ar & BOOST_SERIALIZATION_NVP(m_NextStateId);
+      ar &BOOST_SERIALIZATION_NVP(m_Scans);
+      ar &BOOST_SERIALIZATION_NVP(m_RunningScans);
+      ar &BOOST_SERIALIZATION_NVP(m_pLastScan);
+      ar &BOOST_SERIALIZATION_NVP(m_RunningBufferMaximumSize);
+      ar &BOOST_SERIALIZATION_NVP(m_RunningBufferMaximumDistance);
+      ar &BOOST_SERIALIZATION_NVP(m_NextStateId);
     }
 
   private:
     LocalizedRangeScanMap m_Scans;
     LocalizedRangeScanVector m_RunningScans;
-    LocalizedRangeScan* m_pLastScan;
-    kt_int32u m_NextStateId;    
+    LocalizedRangeScan *m_pLastScan;
+    kt_int32u m_NextStateId;
 
     kt_int32u m_RunningBufferMaximumSize;
     kt_double m_RunningBufferMaximumDistance;
-  };  // ScanManager
+  }; // ScanManager
 
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
 
-  void MapperSensorManager::RegisterSensor(const Name& rSensorName)
+  void MapperSensorManager::RegisterSensor(const Name &rSensorName)
   {
     if (GetScanManager(rSensorName) == NULL)
     {
@@ -239,16 +239,15 @@ namespace karto
     }
   }
 
-
   /**
    * Gets scan from given device with given ID
    * @param rSensorName
    * @param scanNum
    * @return localized range scan
    */
-  LocalizedRangeScan* MapperSensorManager::GetScan(const Name& rSensorName, kt_int32s scanIndex)
+  LocalizedRangeScan *MapperSensorManager::GetScan(const Name &rSensorName, kt_int32s scanIndex)
   {
-    ScanManager* pScanManager = GetScanManager(rSensorName);
+    ScanManager *pScanManager = GetScanManager(rSensorName);
     if (pScanManager != NULL)
     {
       LocalizedRangeScanMap::iterator it = pScanManager->GetScans().find(scanIndex);
@@ -271,7 +270,7 @@ namespace karto
    * @param pLaserRangeFinder
    * @return last localized range scan of device
    */
-  inline LocalizedRangeScan* MapperSensorManager::GetLastScan(const Name& rSensorName)
+  inline LocalizedRangeScan *MapperSensorManager::GetLastScan(const Name &rSensorName)
   {
     RegisterSensor(rSensorName);
 
@@ -282,7 +281,7 @@ namespace karto
    * Sets the last scan of device of given scan
    * @param pScan
    */
-  void MapperSensorManager::SetLastScan(LocalizedRangeScan* pScan)
+  void MapperSensorManager::SetLastScan(LocalizedRangeScan *pScan)
   {
     GetScanManager(pScan)->SetLastScan(pScan);
   }
@@ -291,7 +290,7 @@ namespace karto
    * Adds scan to scan vector of device that recorded scan
    * @param pScan
    */
-  void MapperSensorManager::AddScan(LocalizedRangeScan* pScan)
+  void MapperSensorManager::AddScan(LocalizedRangeScan *pScan)
   {
     GetScanManager(pScan)->AddScan(pScan, m_NextScanId);
     m_Scans.insert({m_NextScanId, pScan});
@@ -302,19 +301,19 @@ namespace karto
    * Adds scan to running scans of device that recorded scan
    * @param pScan
    */
-  inline void MapperSensorManager::AddRunningScan(LocalizedRangeScan* pScan)
+  inline void MapperSensorManager::AddRunningScan(LocalizedRangeScan *pScan)
   {
     GetScanManager(pScan)->AddRunningScan(pScan);
   }
 
-    /**
+  /**
      * Finds and replaces a scan from m_Scans with NULL
      * @param pScan
      */
-  void MapperSensorManager::RemoveScan(LocalizedRangeScan* pScan)
+  void MapperSensorManager::RemoveScan(LocalizedRangeScan *pScan)
   {
     GetScanManager(pScan)->RemoveScan(pScan);
-    
+
     LocalizedRangeScanMap::iterator it = m_Scans.find(pScan->GetStateId());
     if (it != m_Scans.end())
     {
@@ -332,7 +331,7 @@ namespace karto
    * @param rSensorName
    * @return scans of device
    */
-  inline LocalizedRangeScanMap& MapperSensorManager::GetScans(const Name& rSensorName)
+  inline LocalizedRangeScanMap &MapperSensorManager::GetScans(const Name &rSensorName)
   {
     return GetScanManager(rSensorName)->GetScans();
   }
@@ -342,18 +341,18 @@ namespace karto
    * @param rSensorName
    * @return running scans of device
    */
-  inline LocalizedRangeScanVector& MapperSensorManager::GetRunningScans(const Name& rSensorName)
+  inline LocalizedRangeScanVector &MapperSensorManager::GetRunningScans(const Name &rSensorName)
   {
     return GetScanManager(rSensorName)->GetRunningScans();
   }
 
-  void MapperSensorManager::ClearRunningScans(const Name& rSensorName)
+  void MapperSensorManager::ClearRunningScans(const Name &rSensorName)
   {
     GetScanManager(rSensorName)->ClearRunningScans();
     return;
   }
 
-  inline kt_int32u MapperSensorManager::GetRunningScanBufferSize(const Name& rSensorName)
+  inline kt_int32u MapperSensorManager::GetRunningScanBufferSize(const Name &rSensorName)
   {
     return GetScanManager(rSensorName)->GetRunningScanBufferSize();
   }
@@ -368,7 +367,7 @@ namespace karto
 
     forEach(ScanManagerMap, &m_ScanManagers)
     {
-      LocalizedRangeScanMap& rScans = iter->second->GetScans();
+      LocalizedRangeScanMap &rScans = iter->second->GetScans();
 
       LocalizedRangeScanMap::iterator it;
       for (it = rScans.begin(); it != rScans.end(); ++it)
@@ -385,7 +384,7 @@ namespace karto
    */
   void MapperSensorManager::Clear()
   {
-//    SensorManager::Clear();
+    //    SensorManager::Clear();
 
     forEach(ScanManagerMap, &m_ScanManagers)
     {
@@ -414,10 +413,9 @@ namespace karto
     {
       delete m_pGridLookup;
     }
-
   }
 
-  ScanMatcher* ScanMatcher::Create(Mapper* pMapper, kt_double searchSize, kt_double resolution,
+  ScanMatcher *ScanMatcher::Create(Mapper *pMapper, kt_double searchSize, kt_double resolution,
                                    kt_double smearDeviation, kt_double rangeThreshold)
   {
     // invalid parameters
@@ -451,13 +449,13 @@ namespace karto
 
     // create correlation grid
     assert(gridSize % 2 == 1);
-    CorrelationGrid* pCorrelationGrid = CorrelationGrid::CreateGrid(gridSize, gridSize, resolution, smearDeviation);
+    CorrelationGrid *pCorrelationGrid = CorrelationGrid::CreateGrid(gridSize, gridSize, resolution, smearDeviation);
 
     // create search space probabilities
-    Grid<kt_double>* pSearchSpaceProbs = Grid<kt_double>::CreateGrid(searchSpaceSideSize,
+    Grid<kt_double> *pSearchSpaceProbs = Grid<kt_double>::CreateGrid(searchSpaceSideSize,
                                                                      searchSpaceSideSize, resolution);
 
-    ScanMatcher* pScanMatcher = new ScanMatcher(pMapper);
+    ScanMatcher *pScanMatcher = new ScanMatcher(pMapper);
     pScanMatcher->m_pCorrelationGrid = pCorrelationGrid;
     pScanMatcher->m_pSearchSpaceProbs = pSearchSpaceProbs;
     pScanMatcher->m_pGridLookup = new GridIndexLookup<kt_int8u>(pCorrelationGrid);
@@ -475,9 +473,9 @@ namespace karto
    * @param doRefineMatch whether to do finer-grained matching if coarse match is good (default is true)
    * @return strength of response
    */
-  template<class T>
-  kt_double ScanMatcher::MatchScan(LocalizedRangeScan* pScan, const T& rBaseScans, Pose2& rMean,
-                                   Matrix3& rCovariance, kt_bool doPenalize, kt_bool doRefineMatch)
+  template <class T>
+  kt_double ScanMatcher::MatchScan(LocalizedRangeScan *pScan, const T &rBaseScans, Pose2 &rMean,
+                                   Matrix3 &rCovariance, kt_bool doPenalize, kt_bool doRefineMatch)
   {
     ///////////////////////////////////////
     // set scan pose to be center of grid
@@ -492,9 +490,9 @@ namespace karto
       rMean = scanPose;
 
       // maximum covariance
-      rCovariance(0, 0) = MAX_VARIANCE;  // XX
-      rCovariance(1, 1) = MAX_VARIANCE;  // YY
-      rCovariance(2, 2) = 4 * math::Square(m_pMapper->m_pCoarseAngleResolution->GetValue());  // TH*TH
+      rCovariance(0, 0) = MAX_VARIANCE;                                                      // XX
+      rCovariance(1, 1) = MAX_VARIANCE;                                                      // YY
+      rCovariance(2, 2) = 4 * math::Square(m_pMapper->m_pCoarseAngleResolution->GetValue()); // TH*TH
 
       return 0.0;
     }
@@ -581,7 +579,7 @@ namespace karto
     return bestResponse;
   }
 
-  void ScanMatcher::operator() (const kt_double& y) const
+  void ScanMatcher::operator()(const kt_double &y) const
   {
     kt_int32u poseResponseCounter;
     kt_int32u x_pose;
@@ -592,7 +590,7 @@ namespace karto
     kt_double newPositionY = m_rSearchCenter.GetY() + y;
     kt_double squareY = math::Square(y);
 
-    for ( std::vector<kt_double>::const_iterator xIter = m_xPoses.begin(); xIter != m_xPoses.end(); ++xIter )
+    for (std::vector<kt_double>::const_iterator xIter = m_xPoses.begin(); xIter != m_xPoses.end(); ++xIter)
     {
       x_pose = std::distance(m_xPoses.begin(), xIter);
       kt_double x = *xIter;
@@ -627,9 +625,9 @@ namespace karto
         }
 
         // store response and pose
-        poseResponseCounter = (y_pose*size_x + x_pose)*(m_nAngles) + angleIndex;
+        poseResponseCounter = (y_pose * size_x + x_pose) * (m_nAngles) + angleIndex;
         m_pPoseResponse[poseResponseCounter] = std::pair<kt_double, Pose2>(response, Pose2(newPositionX, newPositionY,
-                                                                         math::NormalizeAngle(angle)));
+                                                                                           math::NormalizeAngle(angle)));
       }
     }
     return;
@@ -651,11 +649,11 @@ namespace karto
    * @param doingFineMatch whether to do a finer search after coarse search
    * @return strength of response
    */
-  kt_double ScanMatcher::CorrelateScan(LocalizedRangeScan* pScan, const Pose2& rSearchCenter,
-                                       const Vector2<kt_double>& rSearchSpaceOffset,
-                                       const Vector2<kt_double>& rSearchSpaceResolution,
+  kt_double ScanMatcher::CorrelateScan(LocalizedRangeScan *pScan, const Pose2 &rSearchCenter,
+                                       const Vector2<kt_double> &rSearchSpaceOffset,
+                                       const Vector2<kt_double> &rSearchSpaceResolution,
                                        kt_double searchAngleOffset, kt_double searchAngleResolution,
-                                       kt_bool doPenalize, Pose2& rMean, Matrix3& rCovariance, kt_bool doingFineMatch)
+                                       kt_bool doPenalize, Pose2 &rMean, Matrix3 &rCovariance, kt_bool doingFineMatch)
   {
     assert(searchAngleResolution != 0.0);
 
@@ -676,7 +674,8 @@ namespace karto
 
     m_xPoses.clear();
     kt_int32u nX = static_cast<kt_int32u>(math::Round(rSearchSpaceOffset.GetX() *
-                                          2.0 / rSearchSpaceResolution.GetX()) + 1);
+                                                      2.0 / rSearchSpaceResolution.GetX()) +
+                                          1);
     kt_double startX = -rSearchSpaceOffset.GetX();
     for (kt_int32u xIndex = 0; xIndex < nX; xIndex++)
     {
@@ -686,7 +685,8 @@ namespace karto
 
     m_yPoses.clear();
     kt_int32u nY = static_cast<kt_int32u>(math::Round(rSearchSpaceOffset.GetY() *
-                                          2.0 / rSearchSpaceResolution.GetY()) + 1);
+                                                      2.0 / rSearchSpaceResolution.GetY()) +
+                                          1);
     kt_double startY = -rSearchSpaceOffset.GetY();
     for (kt_int32u yIndex = 0; yIndex < nY; yIndex++)
     {
@@ -702,8 +702,7 @@ namespace karto
     // allocate array
     m_pPoseResponse = new std::pair<kt_double, Pose2>[poseResponseSize];
 
-    Vector2<kt_int32s> startGridPoint = m_pCorrelationGrid->WorldToGrid(Vector2<kt_double>(rSearchCenter.GetX()
-                                                                        + startX, rSearchCenter.GetY() + startY));
+    Vector2<kt_int32s> startGridPoint = m_pCorrelationGrid->WorldToGrid(Vector2<kt_double>(rSearchCenter.GetX() + startX, rSearchCenter.GetY() + startY));
 
     // this isn't good but its the fastest way to iterate. Should clean up later.
     m_rSearchCenter = rSearchCenter;
@@ -711,7 +710,7 @@ namespace karto
     m_nAngles = nAngles;
     m_searchAngleResolution = searchAngleResolution;
     m_doPenalize = doPenalize;
-    tbb::parallel_do(m_yPoses, (*this) );
+    tbb::parallel_do(m_yPoses, (*this));
 
     // find value of best response (in [0; 1])
     kt_double bestResponse = -1;
@@ -722,15 +721,15 @@ namespace karto
       // will compute positional covariance, save best relative probability for each cell
       if (!doingFineMatch)
       {
-        const Pose2& rPose = m_pPoseResponse[i].second;
+        const Pose2 &rPose = m_pPoseResponse[i].second;
         Vector2<kt_int32s> grid = m_pSearchSpaceProbs->WorldToGrid(rPose.GetPosition());
-        kt_double* ptr;
+        kt_double *ptr;
 
         try
         {
-          ptr = (kt_double*)(m_pSearchSpaceProbs->GetDataPointer(grid));
+          ptr = (kt_double *)(m_pSearchSpaceProbs->GetDataPointer(grid));
         }
-        catch(...)
+        catch (...)
         {
           throw std::runtime_error("Mapper FATAL ERROR - unable to get pointer in probability search!");
         }
@@ -779,7 +778,7 @@ namespace karto
     }
 
     // delete pose response array
-    delete [] m_pPoseResponse;
+    delete[] m_pPoseResponse;
 
 #ifdef KARTO_DEBUG
     std::cout << "bestPose: " << averagePose << std::endl;
@@ -794,7 +793,7 @@ namespace karto
     else
     {
       ComputeAngularCovariance(averagePose, bestResponse, rSearchCenter,
-                              searchAngleOffset, searchAngleResolution, rCovariance);
+                               searchAngleOffset, searchAngleResolution, rCovariance);
     }
 
     rMean = averagePose;
@@ -824,11 +823,11 @@ namespace karto
    * @param searchAngleResolution
    * @param rCovariance
    */
-  void ScanMatcher::ComputePositionalCovariance(const Pose2& rBestPose, kt_double bestResponse,
-                                                const Pose2& rSearchCenter,
-                                                const Vector2<kt_double>& rSearchSpaceOffset,
-                                                const Vector2<kt_double>& rSearchSpaceResolution,
-                                                kt_double searchAngleResolution, Matrix3& rCovariance)
+  void ScanMatcher::ComputePositionalCovariance(const Pose2 &rBestPose, kt_double bestResponse,
+                                                const Pose2 &rSearchCenter,
+                                                const Vector2<kt_double> &rSearchSpaceOffset,
+                                                const Vector2<kt_double> &rSearchSpaceResolution,
+                                                kt_double searchAngleResolution, Matrix3 &rCovariance)
   {
     // reset covariance to identity matrix
     rCovariance.SetToIdentity();
@@ -836,9 +835,9 @@ namespace karto
     // if best response is vary small return max variance
     if (bestResponse < KT_TOLERANCE)
     {
-      rCovariance(0, 0) = MAX_VARIANCE;  // XX
-      rCovariance(1, 1) = MAX_VARIANCE;  // YY
-      rCovariance(2, 2) = 4 * math::Square(searchAngleResolution);  // TH*TH
+      rCovariance(0, 0) = MAX_VARIANCE;                            // XX
+      rCovariance(1, 1) = MAX_VARIANCE;                            // YY
+      rCovariance(2, 2) = 4 * math::Square(searchAngleResolution); // TH*TH
 
       return;
     }
@@ -905,7 +904,7 @@ namespace karto
       rCovariance(0, 1) = varianceXY * multiplier;
       rCovariance(1, 0) = varianceXY * multiplier;
       rCovariance(1, 1) = varianceYY * multiplier;
-      rCovariance(2, 2) = varianceTHTH;  // this value will be set in ComputeAngularCovariance
+      rCovariance(2, 2) = varianceTHTH; // this value will be set in ComputeAngularCovariance
     }
 
     // if values are 0, set to MAX_VARIANCE
@@ -930,12 +929,12 @@ namespace karto
    * @param searchAngleResolution
    * @param rCovariance
    */
-  void ScanMatcher::ComputeAngularCovariance(const Pose2& rBestPose,
+  void ScanMatcher::ComputeAngularCovariance(const Pose2 &rBestPose,
                                              kt_double bestResponse,
-                                             const Pose2& rSearchCenter,
+                                             const Pose2 &rSearchCenter,
                                              kt_double searchAngleOffset,
                                              kt_double searchAngleResolution,
-                                             Matrix3& rCovariance)
+                                             Matrix3 &rCovariance)
   {
     // NOTE: do not reset covariance matrix
 
@@ -988,7 +987,7 @@ namespace karto
    * @param rScans scans whose points will mark cells in grid as being occupied
    * @param viewPoint do not add points that belong to scans "opposite" the view point
    */
-  void ScanMatcher::AddScans(const LocalizedRangeScanVector& rScans, Vector2<kt_double> viewPoint)
+  void ScanMatcher::AddScans(const LocalizedRangeScanVector &rScans, Vector2<kt_double> viewPoint)
   {
     m_pCorrelationGrid->Clear();
 
@@ -1009,7 +1008,7 @@ namespace karto
    * @param rScans scans whose points will mark cells in grid as being occupied
    * @param viewPoint do not add points that belong to scans "opposite" the view point
    */
-  void ScanMatcher::AddScans(const LocalizedRangeScanMap& rScans, Vector2<kt_double> viewPoint)
+  void ScanMatcher::AddScans(const LocalizedRangeScanMap &rScans, Vector2<kt_double> viewPoint)
   {
     m_pCorrelationGrid->Clear();
 
@@ -1031,7 +1030,7 @@ namespace karto
    * @param viewPoint do not add points that belong to scans "opposite" the view point
    * @param doSmear whether the points will be smeared
    */
-  void ScanMatcher::AddScan(LocalizedRangeScan* pScan, const Vector2<kt_double>& rViewPoint, kt_bool doSmear)
+  void ScanMatcher::AddScan(LocalizedRangeScan *pScan, const Vector2<kt_double> &rViewPoint, kt_bool doSmear)
   {
     PointVectorDouble validPoints = FindValidPoints(pScan, rViewPoint);
 
@@ -1071,12 +1070,12 @@ namespace karto
    * @param rViewPoint
    * @return points on the same side
    */
-  PointVectorDouble ScanMatcher::FindValidPoints(LocalizedRangeScan* pScan, const Vector2<kt_double>& rViewPoint) const
+  PointVectorDouble ScanMatcher::FindValidPoints(LocalizedRangeScan *pScan, const Vector2<kt_double> &rViewPoint) const
   {
-    const PointVectorDouble& rPointReadings = pScan->GetPointReadings();
+    const PointVectorDouble &rPointReadings = pScan->GetPointReadings();
 
     // points must be at least 10 cm away when making comparisons of inside/outside of viewpoint
-    const kt_double minSquareDistance = math::Square(0.1);  // in m^2
+    const kt_double minSquareDistance = math::Square(0.1); // in m^2
 
     // this iterator lags from the main iterator adding points only when the points are on
     // the same side as the viewpoint
@@ -1111,7 +1110,7 @@ namespace karto
         // reset beginning point
         firstPoint = currentPoint;
 
-        if (ss < 0.0)  // wrong side, skip and keep going
+        if (ss < 0.0) // wrong side, skip and keep going
         {
           trailingPointIter = iter;
         }
@@ -1139,9 +1138,9 @@ namespace karto
     kt_double response = 0.0;
 
     // add up value for each point
-    kt_int8u* pByte = m_pCorrelationGrid->GetDataPointer() + gridPositionIndex;
+    kt_int8u *pByte = m_pCorrelationGrid->GetDataPointer() + gridPositionIndex;
 
-    const LookupArray* pOffsets = m_pGridLookup->GetLookupArray(angleIndex);
+    const LookupArray *pOffsets = m_pGridLookup->GetLookupArray(angleIndex);
     assert(pOffsets != NULL);
 
     // get number of points in offset list
@@ -1152,7 +1151,7 @@ namespace karto
     }
 
     // calculate response
-    kt_int32s* pAngleIndexPointer = pOffsets->GetArrayPointer();
+    kt_int32s *pAngleIndexPointer = pOffsets->GetArrayPointer();
     for (kt_int32u i = 0; i < nPoints; i++)
     {
       // ignore points that fall off the grid
@@ -1173,103 +1172,102 @@ namespace karto
     return response;
   }
 
-
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
 
-  template<typename T>
+  template <typename T>
   class BreadthFirstTraversal : public GraphTraversal<T>
   {
   public:
-  /**
+    /**
    * Constructs a breadth-first traverser for the given graph
    */
-  BreadthFirstTraversal()
-  {
-  }
-  BreadthFirstTraversal(Graph<T>* pGraph)
-  : GraphTraversal<T>(pGraph)
-  {
-  }
+    BreadthFirstTraversal()
+    {
+    }
+    BreadthFirstTraversal(Graph<T> *pGraph)
+        : GraphTraversal<T>(pGraph)
+    {
+    }
 
-  /**
+    /**
    * Destructor
    */
-  virtual ~BreadthFirstTraversal()
-  {
-  }
+    virtual ~BreadthFirstTraversal()
+    {
+    }
 
   public:
-  /**
+    /**
    * Traverse the graph starting with the given vertex; applies the visitor to visited nodes
    * @param pStartVertex
    * @param pVisitor
    * @return visited vertice scans
    */
-  virtual std::vector<T*> TraverseForScans(Vertex<T>* pStartVertex, Visitor<T>* pVisitor)
-  {
-    std::vector<Vertex<T>*> validVertices = TraverseForVertices(pStartVertex, pVisitor);
-
-    std::vector<T*> objects;
-    forEach(typename std::vector<Vertex<T>*>, &validVertices)
+    virtual std::vector<T *> TraverseForScans(Vertex<T> *pStartVertex, Visitor<T> *pVisitor)
     {
-      objects.push_back((*iter)->GetObject());
+      std::vector<Vertex<T> *> validVertices = TraverseForVertices(pStartVertex, pVisitor);
+
+      std::vector<T *> objects;
+      forEach(typename std::vector<Vertex<T> *>, &validVertices)
+      {
+        objects.push_back((*iter)->GetObject());
+      }
+
+      return objects;
     }
 
-    return objects;
-  }
-
-  /**
+    /**
    * Traverse the graph starting with the given vertex; applies the visitor to visited nodes
    * @param pStartVertex
    * @param pVisitor
    * @return visited vertices
    */
-  virtual std::vector<Vertex<T>*> TraverseForVertices(Vertex<T>* pStartVertex, Visitor<T>* pVisitor)
-  {
-    std::queue<Vertex<T>*> toVisit;
-    std::set<Vertex<T>*> seenVertices;
-    std::vector<Vertex<T>*> validVertices;
-
-    toVisit.push(pStartVertex);
-    seenVertices.insert(pStartVertex);
-
-    do
+    virtual std::vector<Vertex<T> *> TraverseForVertices(Vertex<T> *pStartVertex, Visitor<T> *pVisitor)
     {
-      Vertex<T>* pNext = toVisit.front();
-      toVisit.pop();
+      std::queue<Vertex<T> *> toVisit;
+      std::set<Vertex<T> *> seenVertices;
+      std::vector<Vertex<T> *> validVertices;
 
-      if (pNext != NULL && pVisitor->Visit(pNext))
+      toVisit.push(pStartVertex);
+      seenVertices.insert(pStartVertex);
+
+      do
       {
-        // vertex is valid, explore neighbors
-        validVertices.push_back(pNext);
+        Vertex<T> *pNext = toVisit.front();
+        toVisit.pop();
 
-        std::vector<Vertex<T>*> adjacentVertices = pNext->GetAdjacentVertices();
-        forEach(typename std::vector<Vertex<T>*>, &adjacentVertices)
+        if (pNext != NULL && pVisitor->Visit(pNext))
         {
-          Vertex<T>* pAdjacent = *iter;
+          // vertex is valid, explore neighbors
+          validVertices.push_back(pNext);
 
-          // adjacent vertex has not yet been seen, add to queue for processing
-          if (seenVertices.find(pAdjacent) == seenVertices.end())
+          std::vector<Vertex<T> *> adjacentVertices = pNext->GetAdjacentVertices();
+          forEach(typename std::vector<Vertex<T> *>, &adjacentVertices)
           {
-            toVisit.push(pAdjacent);
-            seenVertices.insert(pAdjacent);
+            Vertex<T> *pAdjacent = *iter;
+
+            // adjacent vertex has not yet been seen, add to queue for processing
+            if (seenVertices.find(pAdjacent) == seenVertices.end())
+            {
+              toVisit.push(pAdjacent);
+              seenVertices.insert(pAdjacent);
+            }
           }
         }
-      }
-    } while (toVisit.empty() == false);
+      } while (toVisit.empty() == false);
 
-    return validVertices;
-  }
+      return validVertices;
+    }
 
-  friend class boost::serialization::access;
-  template<class Archive>
-  void serialize(Archive &ar, const unsigned int version)
-  {
-    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(GraphTraversal<T>);
-  }
-  };  // class BreadthFirstTraversal
+    friend class boost::serialization::access;
+    template <class Archive>
+    void serialize(Archive &ar, const unsigned int version)
+    {
+      ar &BOOST_SERIALIZATION_BASE_OBJECT_NVP(GraphTraversal<T>);
+    }
+  }; // class BreadthFirstTraversal
 
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -1278,44 +1276,43 @@ namespace karto
   class NearScanVisitor : public Visitor<LocalizedRangeScan>
   {
   public:
-  NearScanVisitor(LocalizedRangeScan* pScan, kt_double maxDistance, kt_bool useScanBarycenter)
-    : m_MaxDistanceSquared(math::Square(maxDistance))
-    , m_UseScanBarycenter(useScanBarycenter)
-  {
-    m_CenterPose = pScan->GetReferencePose(m_UseScanBarycenter);
-  }
+    NearScanVisitor(LocalizedRangeScan *pScan, kt_double maxDistance, kt_bool useScanBarycenter)
+        : m_MaxDistanceSquared(math::Square(maxDistance)), m_UseScanBarycenter(useScanBarycenter)
+    {
+      m_CenterPose = pScan->GetReferencePose(m_UseScanBarycenter);
+    }
 
-  virtual kt_bool Visit(Vertex<LocalizedRangeScan>* pVertex)
-  {
-    try
+    virtual kt_bool Visit(Vertex<LocalizedRangeScan> *pVertex)
     {
-      LocalizedRangeScan* pScan = pVertex->GetObject();
-      Pose2 pose = pScan->GetReferencePose(m_UseScanBarycenter);
-      kt_double squaredDistance = pose.GetPosition().SquaredDistance(m_CenterPose.GetPosition());
-      return (squaredDistance <= m_MaxDistanceSquared - KT_TOLERANCE);
+      try
+      {
+        LocalizedRangeScan *pScan = pVertex->GetObject();
+        Pose2 pose = pScan->GetReferencePose(m_UseScanBarycenter);
+        kt_double squaredDistance = pose.GetPosition().SquaredDistance(m_CenterPose.GetPosition());
+        return (squaredDistance <= m_MaxDistanceSquared - KT_TOLERANCE);
+      }
+      catch (...)
+      {
+        // relocalization vertex elements missing
+        std::cout << "Unable to visit valid vertex elements!" << std::endl;
+        return false;
+      }
     }
-    catch(...)
-    {
-      // relocalization vertex elements missing
-      std::cout << "Unable to visit valid vertex elements!" << std::endl;
-      return false;
-    }
-  }
 
   protected:
-  Pose2 m_CenterPose;
-  kt_double m_MaxDistanceSquared;
-  kt_bool m_UseScanBarycenter;
-  friend class boost::serialization::access;
-  template<class Archive>
-  void serialize(Archive &ar, const unsigned int version)
-  {
-    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Visitor<LocalizedRangeScan>);
-    ar & BOOST_SERIALIZATION_NVP(m_CenterPose);
-    ar & BOOST_SERIALIZATION_NVP(m_MaxDistanceSquared);
-    ar & BOOST_SERIALIZATION_NVP(m_UseScanBarycenter);
-  }
-  };  // NearScanVisitor
+    Pose2 m_CenterPose;
+    kt_double m_MaxDistanceSquared;
+    kt_bool m_UseScanBarycenter;
+    friend class boost::serialization::access;
+    template <class Archive>
+    void serialize(Archive &ar, const unsigned int version)
+    {
+      ar &BOOST_SERIALIZATION_BASE_OBJECT_NVP(Visitor<LocalizedRangeScan>);
+      ar &BOOST_SERIALIZATION_NVP(m_CenterPose);
+      ar &BOOST_SERIALIZATION_NVP(m_MaxDistanceSquared);
+      ar &BOOST_SERIALIZATION_NVP(m_UseScanBarycenter);
+    }
+  }; // NearScanVisitor
 
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -1324,45 +1321,43 @@ namespace karto
   class NearPoseVisitor : public Visitor<LocalizedRangeScan>
   {
   public:
-  NearPoseVisitor(Pose2 refPose, kt_double maxDistance, kt_bool useScanBarycenter)
-    : m_MaxDistanceSquared(math::Square(maxDistance))
-    , m_UseScanBarycenter(useScanBarycenter)
-  {
-    m_CenterPose = refPose;
-  }
+    NearPoseVisitor(Pose2 refPose, kt_double maxDistance, kt_bool useScanBarycenter)
+        : m_MaxDistanceSquared(math::Square(maxDistance)), m_UseScanBarycenter(useScanBarycenter)
+    {
+      m_CenterPose = refPose;
+    }
 
-  virtual kt_bool Visit(Vertex<LocalizedRangeScan>* pVertex)
-  {
-    LocalizedRangeScan* pScan = pVertex->GetObject();
+    virtual kt_bool Visit(Vertex<LocalizedRangeScan> *pVertex)
+    {
+      LocalizedRangeScan *pScan = pVertex->GetObject();
 
-    Pose2 pose = pScan->GetReferencePose(m_UseScanBarycenter);
+      Pose2 pose = pScan->GetReferencePose(m_UseScanBarycenter);
 
-    kt_double squaredDistance = pose.GetPosition().SquaredDistance(m_CenterPose.GetPosition());
-    return (squaredDistance <= m_MaxDistanceSquared - KT_TOLERANCE);
-  }
+      kt_double squaredDistance = pose.GetPosition().SquaredDistance(m_CenterPose.GetPosition());
+      return (squaredDistance <= m_MaxDistanceSquared - KT_TOLERANCE);
+    }
 
   protected:
-  Pose2 m_CenterPose;
-  kt_double m_MaxDistanceSquared;
-  kt_bool m_UseScanBarycenter;
-  friend class boost::serialization::access;
-  template<class Archive>
-  void serialize(Archive &ar, const unsigned int version)
-  {
-    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Visitor<LocalizedRangeScan>);
-    ar & BOOST_SERIALIZATION_NVP(m_CenterPose);
-    ar & BOOST_SERIALIZATION_NVP(m_MaxDistanceSquared);
-    ar & BOOST_SERIALIZATION_NVP(m_UseScanBarycenter);
-  }
-  };  // NearPoseVisitor
+    Pose2 m_CenterPose;
+    kt_double m_MaxDistanceSquared;
+    kt_bool m_UseScanBarycenter;
+    friend class boost::serialization::access;
+    template <class Archive>
+    void serialize(Archive &ar, const unsigned int version)
+    {
+      ar &BOOST_SERIALIZATION_BASE_OBJECT_NVP(Visitor<LocalizedRangeScan>);
+      ar &BOOST_SERIALIZATION_NVP(m_CenterPose);
+      ar &BOOST_SERIALIZATION_NVP(m_MaxDistanceSquared);
+      ar &BOOST_SERIALIZATION_NVP(m_UseScanBarycenter);
+    }
+  }; // NearPoseVisitor
 
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
 
-
-  MapperGraph::MapperGraph(Mapper* pMapper, kt_double rangeThreshold)
-    : m_pMapper(pMapper)
+  MapperGraph::MapperGraph(Mapper *pMapper, kt_double rangeThreshold)
+      : m_pMapper(pMapper)
   {
     m_pLoopScanMatcher = ScanMatcher::Create(pMapper, m_pMapper->m_pLoopSearchSpaceDimension->GetValue(),
                                              m_pMapper->m_pLoopSearchSpaceResolution->GetValue(),
@@ -1386,13 +1381,13 @@ namespace karto
     }
   }
 
-  Vertex<LocalizedRangeScan>* MapperGraph::AddVertex(LocalizedRangeScan* pScan)
+  Vertex<LocalizedRangeScan> *MapperGraph::AddVertex(LocalizedRangeScan *pScan)
   {
     assert(pScan);
 
     if (pScan != NULL)
     {
-      Vertex<LocalizedRangeScan>* pVertex = new Vertex<LocalizedRangeScan>(pScan);
+      Vertex<LocalizedRangeScan> *pVertex = new Vertex<LocalizedRangeScan>(pScan);
       Graph<LocalizedRangeScan>::AddVertex(pScan->GetSensorName(), pVertex);
       if (m_pMapper->m_pScanOptimizer != NULL)
       {
@@ -1402,9 +1397,9 @@ namespace karto
     }
   }
 
-  void MapperGraph::AddEdges(LocalizedRangeScan* pScan, const Matrix3& rCovariance)
+  void MapperGraph::AddEdges(LocalizedRangeScan *pScan, const Matrix3 &rCovariance)
   {
-    MapperSensorManager* pSensorManager = m_pMapper->m_pMapperSensorManager;
+    MapperSensorManager *pSensorManager = m_pMapper->m_pMapperSensorManager;
 
     const Name rSensorName = pScan->GetSensorName();
 
@@ -1413,7 +1408,7 @@ namespace karto
     if (pSensorManager->GetLastScan(rSensorName) != NULL)
     {
       assert(previousScanNum >= 0);
-      LocalizedRangeScan* pPrevScan = pSensorManager->GetScan(rSensorName, previousScanNum);
+      LocalizedRangeScan *pPrevScan = pSensorManager->GetScan(rSensorName, previousScanNum);
       if (!pPrevScan)
       {
         return;
@@ -1432,7 +1427,7 @@ namespace karto
       std::vector<Name> deviceNames = pSensorManager->GetSensorNames();
       forEach(std::vector<Name>, &deviceNames)
       {
-        const Name& rCandidateSensorName = *iter;
+        const Name &rCandidateSensorName = *iter;
 
         // skip if candidate device is the same or other device has no scans
         if ((rCandidateSensorName == rSensorName) || (pSensorManager->GetScans(rCandidateSensorName).empty()))
@@ -1443,8 +1438,8 @@ namespace karto
         Pose2 bestPose;
         Matrix3 covariance;
         kt_double response = m_pMapper->m_pSequentialScanMatcher->MatchScan<LocalizedRangeScanMap>(pScan,
-                                                                  pSensorManager->GetScans(rCandidateSensorName),
-                                                                  bestPose, covariance);
+                                                                                                   pSensorManager->GetScans(rCandidateSensorName),
+                                                                                                   bestPose, covariance);
         LinkScans(pScan, pSensorManager->GetScan(rCandidateSensorName, 0), bestPose, covariance);
 
         // only add to means and covariances if response was high "enough"
@@ -1473,7 +1468,7 @@ namespace karto
     }
   }
 
-  kt_bool MapperGraph::TryCloseLoop(LocalizedRangeScan* pScan, const Name& rSensorName)
+  kt_bool MapperGraph::TryCloseLoop(LocalizedRangeScan *pScan, const Name &rSensorName)
   {
     kt_bool loopClosed = false;
 
@@ -1506,7 +1501,7 @@ namespace karto
         tmpScan.SetTime(pScan->GetTime());
         tmpScan.SetStateId(pScan->GetStateId());
         tmpScan.SetCorrectedPose(pScan->GetCorrectedPose());
-        tmpScan.SetSensorPose(bestPose);  // This also updates OdometricPose.
+        tmpScan.SetSensorPose(bestPose); // This also updates OdometricPose.
         kt_double fineResponse = m_pMapper->m_pSequentialScanMatcher->MatchScan(&tmpScan, candidateChain,
                                                                                 bestPose, covariance, false);
 
@@ -1539,10 +1534,10 @@ namespace karto
     return loopClosed;
   }
 
-  LocalizedRangeScan* MapperGraph::GetClosestScanToPose(const LocalizedRangeScanVector& rScans,
-                                                        const Pose2& rPose) const
+  LocalizedRangeScan *MapperGraph::GetClosestScanToPose(const LocalizedRangeScanVector &rScans,
+                                                        const Pose2 &rPose) const
   {
-    LocalizedRangeScan* pClosestScan = NULL;
+    LocalizedRangeScan *pClosestScan = NULL;
     kt_double bestSquaredDistance = DBL_MAX;
 
     const_forEach(LocalizedRangeScanVector, &rScans)
@@ -1560,23 +1555,23 @@ namespace karto
     return pClosestScan;
   }
 
-  Edge<LocalizedRangeScan>* MapperGraph::AddEdge(LocalizedRangeScan* pSourceScan,
-                                                 LocalizedRangeScan* pTargetScan, kt_bool& rIsNewEdge)
+  Edge<LocalizedRangeScan> *MapperGraph::AddEdge(LocalizedRangeScan *pSourceScan,
+                                                 LocalizedRangeScan *pTargetScan, kt_bool &rIsNewEdge)
   {
-    std::map<int, Vertex<LocalizedRangeScan>* >::iterator v1 = m_Vertices[pSourceScan->GetSensorName()].find(pSourceScan->GetStateId());
-    std::map<int, Vertex<LocalizedRangeScan>* >::iterator v2 = m_Vertices[pTargetScan->GetSensorName()].find(pTargetScan->GetStateId());
+    std::map<int, Vertex<LocalizedRangeScan> *>::iterator v1 = m_Vertices[pSourceScan->GetSensorName()].find(pSourceScan->GetStateId());
+    std::map<int, Vertex<LocalizedRangeScan> *>::iterator v2 = m_Vertices[pTargetScan->GetSensorName()].find(pTargetScan->GetStateId());
 
     if (v1 == m_Vertices[pSourceScan->GetSensorName()].end() ||
-      v2 == m_Vertices[pSourceScan->GetSensorName()].end())
+        v2 == m_Vertices[pSourceScan->GetSensorName()].end())
     {
       std::cout << "AddEdge: At least one vertex is invalid." << std::endl;
       return NULL;
     }
 
     // see if edge already exists
-    const_forEach(std::vector<Edge<LocalizedRangeScan>*>, &(v1->second->GetEdges()))
+    const_forEach(std::vector<Edge<LocalizedRangeScan> *>, &(v1->second->GetEdges()))
     {
-      Edge<LocalizedRangeScan>* pEdge = *iter;
+      Edge<LocalizedRangeScan> *pEdge = *iter;
 
       if (pEdge->GetTarget() == v2->second)
       {
@@ -1585,17 +1580,17 @@ namespace karto
       }
     }
 
-    Edge<LocalizedRangeScan>* pEdge = new Edge<LocalizedRangeScan>(v1->second, v2->second);
+    Edge<LocalizedRangeScan> *pEdge = new Edge<LocalizedRangeScan>(v1->second, v2->second);
     Graph<LocalizedRangeScan>::AddEdge(pEdge);
     rIsNewEdge = true;
     return pEdge;
   }
 
-  void MapperGraph::LinkScans(LocalizedRangeScan* pFromScan, LocalizedRangeScan* pToScan,
-                              const Pose2& rMean, const Matrix3& rCovariance)
+  void MapperGraph::LinkScans(LocalizedRangeScan *pFromScan, LocalizedRangeScan *pToScan,
+                              const Pose2 &rMean, const Matrix3 &rCovariance)
   {
     kt_bool isNewEdge = true;
-    Edge<LocalizedRangeScan>* pEdge = AddEdge(pFromScan, pToScan, isNewEdge);
+    Edge<LocalizedRangeScan> *pEdge = AddEdge(pFromScan, pToScan, isNewEdge);
 
     if (pEdge == NULL)
     {
@@ -1613,7 +1608,7 @@ namespace karto
     }
   }
 
-  void MapperGraph::LinkNearChains(LocalizedRangeScan* pScan, Pose2Vector& rMeans, std::vector<Matrix3>& rCovariances)
+  void MapperGraph::LinkNearChains(LocalizedRangeScan *pScan, Pose2Vector &rMeans, std::vector<Matrix3> &rCovariances)
   {
     const std::vector<LocalizedRangeScanVector> nearChains = FindNearChains(pScan);
     const_forEach(std::vector<LocalizedRangeScanVector>, &nearChains)
@@ -1636,12 +1631,12 @@ namespace karto
     }
   }
 
-  void MapperGraph::LinkChainToScan(const LocalizedRangeScanVector& rChain, LocalizedRangeScan* pScan,
-                                    const Pose2& rMean, const Matrix3& rCovariance)
+  void MapperGraph::LinkChainToScan(const LocalizedRangeScanVector &rChain, LocalizedRangeScan *pScan,
+                                    const Pose2 &rMean, const Matrix3 &rCovariance)
   {
     Pose2 pose = pScan->GetReferencePose(m_pMapper->m_pUseScanBarycenter->GetValue());
 
-    LocalizedRangeScan* pClosestScan = GetClosestScanToPose(rChain, pose);
+    LocalizedRangeScan *pClosestScan = GetClosestScanToPose(rChain, pose);
     assert(pClosestScan != NULL);
 
     Pose2 closestScanPose = pClosestScan->GetReferencePose(m_pMapper->m_pUseScanBarycenter->GetValue());
@@ -1653,7 +1648,7 @@ namespace karto
     }
   }
 
-  std::vector<LocalizedRangeScanVector> MapperGraph::FindNearChains(LocalizedRangeScan* pScan)
+  std::vector<LocalizedRangeScanVector> MapperGraph::FindNearChains(LocalizedRangeScan *pScan)
   {
     std::vector<LocalizedRangeScanVector> nearChains;
 
@@ -1663,10 +1658,10 @@ namespace karto
     LocalizedRangeScanVector processed;
 
     const LocalizedRangeScanVector nearLinkedScans = FindNearLinkedScans(pScan,
-                                                     m_pMapper->m_pLinkScanMaximumDistance->GetValue());
+                                                                         m_pMapper->m_pLinkScanMaximumDistance->GetValue());
     const_forEach(LocalizedRangeScanVector, &nearLinkedScans)
     {
-      LocalizedRangeScan* pNearScan = *iter;
+      LocalizedRangeScan *pNearScan = *iter;
 
       if (pNearScan == pScan)
       {
@@ -1683,12 +1678,12 @@ namespace karto
 
       // build up chain
       kt_bool isValidChain = true;
-      std::list<LocalizedRangeScan*> chain;
+      std::list<LocalizedRangeScan *> chain;
 
       // add scans before current scan being processed
       for (kt_int32s candidateScanNum = pNearScan->GetStateId() - 1; candidateScanNum >= 0; candidateScanNum--)
       {
-        LocalizedRangeScan* pCandidateScan = m_pMapper->m_pMapperSensorManager->GetScan(pNearScan->GetSensorName(),
+        LocalizedRangeScan *pCandidateScan = m_pMapper->m_pMapperSensorManager->GetScan(pNearScan->GetSensorName(),
                                                                                         candidateScanNum);
 
         // chain is invalid--contains scan being added
@@ -1723,7 +1718,7 @@ namespace karto
       kt_int32u end = static_cast<kt_int32u>(m_pMapper->m_pMapperSensorManager->GetScans(pNearScan->GetSensorName()).size());
       for (kt_int32u candidateScanNum = pNearScan->GetStateId() + 1; candidateScanNum < end; candidateScanNum++)
       {
-        LocalizedRangeScan* pCandidateScan = m_pMapper->m_pMapperSensorManager->GetScan(pNearScan->GetSensorName(),
+        LocalizedRangeScan *pCandidateScan = m_pMapper->m_pMapperSensorManager->GetScan(pNearScan->GetSensorName(),
                                                                                         candidateScanNum);
 
         if (pCandidateScan == pScan)
@@ -1737,7 +1732,8 @@ namespace karto
           continue;
         }
 
-        Pose2 candidatePose = pCandidateScan->GetReferencePose(m_pMapper->m_pUseScanBarycenter->GetValue());;
+        Pose2 candidatePose = pCandidateScan->GetReferencePose(m_pMapper->m_pUseScanBarycenter->GetValue());
+        ;
         kt_double squaredDistance = scanPose.GetPosition().SquaredDistance(candidatePose.GetPosition());
 
         if (squaredDistance < math::Square(m_pMapper->m_pLinkScanMaximumDistance->GetValue()) + KT_TOLERANCE)
@@ -1764,19 +1760,19 @@ namespace karto
     return nearChains;
   }
 
-  LocalizedRangeScanVector MapperGraph::FindNearLinkedScans(LocalizedRangeScan* pScan, kt_double maxDistance)
+  LocalizedRangeScanVector MapperGraph::FindNearLinkedScans(LocalizedRangeScan *pScan, kt_double maxDistance)
   {
-    NearScanVisitor* pVisitor = new NearScanVisitor(pScan, maxDistance, m_pMapper->m_pUseScanBarycenter->GetValue());
+    NearScanVisitor *pVisitor = new NearScanVisitor(pScan, maxDistance, m_pMapper->m_pUseScanBarycenter->GetValue());
     LocalizedRangeScanVector nearLinkedScans = m_pTraversal->TraverseForScans(GetVertex(pScan), pVisitor);
     delete pVisitor;
 
     return nearLinkedScans;
   }
 
-  std::vector<Vertex<LocalizedRangeScan>*> MapperGraph::FindNearLinkedVertices(LocalizedRangeScan* pScan, kt_double maxDistance)
+  std::vector<Vertex<LocalizedRangeScan> *> MapperGraph::FindNearLinkedVertices(LocalizedRangeScan *pScan, kt_double maxDistance)
   {
-    NearScanVisitor* pVisitor = new NearScanVisitor(pScan, maxDistance, m_pMapper->m_pUseScanBarycenter->GetValue());
-    std::vector<Vertex<LocalizedRangeScan>*> nearLinkedVertices = m_pTraversal->TraverseForVertices(GetVertex(pScan), pVisitor);
+    NearScanVisitor *pVisitor = new NearScanVisitor(pScan, maxDistance, m_pMapper->m_pUseScanBarycenter->GetValue());
+    std::vector<Vertex<LocalizedRangeScan> *> nearLinkedVertices = m_pTraversal->TraverseForVertices(GetVertex(pScan), pVisitor);
     delete pVisitor;
 
     return nearLinkedVertices;
@@ -1784,9 +1780,9 @@ namespace karto
 
   LocalizedRangeScanVector MapperGraph::FindNearByScans(Name name, const Pose2 refPose, kt_double maxDistance)
   {
-    NearPoseVisitor* pVisitor = new NearPoseVisitor(refPose, maxDistance, m_pMapper->m_pUseScanBarycenter->GetValue());
+    NearPoseVisitor *pVisitor = new NearPoseVisitor(refPose, maxDistance, m_pMapper->m_pUseScanBarycenter->GetValue());
 
-    Vertex<LocalizedRangeScan>* closestVertex = FindNearByScan(name, refPose);
+    Vertex<LocalizedRangeScan> *closestVertex = FindNearByScan(name, refPose);
 
     LocalizedRangeScanVector nearLinkedScans = m_pTraversal->TraverseForScans(closestVertex, pVisitor);
     delete pVisitor;
@@ -1794,13 +1790,13 @@ namespace karto
     return nearLinkedScans;
   }
 
-  std::vector<Vertex<LocalizedRangeScan>*> MapperGraph::FindNearByVertices(Name name, const Pose2 refPose, kt_double maxDistance)
+  std::vector<Vertex<LocalizedRangeScan> *> MapperGraph::FindNearByVertices(Name name, const Pose2 refPose, kt_double maxDistance)
   {
     VertexMap vertexMap = GetVertices();
-    std::map<int, Vertex<LocalizedRangeScan>*>& vertices = vertexMap[name];
+    std::map<int, Vertex<LocalizedRangeScan> *> &vertices = vertexMap[name];
 
-    std::vector<Vertex<LocalizedRangeScan>*> vertices_to_search;
-    std::map<int, Vertex<LocalizedRangeScan>*>::iterator it;
+    std::vector<Vertex<LocalizedRangeScan> *> vertices_to_search;
+    std::map<int, Vertex<LocalizedRangeScan> *>::iterator it;
     for (it = vertices.begin(); it != vertices.end(); ++it)
     {
       if (it->second)
@@ -1811,20 +1807,20 @@ namespace karto
 
     const size_t dim = 2;
 
-    typedef VertexVectorPoseNanoFlannAdaptor<std::vector<Vertex<LocalizedRangeScan>* > > P2KD;
+    typedef VertexVectorPoseNanoFlannAdaptor<std::vector<Vertex<LocalizedRangeScan> *>> P2KD;
     const P2KD p2kd(vertices_to_search);
 
-    typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, P2KD > , P2KD, dim> my_kd_tree_t;
+    typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, P2KD>, P2KD, dim> my_kd_tree_t;
 
-    my_kd_tree_t index(dim, p2kd, nanoflann::KDTreeSingleIndexAdaptorParams(10) );
+    my_kd_tree_t index(dim, p2kd, nanoflann::KDTreeSingleIndexAdaptorParams(10));
     index.buildIndex();
 
-    std::vector<std::pair<size_t,double> > ret_matches;
+    std::vector<std::pair<size_t, double>> ret_matches;
     const double query_pt[2] = {refPose.GetX(), refPose.GetY()};
     nanoflann::SearchParams params;
     const size_t num_results = index.radiusSearch(&query_pt[0], maxDistance, ret_matches, params);
 
-    std::vector<Vertex<LocalizedRangeScan>*> rtn_vertices;
+    std::vector<Vertex<LocalizedRangeScan> *> rtn_vertices;
     rtn_vertices.reserve(ret_matches.size());
     for (uint i = 0; i != ret_matches.size(); i++)
     {
@@ -1833,13 +1829,13 @@ namespace karto
     return rtn_vertices;
   }
 
-  Vertex<LocalizedRangeScan>* MapperGraph::FindNearByScan(Name name, const Pose2 refPose)
+  Vertex<LocalizedRangeScan> *MapperGraph::FindNearByScan(Name name, const Pose2 refPose)
   {
     VertexMap vertexMap = GetVertices();
-    std::map<int, Vertex<LocalizedRangeScan>*>& vertices = vertexMap[name];
+    std::map<int, Vertex<LocalizedRangeScan> *> &vertices = vertexMap[name];
 
-    std::vector<Vertex<LocalizedRangeScan>*> vertices_to_search;
-    std::map<int, Vertex<LocalizedRangeScan>*>::iterator it;
+    std::vector<Vertex<LocalizedRangeScan> *> vertices_to_search;
+    std::map<int, Vertex<LocalizedRangeScan> *>::iterator it;
     for (it = vertices.begin(); it != vertices.end(); ++it)
     {
       if (it->second)
@@ -1851,15 +1847,15 @@ namespace karto
     size_t num_results = 1;
     const size_t dim = 2;
 
-    typedef VertexVectorPoseNanoFlannAdaptor<std::vector<Vertex<LocalizedRangeScan>* > > P2KD;
+    typedef VertexVectorPoseNanoFlannAdaptor<std::vector<Vertex<LocalizedRangeScan> *>> P2KD;
     const P2KD p2kd(vertices_to_search);
 
-    typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, P2KD > , P2KD, dim> my_kd_tree_t;
+    typedef nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<double, P2KD>, P2KD, dim> my_kd_tree_t;
 
-    my_kd_tree_t index(dim, p2kd, nanoflann::KDTreeSingleIndexAdaptorParams(10) );
+    my_kd_tree_t index(dim, p2kd, nanoflann::KDTreeSingleIndexAdaptorParams(10));
     index.buildIndex();
 
-    std::vector<size_t>   ret_index(num_results);
+    std::vector<size_t> ret_index(num_results);
     std::vector<double> out_dist_sqr(num_results);
     const double query_pt[2] = {refPose.GetX(), refPose.GetY()};
     num_results = index.knnSearch(&query_pt[0], num_results, &ret_index[0], &out_dist_sqr[0]);
@@ -1874,7 +1870,7 @@ namespace karto
     }
   }
 
-  Pose2 MapperGraph::ComputeWeightedMean(const Pose2Vector& rMeans, const std::vector<Matrix3>& rCovariances) const
+  Pose2 MapperGraph::ComputeWeightedMean(const Pose2Vector &rMeans, const std::vector<Matrix3> &rCovariances) const
   {
     assert(rMeans.size() == rCovariances.size());
 
@@ -1918,23 +1914,23 @@ namespace karto
     return accumulatedPose;
   }
 
-  LocalizedRangeScanVector MapperGraph::FindPossibleLoopClosure(LocalizedRangeScan* pScan,
-                                                                const Name& rSensorName,
-                                                                kt_int32u& rStartNum)
+  LocalizedRangeScanVector MapperGraph::FindPossibleLoopClosure(LocalizedRangeScan *pScan,
+                                                                const Name &rSensorName,
+                                                                kt_int32u &rStartNum)
   {
-    LocalizedRangeScanVector chain;  // return value
+    LocalizedRangeScanVector chain; // return value
 
     Pose2 pose = pScan->GetReferencePose(m_pMapper->m_pUseScanBarycenter->GetValue());
 
     // possible loop closure chain should not include close scans that have a
     // path of links to the scan of interest
     const LocalizedRangeScanVector nearLinkedScans =
-          FindNearLinkedScans(pScan, m_pMapper->m_pLoopSearchMaximumDistance->GetValue());
+        FindNearLinkedScans(pScan, m_pMapper->m_pLoopSearchMaximumDistance->GetValue());
 
     kt_int32u nScans = static_cast<kt_int32u>(m_pMapper->m_pMapperSensorManager->GetScans(rSensorName).size());
     for (; rStartNum < nScans; rStartNum++)
     {
-      LocalizedRangeScan* pCandidateScan = m_pMapper->m_pMapperSensorManager->GetScan(rSensorName, rStartNum);
+      LocalizedRangeScan *pCandidateScan = m_pMapper->m_pMapperSensorManager->GetScan(rSensorName, rStartNum);
 
       if (pCandidateScan == NULL)
       {
@@ -1976,28 +1972,62 @@ namespace karto
   void MapperGraph::CorrectPoses()
   {
     // optimize scans!
-    ScanSolver* pSolver = m_pMapper->m_pScanOptimizer;
+    ScanSolver *pSolver = m_pMapper->m_pScanOptimizer;
     if (pSolver != NULL)
     {
       pSolver->Compute();
 
-      std::cout << "\nOutputting CorrectedPoses (Pose2D) after optimization: -----------------------" << std::endl;
+      /* std::cout << "\nOutputting CorrectedPoses (Pose2D) after optimization: -----------------------" << std::endl; */
       const_forEach(ScanSolver::IdPoseVector, &pSolver->GetCorrections())
       {
-        LocalizedRangeScan* scan = m_pMapper->m_pMapperSensorManager->GetScan(iter->first);
+        LocalizedRangeScan *scan = m_pMapper->m_pMapperSensorManager->GetScan(iter->first);
         if (scan == NULL)
         {
           continue;
         }
-        std::cout << "\nID scan: " << iter->first << std::endl;
-        std::cout << "Before:\t" << scan->GetCorrectedPose() << std::endl;
+        /*  std::cout << "\nID scan: " << iter->first << std::endl
+                  << "Before:\t" << scan->GetCorrectedPose() << std::endl; */
         scan->SetSensorPose(iter->second);
-        std::cout << "After:\t" << scan->GetCorrectedPose() << std::endl;
-
+        /*  std::cout << "After:\t" << scan->GetCorrectedPose() << std::endl; */
       }
-      std::cout << "------------------------------------------------------------------------------" << std::endl;
+      /* std::cout << "------------------------------------------------------------------------------" << std::endl; */
       pSolver->Clear();
     }
+  }
+
+  ////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////
+
+  MarkerGraph::MarkerGraph(Mapper *pMapper)
+      : m_pMapper(pMapper)
+  {
+  }
+
+  MarkerGraph::~MarkerGraph()
+  {
+  }
+
+  Vertex<LocalizedMarker> *MarkerGraph::AddVertex(LocalizedMarker *pMarker)
+  {
+    assert(pMarker);
+
+    if (pMarker != NULL)
+    {
+      m_Markers.insert({pMarker->GetStateId(), pMarker});
+      Vertex<LocalizedMarker> *pVertex = new Vertex<LocalizedMarker>(pMarker);
+      Graph<LocalizedMarker>::AddVertex(pMarker->GetSensorName(), pVertex);
+      if (m_pMapper->m_pScanOptimizer != NULL)
+      {
+        m_pMapper->m_pScanOptimizer->AddNode(pVertex);
+      }
+      return pVertex;
+    }
+  }
+
+  LocalizedMarkerMap MarkerGraph::GetLocalizedMarkers()
+  {
+    return m_Markers;
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -2008,12 +2038,7 @@ namespace karto
    * Default constructor
    */
   Mapper::Mapper()
-    : Module("Mapper")
-    , m_Initialized(false)
-    , m_pSequentialScanMatcher(NULL)
-    , m_pMapperSensorManager(NULL)
-    , m_pGraph(NULL)
-    , m_pScanOptimizer(NULL)
+      : Module("Mapper"), m_Initialized(false), m_pSequentialScanMatcher(NULL), m_pMapperSensorManager(NULL), m_pGraph(NULL), m_pMarkerGraph(NULL), m_pScanOptimizer(NULL)
   {
     InitializeParameters();
   }
@@ -2021,13 +2046,8 @@ namespace karto
   /**
    * Default constructor
    */
-  Mapper::Mapper(const std::string& rName)
-    : Module(rName)
-    , m_Initialized(false)
-    , m_pSequentialScanMatcher(NULL)
-    , m_pMapperSensorManager(NULL)
-    , m_pGraph(NULL)
-    , m_pScanOptimizer(NULL)
+  Mapper::Mapper(const std::string &rName)
+      : Module(rName), m_Initialized(false), m_pSequentialScanMatcher(NULL), m_pMapperSensorManager(NULL), m_pGraph(NULL), m_pMarkerGraph(NULL), m_pScanOptimizer(NULL)
   {
     InitializeParameters();
   }
@@ -2180,7 +2200,6 @@ namespace karto
         "The point readings are smeared by this value in X and Y to create a "
         "smoother response.",
         0.03, GetParameterManager());
-
 
     //////////////////////////////////////////////////////////////////////////////
     //    CorrelationParameters loopCorrelationParameters;
@@ -2497,7 +2516,6 @@ namespace karto
     m_pCorrelationSearchSpaceSmearDeviation->SetValue((kt_double)d);
   }
 
-
   // Correlation Parameters - Loop Closure Parameters
   void Mapper::setParamLoopSearchSpaceDimension(double d)
   {
@@ -2513,7 +2531,6 @@ namespace karto
   {
     m_pLoopSearchSpaceSmearDeviation->SetValue((kt_double)d);
   }
-
 
   // Scan Matcher Parameters
   void Mapper::setParamDistanceVariancePenalty(double d)
@@ -2556,18 +2573,16 @@ namespace karto
     m_pUseResponseExpansion->SetValue((kt_bool)b);
   }
 
-
-
   void Mapper::Initialize(kt_double rangeThreshold)
   {
     if (m_Initialized == false)
     {
       // create sequential scan and loop matcher
       m_pSequentialScanMatcher = ScanMatcher::Create(this,
-                                                    m_pCorrelationSearchSpaceDimension->GetValue(),
-                                                    m_pCorrelationSearchSpaceResolution->GetValue(),
-                                                    m_pCorrelationSearchSpaceSmearDeviation->GetValue(),
-                                                    rangeThreshold);
+                                                     m_pCorrelationSearchSpaceDimension->GetValue(),
+                                                     m_pCorrelationSearchSpaceResolution->GetValue(),
+                                                     m_pCorrelationSearchSpaceSmearDeviation->GetValue(),
+                                                     rangeThreshold);
       assert(m_pSequentialScanMatcher);
 
       m_pMapperSensorManager = new MapperSensorManager(m_pScanBufferSize->GetValue(),
@@ -2575,11 +2590,13 @@ namespace karto
 
       m_pGraph = new MapperGraph(this, rangeThreshold);
 
+      m_pMarkerGraph = new MarkerGraph(this);
+
       m_Initialized = true;
-	}
+    }
   }
 
-  void Mapper::SaveToFile(const std::string& filename)
+  void Mapper::SaveToFile(const std::string &filename)
   {
     printf("Save To File %s \n", filename.c_str());
     std::ofstream ofs(filename.c_str());
@@ -2587,7 +2604,7 @@ namespace karto
     oa << BOOST_SERIALIZATION_NVP(*this);
   }
 
-  void Mapper::LoadFromFile(const std::string& filename)
+  void Mapper::LoadFromFile(const std::string &filename)
   {
     printf("Load From File %s \n", filename.c_str());
     std::ifstream ifs(filename.c_str());
@@ -2607,90 +2624,95 @@ namespace karto
       delete m_pGraph;
       m_pGraph = NULL;
     }
+    if (m_pMarkerGraph)
+    {
+      delete m_pMarkerGraph;
+      m_pMarkerGraph = NULL;
+    }
     if (m_pMapperSensorManager)
     {
       delete m_pMapperSensorManager;
       m_pMapperSensorManager = NULL;
     }
-	  m_Initialized = false;
+    m_Initialized = false;
     while (!m_LocalizationScanVertices.empty())
     {
       m_LocalizationScanVertices.pop();
     }
   }
 
-  kt_bool Mapper::Process(Object*  /*pObject*/)
+  kt_bool Mapper::Process(Object * /*pObject*/)
   {
     return true;
   }
 
-  kt_bool Mapper::Process(LocalizedRangeScan* pScan)
+  kt_bool Mapper::Process(LocalizedRangeScan *pScan)
   {
-	  if (pScan != NULL)
-	  {
-		  karto::LaserRangeFinder* pLaserRangeFinder = pScan->GetLaserRangeFinder();
+    if (pScan != NULL)
+    {
+      karto::LaserRangeFinder *pLaserRangeFinder = pScan->GetLaserRangeFinder();
 
-		  // validate scan
-		  if (pLaserRangeFinder == NULL || pScan == NULL || pLaserRangeFinder->Validate(pScan) == false)
-		  {
-			  return false;
-		  }
+      // validate scan
+      if (pLaserRangeFinder == NULL || pScan == NULL || pLaserRangeFinder->Validate(pScan) == false)
+      {
+        return false;
+      }
 
-		  if (m_Initialized == false)
-		  {
-			  // initialize mapper with range threshold from device
-			  Initialize(pLaserRangeFinder->GetRangeThreshold());
-		  }
+      if (m_Initialized == false)
+      {
+        // initialize mapper with range threshold from device
+        Initialize(pLaserRangeFinder->GetRangeThreshold());
+      }
 
-		  // get last scan
-		  LocalizedRangeScan* pLastScan = m_pMapperSensorManager->GetLastScan(pScan->GetSensorName());
+      // get last scan
+      LocalizedRangeScan *pLastScan = m_pMapperSensorManager->GetLastScan(pScan->GetSensorName());
 
-		  // update scans corrected pose based on last correction
-		  if (pLastScan != NULL)
-		  {
-			  Transform lastTransform(pLastScan->GetOdometricPose(), pLastScan->GetCorrectedPose());
-			  pScan->SetCorrectedPose(lastTransform.TransformPose(pScan->GetOdometricPose()));
-		  }
+      // update scans corrected pose based on last correction
+      if (pLastScan != NULL)
+      {
+        Transform lastTransform(pLastScan->GetOdometricPose(), pLastScan->GetCorrectedPose());
+        pScan->SetCorrectedPose(lastTransform.TransformPose(pScan->GetOdometricPose()));
+      }
 
-		  // test if scan is outside minimum boundary or if heading is larger then minimum heading
-		  if (!HasMovedEnough(pScan, pLastScan))
-		  {
-			  return false;
-		  }
+      // test if scan is outside minimum boundary or if heading is larger then minimum heading
+      if (!HasMovedEnough(pScan, pLastScan))
+      {
+        return false;
+      }
 
-		  Matrix3 covariance;
-		  covariance.SetToIdentity();
+      Matrix3 covariance;
+      covariance.SetToIdentity();
 
-		  // correct scan (if not first scan)
-		  if (m_pUseScanMatching->GetValue() && pLastScan != NULL)
-		  {
-			  Pose2 bestPose;
-			  m_pSequentialScanMatcher->MatchScan(pScan,
-					  m_pMapperSensorManager->GetRunningScans(pScan->GetSensorName()),
-					  bestPose,
-					  covariance);
-			  pScan->SetSensorPose(bestPose);
-		  }
+      // correct scan (if not first scan)
+      if (m_pUseScanMatching->GetValue() && pLastScan != NULL)
+      {
+        Pose2 bestPose;
+        m_pSequentialScanMatcher->MatchScan(pScan,
+                                            m_pMapperSensorManager->GetRunningScans(pScan->GetSensorName()),
+                                            bestPose,
+                                            covariance);
+        pScan->SetSensorPose(bestPose);
+      }
 
-		  // add scan to buffer and assign id
-		  m_pMapperSensorManager->AddScan(pScan);
-      
-		  if (m_pUseScanMatching->GetValue())
-		  {
-			  // add to graph
-			  m_pGraph->AddVertex(pScan);
-			  m_pGraph->AddEdges(pScan, covariance);
+      // add scan to buffer and assign id
+      m_pMapperSensorManager->AddScan(pScan);
 
-			  m_pMapperSensorManager->AddRunningScan(pScan);
+      if (m_pUseScanMatching->GetValue())
+      {
+        // add to graph
+        m_pGraph->AddVertex(pScan);
+        m_pGraph->AddEdges(pScan, covariance);
 
-			  if (m_pDoLoopClosing->GetValue())
-			  {
-				  std::vector<Name> deviceNames = m_pMapperSensorManager->GetSensorNames();
-				  const_forEach(std::vector<Name>, &deviceNames)
-				  {
-					  m_pGraph->TryCloseLoop(pScan, *iter);
-				  }
-			  }
+        m_pMapperSensorManager->AddRunningScan(pScan);
+
+        if (m_pDoLoopClosing->GetValue())
+        {
+          std::vector<Name> deviceNames = m_pMapperSensorManager->GetSensorNames();
+          const_forEach(std::vector<Name>, &deviceNames)
+          {
+            m_pGraph->TryCloseLoop(pScan, *iter);
+          }
+        }
 
         // TEST TEST TEST!!
         // Serve per triggerare la Loop Closure dopo un certo numero di nodi aggiunti al grafo
@@ -2702,26 +2724,25 @@ namespace karto
           count = 0;
         } */
         // END TEST END TEST END TEST!!!
+      }
 
-		  }
+      m_pMapperSensorManager->SetLastScan(pScan);
 
-		  m_pMapperSensorManager->SetLastScan(pScan);
+      return true;
+    }
 
-		  return true;
-	  }
-
-	  return false;
+    return false;
   }
 
-  kt_bool Mapper::ProcessAgainstNodesNearBy(LocalizedRangeScan* pScan)
+  kt_bool Mapper::ProcessAgainstNodesNearBy(LocalizedRangeScan *pScan)
   {
     if (pScan != NULL)
     {
-      karto::LaserRangeFinder* pLaserRangeFinder = pScan->GetLaserRangeFinder();
+      karto::LaserRangeFinder *pLaserRangeFinder = pScan->GetLaserRangeFinder();
 
       // validate scan
       if (pLaserRangeFinder == NULL || pScan == NULL ||
-        pLaserRangeFinder->Validate(pScan) == false)
+          pLaserRangeFinder->Validate(pScan) == false)
       {
         return false;
       }
@@ -2732,13 +2753,13 @@ namespace karto
         Initialize(pLaserRangeFinder->GetRangeThreshold());
       }
 
-      Vertex<LocalizedRangeScan>* closetVertex = m_pGraph->FindNearByScan(
-        pScan->GetSensorName(), pScan->GetOdometricPose());
-      LocalizedRangeScan* pLastScan = NULL;
+      Vertex<LocalizedRangeScan> *closetVertex = m_pGraph->FindNearByScan(
+          pScan->GetSensorName(), pScan->GetOdometricPose());
+      LocalizedRangeScan *pLastScan = NULL;
       if (closetVertex)
       {
         pLastScan = m_pMapperSensorManager->GetScan(pScan->GetSensorName(),
-          closetVertex->GetObject()->GetStateId());
+                                                    closetVertex->GetObject()->GetStateId());
         m_pMapperSensorManager->ClearRunningScans(pScan->GetSensorName());
         m_pMapperSensorManager->AddRunningScan(pLastScan);
         m_pMapperSensorManager->SetLastScan(pLastScan);
@@ -2752,9 +2773,9 @@ namespace karto
       {
         Pose2 bestPose;
         m_pSequentialScanMatcher->MatchScan(pScan,
-            m_pMapperSensorManager->GetRunningScans(pScan->GetSensorName()),
-            bestPose,
-            covariance);
+                                            m_pMapperSensorManager->GetRunningScans(pScan->GetSensorName()),
+                                            bestPose,
+                                            covariance);
         pScan->SetSensorPose(bestPose);
       }
 
@@ -2774,7 +2795,7 @@ namespace karto
         if (m_pDoLoopClosing->GetValue())
         {
           std::vector<Name> deviceNames =
-            m_pMapperSensorManager->GetSensorNames();
+              m_pMapperSensorManager->GetSensorNames();
           const_forEach(std::vector<Name>, &deviceNames)
           {
             m_pGraph->TryCloseLoop(pScan, *iter);
@@ -2790,18 +2811,18 @@ namespace karto
     return false;
   }
 
-  kt_bool Mapper::ProcessLocalization(LocalizedRangeScan* pScan)
+  kt_bool Mapper::ProcessLocalization(LocalizedRangeScan *pScan)
   {
     if (pScan == NULL)
     {
       return false;
     }
 
-    karto::LaserRangeFinder* pLaserRangeFinder = pScan->GetLaserRangeFinder();
+    karto::LaserRangeFinder *pLaserRangeFinder = pScan->GetLaserRangeFinder();
 
     // validate scan
     if (pLaserRangeFinder == NULL || pScan == NULL ||
-      pLaserRangeFinder->Validate(pScan) == false)
+        pLaserRangeFinder->Validate(pScan) == false)
     {
       return false;
     }
@@ -2813,19 +2834,19 @@ namespace karto
     }
 
     // get last scan
-    LocalizedRangeScan* pLastScan = m_pMapperSensorManager->GetLastScan(
-      pScan->GetSensorName());
+    LocalizedRangeScan *pLastScan = m_pMapperSensorManager->GetLastScan(
+        pScan->GetSensorName());
 
     // update scans corrected pose based on last correction
     if (pLastScan != NULL)
     {
       Transform lastTransform(pLastScan->GetOdometricPose(),
-        pLastScan->GetCorrectedPose());
+                              pLastScan->GetCorrectedPose());
       pScan->SetCorrectedPose(lastTransform.TransformPose(
-        pScan->GetOdometricPose()));
+          pScan->GetOdometricPose()));
     }
 
-    // test if scan is outside minimum boundary 
+    // test if scan is outside minimum boundary
     // or if heading is larger then minimum heading
     if (!HasMovedEnough(pScan, pLastScan))
     {
@@ -2840,16 +2861,16 @@ namespace karto
     {
       Pose2 bestPose;
       m_pSequentialScanMatcher->MatchScan(pScan,
-          m_pMapperSensorManager->GetRunningScans(pScan->GetSensorName()),
-          bestPose,
-          covariance);
+                                          m_pMapperSensorManager->GetRunningScans(pScan->GetSensorName()),
+                                          bestPose,
+                                          covariance);
       pScan->SetSensorPose(bestPose);
     }
 
     // add scan to buffer and assign id
     m_pMapperSensorManager->AddScan(pScan);
 
-    Vertex<LocalizedRangeScan>* scan_vertex = NULL;
+    Vertex<LocalizedRangeScan> *scan_vertex = NULL;
     if (m_pUseScanMatching->GetValue())
     {
       // add to graph
@@ -2857,7 +2878,7 @@ namespace karto
       m_pGraph->AddEdges(pScan, covariance);
 
       m_pMapperSensorManager->AddRunningScan(pScan);
-      
+
       if (m_pDoLoopClosing->GetValue())
       {
         std::vector<Name> deviceNames = m_pMapperSensorManager->GetSensorNames();
@@ -2873,7 +2894,7 @@ namespace karto
     // generate the info to store and later decay, outside of dataset
     if (m_LocalizationScanVertices.size() > getParamScanBufferSize())
     {
-      LocalizationScanVertex& oldLSV = m_LocalizationScanVertices.front();
+      LocalizationScanVertex &oldLSV = m_LocalizationScanVertices.front();
       RemoveNodeFromGraph(oldLSV.vertex);
 
       // delete node and scans
@@ -2898,27 +2919,27 @@ namespace karto
     return true;
   }
 
-  kt_bool Mapper::RemoveNodeFromGraph(Vertex<LocalizedRangeScan>* vertex_to_remove)
+  kt_bool Mapper::RemoveNodeFromGraph(Vertex<LocalizedRangeScan> *vertex_to_remove)
   {
     // 1) delete edges in adjacent vertices, graph, and optimizer
-    std::vector<Vertex<LocalizedRangeScan>*> adjVerts =
-      vertex_to_remove->GetAdjacentVertices();
+    std::vector<Vertex<LocalizedRangeScan> *> adjVerts =
+        vertex_to_remove->GetAdjacentVertices();
     for (int i = 0; i != adjVerts.size(); i++)
     {
-      std::vector<Edge<LocalizedRangeScan>*> adjEdges = adjVerts[i]->GetEdges();
+      std::vector<Edge<LocalizedRangeScan> *> adjEdges = adjVerts[i]->GetEdges();
       bool found = false;
-      for (int j=0; j!=adjEdges.size(); j++)
+      for (int j = 0; j != adjEdges.size(); j++)
       {
         if (adjEdges[j]->GetTarget() == vertex_to_remove ||
-          adjEdges[j]->GetSource() == vertex_to_remove)
+            adjEdges[j]->GetSource() == vertex_to_remove)
         {
           adjVerts[i]->RemoveEdge(j);
           m_pScanOptimizer->RemoveConstraint(
-            adjEdges[j]->GetSource()->GetObject()->GetUniqueId(),
-            adjEdges[j]->GetTarget()->GetObject()->GetUniqueId()); 
-          std::vector<Edge<LocalizedRangeScan>*> edges = m_pGraph->GetEdges();
-          std::vector<Edge<LocalizedRangeScan>*>::iterator edgeGraphIt =
-            std::find(edges.begin(), edges.end(), adjEdges[j]);
+              adjEdges[j]->GetSource()->GetObject()->GetUniqueId(),
+              adjEdges[j]->GetTarget()->GetObject()->GetUniqueId());
+          std::vector<Edge<LocalizedRangeScan> *> edges = m_pGraph->GetEdges();
+          std::vector<Edge<LocalizedRangeScan> *>::iterator edgeGraphIt =
+              std::find(edges.begin(), edges.end(), adjEdges[j]);
 
           if (edgeGraphIt == edges.end())
           {
@@ -2928,15 +2949,15 @@ namespace karto
 
           int posEdge = edgeGraphIt - edges.begin();
           m_pGraph->RemoveEdge(posEdge); // remove from graph
-          delete *edgeGraphIt; // free hat!
+          delete *edgeGraphIt;           // free hat!
           *edgeGraphIt = NULL;
           found = true;
         }
       }
       if (!found)
       {
-        std::cout << "Failed to find any edge in adj. vertex" <<
-          " with a matching vertex to current!" << std::endl;
+        std::cout << "Failed to find any edge in adj. vertex"
+                  << " with a matching vertex to current!" << std::endl;
       }
     }
 
@@ -2944,16 +2965,16 @@ namespace karto
     m_pScanOptimizer->RemoveNode(vertex_to_remove->GetObject()->GetUniqueId());
 
     // 3) delete from vertex map
-    std::map<Name, std::map<int, Vertex<LocalizedRangeScan>*> > 
-      vertexMap = m_pGraph->GetVertices();
-    std::map<int, Vertex<LocalizedRangeScan>*> graphVertices =
-      vertexMap[vertex_to_remove->GetObject()->GetSensorName()];
-    std::map<int, Vertex<LocalizedRangeScan>*>::iterator
-      vertexGraphIt = graphVertices.find(vertex_to_remove->GetObject()->GetStateId());
+    std::map<Name, std::map<int, Vertex<LocalizedRangeScan> *>>
+        vertexMap = m_pGraph->GetVertices();
+    std::map<int, Vertex<LocalizedRangeScan> *> graphVertices =
+        vertexMap[vertex_to_remove->GetObject()->GetSensorName()];
+    std::map<int, Vertex<LocalizedRangeScan> *>::iterator
+        vertexGraphIt = graphVertices.find(vertex_to_remove->GetObject()->GetStateId());
     if (vertexGraphIt != graphVertices.end())
     {
       m_pGraph->RemoveVertex(vertex_to_remove->GetObject()->GetSensorName(),
-        vertexGraphIt->second->GetObject()->GetStateId());
+                             vertexGraphIt->second->GetObject()->GetStateId());
     }
     else
     {
@@ -2964,16 +2985,16 @@ namespace karto
     return true;
   }
 
-  kt_bool Mapper::ProcessAgainstNode(LocalizedRangeScan* pScan, 
-    const int& nodeId)
+  kt_bool Mapper::ProcessAgainstNode(LocalizedRangeScan *pScan,
+                                     const int &nodeId)
   {
     if (pScan != NULL)
     {
-      karto::LaserRangeFinder* pLaserRangeFinder = pScan->GetLaserRangeFinder();
+      karto::LaserRangeFinder *pLaserRangeFinder = pScan->GetLaserRangeFinder();
 
       // validate scan
-      if (pLaserRangeFinder == NULL || pScan == NULL || 
-        pLaserRangeFinder->Validate(pScan) == false)
+      if (pLaserRangeFinder == NULL || pScan == NULL ||
+          pLaserRangeFinder->Validate(pScan) == false)
       {
         return false;
       }
@@ -2987,8 +3008,8 @@ namespace karto
       // If we're matching against a node from an older mapping session
       // lets get the first scan as the last scan and populate running scans
       // with the first few from that run as well.
-      LocalizedRangeScan* pLastScan =
-      m_pMapperSensorManager->GetScan(pScan->GetSensorName(), nodeId);
+      LocalizedRangeScan *pLastScan =
+          m_pMapperSensorManager->GetScan(pScan->GetSensorName(), nodeId);
       m_pMapperSensorManager->ClearRunningScans(pScan->GetSensorName());
       m_pMapperSensorManager->AddRunningScan(pLastScan);
       m_pMapperSensorManager->SetLastScan(pLastScan);
@@ -3001,9 +3022,9 @@ namespace karto
       {
         Pose2 bestPose;
         m_pSequentialScanMatcher->MatchScan(pScan,
-            m_pMapperSensorManager->GetRunningScans(pScan->GetSensorName()),
-            bestPose,
-            covariance);
+                                            m_pMapperSensorManager->GetRunningScans(pScan->GetSensorName()),
+                                            bestPose,
+                                            covariance);
         pScan->SetSensorPose(bestPose);
       }
 
@@ -3023,7 +3044,7 @@ namespace karto
         if (m_pDoLoopClosing->GetValue())
         {
           std::vector<Name> deviceNames =
-          m_pMapperSensorManager->GetSensorNames();
+              m_pMapperSensorManager->GetSensorNames();
           const_forEach(std::vector<Name>, &deviceNames)
           {
             m_pGraph->TryCloseLoop(pScan, *iter);
@@ -3039,10 +3060,25 @@ namespace karto
     return false;
   }
 
-  kt_bool Mapper::ProcessAtDock(LocalizedRangeScan* pScan)
+  kt_bool Mapper::ProcessAtDock(LocalizedRangeScan *pScan)
   {
     // Special case of processing against node where node is the starting point
     return ProcessAgainstNode(pScan, 0);
+  }
+
+  kt_bool Mapper::ProcessMarker(LocalizedMarker *pMarker)
+  {
+    if (pMarker != NULL)
+    {
+      if (m_pUseScanMatching->GetValue())
+      {
+        // add to graph
+        m_pMarkerGraph->AddVertex(pMarker);
+        // m_pMarkerGraph->AddEdges(pMarker, covariance);
+      }
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -3051,39 +3087,39 @@ namespace karto
    * @param pLastScan
    * @return true if the scans are sufficiently far
    */
-  kt_bool Mapper::HasMovedEnough(LocalizedRangeScan* pScan, LocalizedRangeScan* pLastScan) const
+  kt_bool Mapper::HasMovedEnough(LocalizedRangeScan *pScan, LocalizedRangeScan *pLastScan) const
   {
-	  // test if first scan
-	  if (pLastScan == NULL)
-	  {
-		  return true;
-	  }
+    // test if first scan
+    if (pLastScan == NULL)
+    {
+      return true;
+    }
 
-	  // test if enough time has passed
-	  kt_double timeInterval = pScan->GetTime() - pLastScan->GetTime();
-	  if (timeInterval >= m_pMinimumTimeInterval->GetValue())
-	  {
-		  return true;
-	  }
+    // test if enough time has passed
+    kt_double timeInterval = pScan->GetTime() - pLastScan->GetTime();
+    if (timeInterval >= m_pMinimumTimeInterval->GetValue())
+    {
+      return true;
+    }
 
-	  Pose2 lastScannerPose = pLastScan->GetSensorAt(pLastScan->GetOdometricPose());
-	  Pose2 scannerPose = pScan->GetSensorAt(pScan->GetOdometricPose());
+    Pose2 lastScannerPose = pLastScan->GetSensorAt(pLastScan->GetOdometricPose());
+    Pose2 scannerPose = pScan->GetSensorAt(pScan->GetOdometricPose());
 
-	  // test if we have turned enough
-	  kt_double deltaHeading = math::NormalizeAngle(scannerPose.GetHeading() - lastScannerPose.GetHeading());
-	  if (fabs(deltaHeading) >= m_pMinimumTravelHeading->GetValue())
-	  {
-		  return true;
-	  }
+    // test if we have turned enough
+    kt_double deltaHeading = math::NormalizeAngle(scannerPose.GetHeading() - lastScannerPose.GetHeading());
+    if (fabs(deltaHeading) >= m_pMinimumTravelHeading->GetValue())
+    {
+      return true;
+    }
 
-	  // test if we have moved enough
-	  kt_double squaredTravelDistance = lastScannerPose.GetPosition().SquaredDistance(scannerPose.GetPosition());
-	  if (squaredTravelDistance >= math::Square(m_pMinimumTravelDistance->GetValue()) - KT_TOLERANCE)
-	  {
-		  return true;
-	  }
+    // test if we have moved enough
+    kt_double squaredTravelDistance = lastScannerPose.GetPosition().SquaredDistance(scannerPose.GetPosition());
+    if (squaredTravelDistance >= math::Square(m_pMinimumTravelDistance->GetValue()) - KT_TOLERANCE)
+    {
+      return true;
+    }
 
-	  return false;
+    return false;
   }
 
   /**
@@ -3092,121 +3128,126 @@ namespace karto
    */
   const LocalizedRangeScanVector Mapper::GetAllProcessedScans() const
   {
-	  LocalizedRangeScanVector allScans;
+    LocalizedRangeScanVector allScans;
 
-	  if (m_pMapperSensorManager != NULL)
-	  {
-		  allScans = m_pMapperSensorManager->GetAllScans();
-	  }
+    if (m_pMapperSensorManager != NULL)
+    {
+      allScans = m_pMapperSensorManager->GetAllScans();
+    }
 
-	  return allScans;
+    return allScans;
   }
 
   /**
    * Adds a listener
    * @param pListener
    */
-  void Mapper::AddListener(MapperListener* pListener)
+  void Mapper::AddListener(MapperListener *pListener)
   {
-	  m_Listeners.push_back(pListener);
+    m_Listeners.push_back(pListener);
   }
 
   /**
    * Removes a listener
    * @param pListener
    */
-  void Mapper::RemoveListener(MapperListener* pListener)
+  void Mapper::RemoveListener(MapperListener *pListener)
   {
-	  std::vector<MapperListener*>::iterator iter = std::find(m_Listeners.begin(), m_Listeners.end(), pListener);
-	  if (iter != m_Listeners.end())
-	  {
-		  m_Listeners.erase(iter);
-	  }
+    std::vector<MapperListener *>::iterator iter = std::find(m_Listeners.begin(), m_Listeners.end(), pListener);
+    if (iter != m_Listeners.end())
+    {
+      m_Listeners.erase(iter);
+    }
   }
 
-  void Mapper::FireInfo(const std::string& rInfo) const
+  void Mapper::FireInfo(const std::string &rInfo) const
   {
-	  const_forEach(std::vector<MapperListener*>, &m_Listeners)
-	  {
-		  (*iter)->Info(rInfo);
-	  }
+    const_forEach(std::vector<MapperListener *>, &m_Listeners)
+    {
+      (*iter)->Info(rInfo);
+    }
   }
 
-  void Mapper::FireDebug(const std::string& rInfo) const
+  void Mapper::FireDebug(const std::string &rInfo) const
   {
-	  const_forEach(std::vector<MapperListener*>, &m_Listeners)
-	  {
-		  MapperDebugListener* pListener = dynamic_cast<MapperDebugListener*>(*iter);
+    const_forEach(std::vector<MapperListener *>, &m_Listeners)
+    {
+      MapperDebugListener *pListener = dynamic_cast<MapperDebugListener *>(*iter);
 
-		  if (pListener != NULL)
-		  {
-			  pListener->Debug(rInfo);
-		  }
-	  }
+      if (pListener != NULL)
+      {
+        pListener->Debug(rInfo);
+      }
+    }
   }
 
-  void Mapper::FireLoopClosureCheck(const std::string& rInfo) const
+  void Mapper::FireLoopClosureCheck(const std::string &rInfo) const
   {
-	  const_forEach(std::vector<MapperListener*>, &m_Listeners)
-	  {
-		  MapperLoopClosureListener* pListener = dynamic_cast<MapperLoopClosureListener*>(*iter);
+    const_forEach(std::vector<MapperListener *>, &m_Listeners)
+    {
+      MapperLoopClosureListener *pListener = dynamic_cast<MapperLoopClosureListener *>(*iter);
 
-		  if (pListener != NULL)
-		  {
-			  pListener->LoopClosureCheck(rInfo);
-		  }
-	  }
+      if (pListener != NULL)
+      {
+        pListener->LoopClosureCheck(rInfo);
+      }
+    }
   }
 
-  void Mapper::FireBeginLoopClosure(const std::string& rInfo) const
+  void Mapper::FireBeginLoopClosure(const std::string &rInfo) const
   {
-	  const_forEach(std::vector<MapperListener*>, &m_Listeners)
-	  {
-		  MapperLoopClosureListener* pListener = dynamic_cast<MapperLoopClosureListener*>(*iter);
+    const_forEach(std::vector<MapperListener *>, &m_Listeners)
+    {
+      MapperLoopClosureListener *pListener = dynamic_cast<MapperLoopClosureListener *>(*iter);
 
-		  if (pListener != NULL)
-		  {
-			  pListener->BeginLoopClosure(rInfo);
-		  }
-	  }
+      if (pListener != NULL)
+      {
+        pListener->BeginLoopClosure(rInfo);
+      }
+    }
   }
 
-  void Mapper::FireEndLoopClosure(const std::string& rInfo) const
+  void Mapper::FireEndLoopClosure(const std::string &rInfo) const
   {
-	  const_forEach(std::vector<MapperListener*>, &m_Listeners)
-	  {
-		  MapperLoopClosureListener* pListener = dynamic_cast<MapperLoopClosureListener*>(*iter);
+    const_forEach(std::vector<MapperListener *>, &m_Listeners)
+    {
+      MapperLoopClosureListener *pListener = dynamic_cast<MapperLoopClosureListener *>(*iter);
 
-		  if (pListener != NULL)
-		  {
-			  pListener->EndLoopClosure(rInfo);
-		  }
-	  }
+      if (pListener != NULL)
+      {
+        pListener->EndLoopClosure(rInfo);
+      }
+    }
   }
 
-  void Mapper::SetScanSolver(ScanSolver* pScanOptimizer)
+  void Mapper::SetScanSolver(ScanSolver *pScanOptimizer)
   {
-	  m_pScanOptimizer = pScanOptimizer;
+    m_pScanOptimizer = pScanOptimizer;
   }
 
-  ScanSolver* Mapper::getScanSolver()
+  ScanSolver *Mapper::getScanSolver()
   {
     return m_pScanOptimizer;
   }
 
-  MapperGraph* Mapper::GetGraph() const
+  MapperGraph *Mapper::GetGraph() const
   {
-	  return m_pGraph;
+    return m_pGraph;
   }
 
-  ScanMatcher* Mapper::GetSequentialScanMatcher() const
+  MarkerGraph *Mapper::GetMarkerGraph() const
   {
-	  return m_pSequentialScanMatcher;
+    return m_pMarkerGraph;
   }
 
-  ScanMatcher* Mapper::GetLoopScanMatcher() const
+  ScanMatcher *Mapper::GetSequentialScanMatcher() const
   {
-	  return m_pGraph->GetLoopScanMatcher();
+    return m_pSequentialScanMatcher;
   }
-}  // namespace karto
+
+  ScanMatcher *Mapper::GetLoopScanMatcher() const
+  {
+    return m_pGraph->GetLoopScanMatcher();
+  }
+} // namespace karto
 BOOST_CLASS_EXPORT(karto::BreadthFirstTraversal<karto::LocalizedRangeScan>)

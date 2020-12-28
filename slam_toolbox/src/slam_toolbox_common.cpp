@@ -49,7 +49,8 @@ SlamToolbox::SlamToolbox(ros::NodeHandle& nh)
   closure_assistant_ =
     std::make_unique<loop_closure_assistant::LoopClosureAssistant>(
     nh_, smapper_->getMapper(), scan_holder_.get(), state_, processor_type_);
-
+  tag_assistant_ = std::make_unique<tag_assistant::ApriltagAssistant>(
+    nh_, tf_.get(), smapper_->getMapper());
   reprocessing_transform_.setIdentity();
 
   double transform_publish_period;
@@ -77,6 +78,7 @@ SlamToolbox::~SlamToolbox()
   pose_helper_.reset();
   laser_assistant_.reset();
   scan_holder_.reset();
+  tag_assistant_.reset();
 }
 
 /*****************************************************************************/
@@ -107,7 +109,7 @@ void SlamToolbox::setSolver(ros::NodeHandle& private_nh_)
 /*****************************************************************************/
 void SlamToolbox::setParams(ros::NodeHandle& private_nh)
 /*****************************************************************************/
-{
+{ 
   map_to_odom_.setIdentity();
   private_nh.param("odom_frame", odom_frame_, std::string("odom"));
   private_nh.param("map_frame", map_frame_, std::string("map"));
@@ -117,6 +119,8 @@ void SlamToolbox::setParams(ros::NodeHandle& private_nh)
   private_nh.param("scan_topic", scan_topic_, std::string("/scan"));
   private_nh.param("throttle_scans", throttle_scans_, 1);
   private_nh.param("enable_interactive_mode", enable_interactive_mode_, false);
+  private_nh.param("camera_frame", camera_frame_, std::string("camera_rgb_optical_frame"));
+  private_nh.param("tag_topic", tag_topic_, std::string("/tag_detections"));
 
   double tmp_val;
   private_nh.param("transform_timeout", tmp_val, 0.2);
@@ -156,7 +160,7 @@ void SlamToolbox::setROSInterfaces(ros::NodeHandle& node)
   scan_filter_sub_ = std::make_unique<message_filters::Subscriber<sensor_msgs::LaserScan> >(node, scan_topic_, 5);
   scan_filter_ = std::make_unique<tf2_ros::MessageFilter<sensor_msgs::LaserScan> >(*scan_filter_sub_, *tf_, odom_frame_, 5, node);
   scan_filter_->registerCallback(boost::bind(&SlamToolbox::laserCallback, this, _1));
-}
+} 
 
 /*****************************************************************************/
 void SlamToolbox::publishTransformLoop(const double& transform_publish_period)
@@ -209,7 +213,7 @@ void SlamToolbox::publishVisualizations()
     if(!isPaused(VISUALIZING_GRAPH))
     {
       closure_assistant_->publishGraph();
-    }
+    } // tag_assistant_->publishMarkerGraph();
     r.sleep();
   }
 }
@@ -473,7 +477,7 @@ karto::LocalizedRangeScan* SlamToolbox::addScan(
   const sensor_msgs::LaserScan::ConstPtr& scan, 
   karto::Pose2& karto_pose)
 /*****************************************************************************/
-{  
+{ 
   // get our localized range scan
   karto::LocalizedRangeScan* range_scan = getLocalizedRangeScan(
     laser, scan, karto_pose);
