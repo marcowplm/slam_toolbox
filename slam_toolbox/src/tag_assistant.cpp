@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "slam_toolbox/tag_assistant.hpp"
+#include <eigen_conversions/eigen_msg.h>
 
 namespace tag_assistant
 {
@@ -15,17 +16,19 @@ namespace tag_assistant
         nh_.getParam("odom_frame", odom_frame_);
         nh_.getParam("camera_frame", camera_frame_);
         tag_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("tag_visualization", 1);
+        link_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("link_visualization", 1);
+        tfB_ = std::make_unique<tf2_ros::TransformBroadcaster>();
         solver_ = mapper_->getScanSolver();
+        markerGraph_ = mapper_->GetMarkerGraph();   // inutile!
         camera_ = makeCamera();
     }
 
     /*****************************************************************************/
-    bool ApriltagAssistant::processDetection(const int &last_vertex_id,
+    bool ApriltagAssistant::processDetection(const int last_vertex_id,
                                              const karto::Pose2 last_vertex_pose,
                                              const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array)
     /*****************************************************************************/
     {
-        // std::cout << ">>>>>>>>>> processDetection!" << std::endl;
         bool processed = false;
         for (detectionConstIter = detection_array->detections.begin(); detectionConstIter != detection_array->detections.end(); ++detectionConstIter)
         {
@@ -38,18 +41,20 @@ namespace tag_assistant
                 {
                     if (tags_Iter->second.find(last_vertex_id) == tags_Iter->second.end()) // il tag esiste ma non è associato al vertex
                     {
-                        if (!addLink(last_vertex_id, last_vertex_pose, *detectionConstIter, false))
+                        karto::LocalizedMarkerMap::const_iterator markers_it = mapper_->GetMarkers().find(tags_Iter->first);
+                        karto::Pose3 tag_pose_ = markers_it->second->GetOdometricPose();
+                        if (!addLink(last_vertex_id, last_vertex_pose, tags_Iter->first, tag_pose_, false))
                         {
                             processed = false;
                             return processed;
                         }
                         tags_Iter->second.insert(last_vertex_id); // aggiungo il vertex alla map, in corrispondenza dell'id del tag
                         processed = true;
-                    } // else se il tag è già associato al vertex -> non fare niente
+                    } // else: il tag è già associato al vertex -> non fare niente
                 }
                 else // il tag non esiste nella map (è la prima volta che lo vedo)
                 {
-                    if (!addTag(last_vertex_id, last_vertex_pose, *detectionConstIter))
+                    if (!addLocalizedMarker(last_vertex_id, last_vertex_pose, *detectionConstIter))
                     {
                         processed = false;
                         return processed;
@@ -69,37 +74,33 @@ namespace tag_assistant
      * recupera entrambe le posizioni e ne calcola la transform
      */
     /*****************************************************************************/
-    bool ApriltagAssistant::addLink(const int &vertex_id, const karto::Pose2 vertex_pose, const apriltag_ros::AprilTagDetection &detection, const bool isFirstLink)
+    bool ApriltagAssistant::addLink(const int vertex_id, 
+                                    const karto::Pose2 vertex_pose, 
+                                    const int tag_id, 
+                                    const karto::Pose3 tag_pose, 
+                                    const bool isFirstLink)
     /*****************************************************************************/
     {
-        // std::cout << ">>>>>>>>>> addLink!" << std::endl;
-        karto::Pose3 link_transform;
-        karto::Pose3 vertex_pose3(vertex_pose);
-        karto::Pose3 tag_pose; // è la posizione del tag nel mondo
-        if (!getTagPose(tag_pose, detection))
-        {
-            return false;
-        }
-        vertex_pose3 = invertTransform3(vertex_pose3);
-        link_transform.SetPosition(vertex_pose3.GetPosition() + tag_pose.GetPosition());
+        karto::Pose3 link_pose;                 // qui ci metto la tansform
+        karto::Pose3 vertex_pose3(vertex_pose); // questa è la posizione dello scan vertex
 
-        Eigen::Quaterniond l_v_quat = kartoToEigenQuaternion(vertex_pose3.GetOrientation());
-        Eigen::Quaterniond t_p_quat = kartoToEigenQuaternion(tag_pose.GetOrientation());
-        Eigen::Quaterniond l_t_quat = l_v_quat * t_p_quat;
-        l_t_quat.normalize();
-        link_transform.SetOrientation(EigenTokartoQuaternion(l_t_quat));
+        Eigen::Isometry3d vertex_transform = poseKartoToEigenIsometry(vertex_pose3);
+        Eigen::Isometry3d tag_transform = poseKartoToEigenIsometry(tag_pose);
+        Eigen::Isometry3d link_transform = vertex_transform.inverse() * tag_transform; // link_transform ha origine in Vertex e punta in Tag
 
-        tag_assistant::Link link_(detection.id[0], vertex_id, link_transform);
-        std::set<Link> temp_set ({link_});
+        link_pose = isometryEigenToPoseKarto(link_transform);
+
+        tag_assistant::Link link_(tag_id, vertex_id, link_transform);
+        //std::set<Link> temp_set ({link_});
         if (isFirstLink)
         {
-            links_.insert(std::pair <int, std::set<Link> > (detection.id[0], temp_set));
+            links_.insert(std::pair <int, std::set<Link> > (tag_id, std::set<Link>({link_})));
         }
         else
         {
-            links_[detection.id[0]].insert(link_);
-        }
-        
+            links_[tag_id].insert(link_);
+        } 
+
         return true;
     }
 
@@ -108,23 +109,24 @@ namespace tag_assistant
      * e poi crea l'Edge tra il nuovo vertice e il vertice dello scan
      */
     /*****************************************************************************/
-    bool ApriltagAssistant::addTag(const int &vertex_id, const karto::Pose2 vertex_pose, const apriltag_ros::AprilTagDetection &detection)
+    bool ApriltagAssistant::addLocalizedMarker(const int vertex_id, 
+                                               const karto::Pose2 vertex_pose, 
+                                               const apriltag_ros::AprilTagDetection &detection)
     /*****************************************************************************/
     {
-        // std::cout << ">>>>>>>>> addTag!" << std::endl;
-        karto::Pose3 tag_pose; // è la posizione del tag nel mondo
-        if (!getTagPose(tag_pose, detection))
+        karto::Pose3 tag_pose_; // è la posizione del tag nel mondo
+        if (!getTagPose(tag_pose_, detection))
         {
             return false;
         }
-        karto::LocalizedMarker* tag = getLocalizedTag(getCamera(), detection.id[0], tag_pose);
+        karto::LocalizedMarker *tag = createLocalizedMarker(getCamera(), detection.id[0], tag_pose_);
         if (!mapper_->ProcessMarker(tag))
         {
             std::cout << "ProcessMarker FALSE!" << std::endl;
             return false;
         }
 
-        if (!addLink(vertex_id, vertex_pose, detection, true))
+        if (!addLink(vertex_id, vertex_pose, detection.id[0], tag_pose_, true))
         {
             return false;
         }
@@ -133,21 +135,24 @@ namespace tag_assistant
 
     // Chiama il costruttore di karto::LocalizedMarker
     /*****************************************************************************/
-    karto::LocalizedMarker* ApriltagAssistant::getLocalizedTag(karto::Camera* camera, int unique_id, karto::Pose3 karto_pose)
+    karto::LocalizedMarker *ApriltagAssistant::createLocalizedMarker(karto::Camera *camera, 
+                                                                     int unique_id, 
+                                                                     karto::Pose3 tag_pose_karto)
     /*****************************************************************************/
     {
-        // std::cout << ">>>>>>> getLocalizedTag!" << std::endl;
-        karto::LocalizedMarker* tag = new karto::LocalizedMarker(camera->GetName(), unique_id, karto_pose);
-        tag->SetCorrectedPose(karto_pose);
+        karto::LocalizedMarker *tag = new karto::LocalizedMarker(camera->GetName(), unique_id, tag_pose_karto);
+        tag->SetCorrectedPose(tag_pose_karto);
         return tag;
     }
 
-    // Ottiene la posizione del tag nel mondo
+    // Ottiene la posizione del tag nel riferimento mondo (map_frame_), nel momento in cui il tag viene creato
     /*****************************************************************************/
-    bool ApriltagAssistant::getTagPose(karto::Pose3 &karto_pose,
+    bool ApriltagAssistant::getTagPose(karto::Pose3 &tag_pose_karto,
                                        const apriltag_ros::AprilTagDetection &detection)
     /*****************************************************************************/
     {
+        // base_ident è un "contenitore" che tf_->transform userà per tirare fuori il suo source frame,
+        // camera_rgb_optical, che è in base_ident.header.frame_id
         geometry_msgs::TransformStamped base_ident;
         base_ident.header.stamp = detection.pose.header.stamp;
         base_ident.header.frame_id = detection.pose.header.frame_id;
@@ -155,7 +160,7 @@ namespace tag_assistant
 
         try
         {
-            // Ottiene la posizione della camera -> Target frame: odom / Source frame: camera_rgb_optical
+            // Ottiene la posizione della camera -> Target frame: map / Source frame: camera_rgb_optical (all'interno di base_ident)
             camera_pose_ = tf_->transform(base_ident, map_frame_);
         }
         catch (tf2::TransformException e)
@@ -164,51 +169,38 @@ namespace tag_assistant
             return false;
         }
         geometry_msgs::Pose tag_pose_;
-        // Input frame: detection_pose_ / Output_frame: tag_pose_ / Transformed by camera_pose_
+        // Input pose: detection_pose / Output pose: tag_pose_ / Transformed by camera_pose_
         tf2::doTransform(detection.pose.pose.pose, tag_pose_, camera_pose_);
-        karto_pose = geometryToKarto(tag_pose_);
+        tag_pose_karto = poseGeometryToKarto(tag_pose_);
+
+        // Adesso provo a pubblicare la tf di tag_pose rispetto a map_frame
+        geometry_msgs::TransformStamped tag_pose_stamped_;
+        tag_pose_stamped_.transform.rotation = tag_pose_.orientation;
+        tag_pose_stamped_.transform.translation.x = tag_pose_.position.x;
+        tag_pose_stamped_.transform.translation.y = tag_pose_.position.y;
+        tag_pose_stamped_.transform.translation.z = tag_pose_.position.z;
+        tag_pose_stamped_.header.frame_id = map_frame_;
+        tag_pose_stamped_.header.stamp = base_ident.header.stamp;
+        tag_pose_stamped_.child_frame_id = "TAG" + std::to_string(detection.id[0]);
+        tfB_->sendTransform(tag_pose_stamped_);
         return true;
     }
 
-    // inutile
-    /*****************************************************************************/
-    karto::Camera *ApriltagAssistant::makeCamera()
-    /*****************************************************************************/
-    {
-        karto::Camera *camera = karto::Camera::CreateCamera(karto::Name("Custom Camera"));
-        karto::SensorManager::GetInstance()->RegisterSensor(camera);
-        return camera;
-    }
-
-    // inutile
-    /*****************************************************************************/
-    karto::Camera *ApriltagAssistant::getCamera()
-    /*****************************************************************************/
-    {
-        return camera_;
-    }
-
+    // Qui prendo semplicemente i Marker e i Vertex del grafo e visualizzo gli edge tra queste due posiioni 
     /*****************************************************************************/
     void ApriltagAssistant::publishMarkerGraph()
     /*****************************************************************************/
-    {
-        karto::LocalizedMarkerMap markers = mapper_->GetMarkerGraph()->GetLocalizedMarkers();
-        std::unordered_map<int, Eigen::Vector3d>* graph = solver_->getGraph();
-
-        if (markers.size() == 0)
-        {
-            return;
-        }
+    {   
+        std::unordered_map<int, Eigen::Vector3d> *graph = solver_->getGraph();
 
         visualization_msgs::MarkerArray marray;
-        visualization_msgs::Marker m = vis_utils::toTagMarker(
-            map_frame_, nh_.getNamespace(), 0.1);
-        visualization_msgs::Marker e = vis_utils::toEdgeMarker(
-            map_frame_, nh_.getNamespace(), 0.03);
+        visualization_msgs::Marker m = vis_utils::toTagMarker(map_frame_, nh_.getNamespace());
+        visualization_msgs::Marker e = vis_utils::toEdgeMarker(map_frame_, nh_.getNamespace(), 0.03);
 
         for (tags_Iter = tags_.begin(); tags_Iter != tags_.end(); ++tags_Iter)
-        {     
-            geometry_msgs::Pose mPose = kartoToGeometry(markers.find(tags_Iter->first)->second->GetOdometricPose());
+        {
+            karto::LocalizedMarkerMap::iterator markers_it = mapper_->GetMarkers().find(tags_Iter->first);
+            geometry_msgs::Pose mPose = poseKartoToGeometry(markers_it->second->GetOdometricPose());
 
             m.id = tags_Iter->first;
             m.pose.orientation = mPose.orientation;
@@ -221,10 +213,10 @@ namespace tag_assistant
             {
                 e.points.clear();
 
-                geometry_msgs::Point p = m.pose.position; // Posizione del Marker
+                geometry_msgs::Point p = mPose.position; // Posizione del Marker presa da MarkerGraph
                 e.points.push_back(p);
 
-                p.x = graph->find(*set_Iter)->second(0); // Posizione dello Scan
+                p.x = graph->find(*set_Iter)->second(0); // Posizione dello Scan presa da MapperGraph
                 p.y = graph->find(*set_Iter)->second(1);
                 p.z = 0.0;
                 e.points.push_back(p);
@@ -242,24 +234,80 @@ namespace tag_assistant
         return;
     }
 
+    /**
+     * Qui prendo i Marker e le transform salvate e calcolo di conseguenza la posizione dei Vertex.
+     * L'edge visualizzato, quindi, corrsiponde proprio alla transform calcolata
+     * TODO: questa funzione sarà eliminata, insieme alla struct Link (e a links_)
+     */  
     /*****************************************************************************/
     void ApriltagAssistant::publishLinks()
     /*****************************************************************************/
     {
-        std::cout << "\n================= publish links_ =================" << std::endl;
+        visualization_msgs::MarkerArray marray;
+        visualization_msgs::Marker m = vis_utils::toTagMarker(map_frame_, nh_.getNamespace());
+        visualization_msgs::Marker e = vis_utils::toEdgeMarker(map_frame_, nh_.getNamespace(), 0.02);
+
+        std::cout << "\n================= publish & visualize links_ - size of links_: " << links_.size() << " =================" << std::endl;
         for (links_Iter = links_.begin(); links_Iter != links_.end(); ++links_Iter)
         {
-            std::set<Link>::iterator setIter = links_Iter->second.begin();
-            for (setIter; setIter != links_Iter->second.end(); ++setIter)
+            karto::LocalizedMarkerMap::const_iterator markers_it = mapper_->GetMarkers().find(links_Iter->first);
+            karto::Pose3 mPose_karto = markers_it->second->GetOdometricPose();
+            geometry_msgs::Pose mPose = poseKartoToGeometry(mPose_karto);
+            Eigen::Isometry3d mPose_eigen = poseKartoToEigenIsometry(mPose_karto);
+
+            m.id = links_Iter->first;
+            m.pose = mPose;
+            marray.markers.push_back(m);
+
+            std::set<Link>::const_iterator set_Iter = links_Iter->second.begin();
+            for (set_Iter; set_Iter != links_Iter->second.end(); ++set_Iter)
             {
-                std::cout << "TagID:\t\t" << setIter->tag_id_ << std::endl
-                          << "VertexID:\t" << setIter->vertex_id_ << std::endl
-                          << "Link (transform between tag and vertex):" << std::endl 
-                          << " Position:\t" << setIter->transform_.GetPosition() << std::endl 
-                          << " Orientation:\t" << setIter->transform_.GetOrientation() << std::endl
-                          << "-------------" << std::endl;
-            }        
+                std::cout << "\nTagID:\t\t" << set_Iter->tag_id_ << std::endl
+                          << "VertexID:\t" << set_Iter->vertex_id_ << std::endl
+                          << "Link (transform between tag and vertex):" << std::endl
+                          << " Norm (length of translation):\t" << set_Iter->transform_.translation().norm() << std::endl
+                          << "------------------------" << std::endl;
+
+                // Applico la transform rappresentata dal link alla posizione del marker per ottenere la posizione del vertex!
+                Eigen::Isometry3d vertexPose_eigen = mPose_eigen * (set_Iter->transform_).inverse();
+                geometry_msgs::Pose vertexPose;
+                tf::poseEigenToMsg(vertexPose_eigen, vertexPose);
+
+                e.points.clear();
+
+                geometry_msgs::Point p = vertexPose.position; // posizione del Vertex calcolata tramite transform
+                e.points.push_back(p);
+
+                p = m.pose.position; // Posizione del Marker
+                e.points.push_back(p);
+
+                e.id = ((std::hash<double>()(m.id) ^ (std::hash<double>()(set_Iter->vertex_id_) << 1)) >> 1);
+                e.color.r = 0.25;
+                e.color.g = 0.85;
+                e.color.b = 0.75; 
+
+                marray.markers.push_back(e);
+            }
         }
+
+        link_publisher_.publish(marray);
+        return;
     }
-    
+
+    /*****************************************************************************/
+    karto::Camera *ApriltagAssistant::makeCamera()
+    /*****************************************************************************/
+    {
+        karto::Camera *camera = karto::Camera::CreateCamera(karto::Name("Custom Camera"));
+        karto::SensorManager::GetInstance()->RegisterSensor(camera);
+        return camera;
+    }
+
+    /*****************************************************************************/
+    karto::Camera *ApriltagAssistant::getCamera()
+    /*****************************************************************************/
+    {
+        return camera_;
+    }
+
 } // end namespace tag_assistant

@@ -74,8 +74,7 @@ inline visualization_msgs::Marker toEdgeMarker(
 
 inline visualization_msgs::Marker toTagMarker(
     const std::string &frame,
-    const std::string &ns,
-    const double &scale)
+    const std::string &ns)
 {
   visualization_msgs::Marker tag_marker;
 
@@ -83,7 +82,7 @@ inline visualization_msgs::Marker toTagMarker(
   tag_marker.header.stamp = ros::Time::now();
   tag_marker.ns = ns;
   tag_marker.type = visualization_msgs::Marker::ARROW;
-  tag_marker.scale.x = scale;
+  tag_marker.scale.x = 0.15;
   tag_marker.scale.y = 0.05;
   tag_marker.scale.z = 0.05;
   tag_marker.color.r = 0.0;

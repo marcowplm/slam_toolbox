@@ -40,6 +40,7 @@
   <build_depend>qtbase5-dev</build_depend>
   <build_depend>map_server</build_depend>
   <build_depend>apriltag_ros</build_depend>
+  <build_depend>eigen_conversions</build_depend>
   <exec_depend>slam_toolbox_msgs</exec_depend>
   <exec_depend>eigen</exec_depend>
   <exec_depend>pluginlib</exec_depend>
@@ -67,6 +68,7 @@
   <exec_depend>libqt5-widgets</exec_depend>
   <exec_depend>map_server</exec_depend>
   <exec_depend>apriltag_ros</exec_depend>
+  <exec_depend>eigen_conversions</exec_depend>
 
   <depend>rostest</depend>
 

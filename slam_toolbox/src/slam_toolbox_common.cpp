@@ -213,7 +213,8 @@ void SlamToolbox::publishVisualizations()
     if(!isPaused(VISUALIZING_GRAPH))
     {
       closure_assistant_->publishGraph();
-    } // tag_assistant_->publishMarkerGraph();
+      tag_assistant_->publishMarkerGraph();
+    }
     r.sleep();
   }
 }

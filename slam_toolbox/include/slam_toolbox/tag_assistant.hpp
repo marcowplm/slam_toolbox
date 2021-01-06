@@ -9,6 +9,7 @@
 #include "slam_toolbox/toolbox_types.hpp"
 #include "slam_toolbox/visualization_utils.hpp"
 #include "tf2/utils.h"
+#include "tf2_ros/transform_broadcaster.h"
 #include "karto_sdk/Mapper.h"
 #include "apriltag_ros/AprilTagDetectionArray.h"
 
@@ -18,10 +19,11 @@ namespace tag_assistant
 
     /**
      * Object containing a tag ID, a vertex ID and a link between them
+     * TODO: Questa struct è superflua e dovrà essere eliminata!
      */
     struct Link
     {
-        Link(int tag_id, int vertex_id, karto::Pose3 transform)
+        Link(int tag_id, int vertex_id, Eigen::Isometry3d transform)
             : tag_id_(tag_id), vertex_id_(vertex_id), transform_(transform)
         {
         }
@@ -36,7 +38,7 @@ namespace tag_assistant
             return vertex_id_;
         }
 
-        karto::Pose3 GetTransform()
+        Eigen::Isometry3d GetTransform()
         {
             return transform_;
         }
@@ -53,10 +55,10 @@ namespace tag_assistant
             else if (vertex_id_ > li.vertex_id_)
                 return false;
             else
-                return (transform_.GetPosition() < li.transform_.GetPosition());
+                return (transform_.matrix().data() < li.transform_.matrix().data());
         }
 
-        karto::Pose3 transform_;
+        Eigen::Isometry3d transform_;
         int tag_id_;
         int vertex_id_;
     };
@@ -65,7 +67,7 @@ namespace tag_assistant
     /**
      * Converts a geometry_msgs Pose in a karto Pose3
      */
-    inline karto::Pose3 geometryToKarto(const geometry_msgs::Pose &pose_in)
+    inline karto::Pose3 poseGeometryToKarto(const geometry_msgs::Pose &pose_in)
     {
         karto::Vector3 position_out(pose_in.position.x, pose_in.position.y, pose_in.position.z);
         karto::Quaternion orientation_out(pose_in.orientation.x, pose_in.orientation.y, pose_in.orientation.z, pose_in.orientation.w);
@@ -77,7 +79,7 @@ namespace tag_assistant
     /**
      * Converts a karto Pose3 in a geometry_msgs Pose
      */
-    inline geometry_msgs::Pose kartoToGeometry(const karto::Pose3 &pose_in)
+    inline geometry_msgs::Pose poseKartoToGeometry(const karto::Pose3 &pose_in)
     {
         geometry_msgs::Point position_out;
         position_out.x = pose_in.GetPosition().GetX();
@@ -97,9 +99,9 @@ namespace tag_assistant
     };
         
     /**
-     * Converts a karto Quaternion in a Eigen Quaternion
+     * Converts a karto Quaternion in a Eigen Quaternion (normalized)
      */
-    inline Eigen::Quaterniond kartoToEigenQuaternion(const karto::Quaternion &quat_in)
+    inline Eigen::Quaterniond quaternionKartoToEigen(const karto::Quaternion &quat_in)
     {
         Eigen::Quaterniond quat_out(quat_in.GetW(), quat_in.GetX(), quat_in.GetY(), quat_in.GetZ());
         quat_out.normalize();
@@ -109,7 +111,7 @@ namespace tag_assistant
     /**
      * Converts a Eigen Quaternion in a karto Quaternion
      */
-    inline karto::Quaternion EigenTokartoQuaternion(const Eigen::Quaterniond &quat_in)
+    inline karto::Quaternion quaternionEigenToKarto(const Eigen::Quaterniond &quat_in)
     {
         karto::Quaternion quat_out;
         quat_out.SetW(quat_in.w());
@@ -120,22 +122,40 @@ namespace tag_assistant
     };
 
     /**
-     * Computes the inverse of a 3D transform
+     * Converts a Eigen Isometry3d (Transform) in a karto Pose3
      */
-    inline karto::Pose3 invertTransform3(const karto::Pose3 &pose_in)
+    inline karto::Pose3 isometryEigenToPoseKarto(const Eigen::Isometry3d &isometry_in)
     {
-        karto::Quaternion orientation = pose_in.GetOrientation();
-        karto::Vector3 position = pose_in.GetPosition();
-        Eigen::Quaterniond inv(orientation.GetW(), orientation.GetX(), orientation.GetY(), orientation.GetZ());
-        inv.inverse();
-        orientation = EigenTokartoQuaternion(inv);
-        position.SetX(-position.GetX());
-        position.SetY(-position.GetY());
-        position.SetZ(-position.GetZ());
+        Eigen::Vector3d translation = Eigen::Vector3d(isometry_in.translation());
+        Eigen::Quaterniond rotation(isometry_in.rotation());
+        rotation.normalize();
 
-        karto::Pose3 pose_out(position, orientation);
+        karto::Vector3<double> translation_out(translation.x(), translation.y(), translation.z());
+        karto::Quaternion rotation_out = quaternionEigenToKarto(rotation);
+        
+        karto::Pose3 pose_out(translation_out, rotation_out);
+        
         return pose_out;
     };
+
+    /**
+     * Converts a karto Pose3 in a Eigen Isometry3d (Transform)
+     */
+    inline Eigen::Isometry3d poseKartoToEigenIsometry(const karto::Pose3 &pose_in)
+    {
+        Eigen::Isometry3d isometry_out;
+        isometry_out.linear() = (quaternionKartoToEigen(pose_in.GetOrientation())).toRotationMatrix();
+        isometry_out.translation() = Eigen::Vector3d(
+            pose_in.GetPosition().GetX(),
+            pose_in.GetPosition().GetY(),
+            pose_in.GetPosition().GetZ());   
+        
+        return isometry_out;
+    };    
+
+    ////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Class ApriltagAssistant
@@ -150,13 +170,27 @@ namespace tag_assistant
 
         void publishMarkerGraph();
         void publishLinks();
-        bool processDetection(const int &last_vertex_id, const karto::Pose2 last_vertex_pose, const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array);
+        bool processDetection(
+            const int last_vertex_id, 
+            const karto::Pose2 last_vertex_pose, 
+            const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array);
 
     private:
-        karto::LocalizedMarker *getLocalizedTag(karto::Camera *camera, int unique_id, karto::Pose3 karto_pose);
+        karto::LocalizedMarker *createLocalizedMarker(
+            karto::Camera *camera, 
+            int unique_id, 
+            karto::Pose3 karto_pose);
         bool getTagPose(karto::Pose3 &karto_pose, const apriltag_ros::AprilTagDetection &detection);
-        bool addLink(const int &vertex_id, const karto::Pose2 vertex_pose, const apriltag_ros::AprilTagDetection &detection, const bool isFirstLink);
-        bool addTag(const int &vertex_id, const karto::Pose2 vertex_pose, const apriltag_ros::AprilTagDetection &detection);
+        bool addLink(
+            const int vertex_id, 
+            const karto::Pose2 vertex_pose, 
+            const int tag_id, 
+            const karto::Pose3 tag_pose, 
+            const bool isFirstLink);
+        bool addLocalizedMarker(
+            const int vertex_id, 
+            const karto::Pose2 vertex_pose, 
+            const apriltag_ros::AprilTagDetection &detection);
 
     private:
         geometry_msgs::TransformStamped camera_pose_;
@@ -164,17 +198,23 @@ namespace tag_assistant
         tf2_ros::Buffer *tf_;
         ros::NodeHandle &nh_;
         ros::Publisher tag_publisher_;
+        ros::Publisher link_publisher_;
+        std::unique_ptr<tf2_ros::TransformBroadcaster> tfB_;
 
         karto::Mapper *mapper_;
         karto::ScanSolver *solver_;
         karto::Camera *camera_;
+        karto::MarkerGraph *markerGraph_;
 
         std::string map_frame_, odom_frame_, camera_frame_;
 
-        std::map<int, std::set<Link>> links_;
+        // N.B. links_ è ridondante in quanto il tag_id è la key della map ma è anche nella stuct Link (TODO: elimina tag_id dalla struct Link!)
+        std::map<int, std::set<Link>> links_; 
         std::map<int, std::set<Link>>::iterator links_Iter;
-        std::map<int, std::set<int>> tags_; // Maps a tag id to many vertices id
+
+        std::map<int, std::set<int>> tags_; // Maps each tag id (int key) to many vertices id (set<int>)
         std::map<int, std::set<int>>::iterator tags_Iter;
+
         std::vector<apriltag_ros::AprilTagDetection>::const_iterator detectionConstIter;
     };
 

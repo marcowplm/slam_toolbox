@@ -6251,7 +6251,7 @@ namespace karto
   }; // LocalizedMarker
 
   /**
-   * Type declaration of LocalizedMarker vector and map
+   * Type declarations of LocalizedMarker vector and map
    */
   typedef std::vector<LocalizedMarker *> LocalizedMarkerVector;
   typedef std::map<int, LocalizedMarker *> LocalizedMarkerMap;

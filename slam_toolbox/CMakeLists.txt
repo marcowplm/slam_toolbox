@@ -31,6 +31,7 @@ find_package(catkin REQUIRED
     map_server
     slam_toolbox_msgs
     apriltag_ros
+    eigen_conversions
 )
 
 find_package(PkgConfig REQUIRED)
@@ -82,6 +83,7 @@ catkin_package(
       interactive_markers
       slam_toolbox_msgs
       apriltag_ros
+      eigen_conversions
     DEPENDS
       EIGEN3
       Boost

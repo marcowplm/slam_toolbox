@@ -2015,8 +2015,10 @@ namespace karto
     if (pMarker != NULL)
     {
       m_Markers.insert({pMarker->GetStateId(), pMarker});
+
       Vertex<LocalizedMarker> *pVertex = new Vertex<LocalizedMarker>(pMarker);
       Graph<LocalizedMarker>::AddVertex(pMarker->GetSensorName(), pVertex);
+
       if (m_pMapper->m_pScanOptimizer != NULL)
       {
         m_pMapper->m_pScanOptimizer->AddNode(pVertex);
@@ -2025,7 +2027,7 @@ namespace karto
     }
   }
 
-  LocalizedMarkerMap MarkerGraph::GetLocalizedMarkers()
+  LocalizedMarkerMap &MarkerGraph::GetLocalizedMarkers()
   {
     return m_Markers;
   }
@@ -3238,6 +3240,11 @@ namespace karto
   MarkerGraph *Mapper::GetMarkerGraph() const
   {
     return m_pMarkerGraph;
+  }
+
+  LocalizedMarkerMap Mapper::GetMarkers() const
+  {
+    return m_pMarkerGraph->GetLocalizedMarkers();
   }
 
   ScanMatcher *Mapper::GetSequentialScanMatcher() const

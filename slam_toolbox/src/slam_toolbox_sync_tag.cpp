@@ -114,10 +114,8 @@ namespace slam_toolbox
     if (tag_assistant_->processDetection(last_vertex_id, last_vertex_pose, detection_array))
     {
       // tag_assistant_->publishLinks();
-      
+      // tag_assistant_->publishMarkerGraph();
     }
-
-    tag_assistant_->publishMarkerGraph();
     return;
   }
 

@@ -205,7 +205,7 @@ struct CeresPose3d
   
 };
 
-// TODO Queste due typedef dovrebbero essere in toolbox_types.hpp
+// TODO: Queste due typedef dovrebbero essere in toolbox_types.hpp
 typedef std::unordered_map<int, CeresPose3d>::iterator GraphIterator3d;
 typedef std::unordered_map<int, CeresPose3d>::const_iterator ConstGraphIterator3d;
 

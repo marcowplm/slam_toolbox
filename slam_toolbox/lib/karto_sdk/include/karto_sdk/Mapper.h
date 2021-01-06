@@ -969,9 +969,12 @@ namespace karto
                                    LocalizedMarker *pTargetMarker,
                                    kt_bool &rIsNewEdge);
 
-    LocalizedMarkerMap GetLocalizedMarkers();
+    LocalizedMarkerMap &GetLocalizedMarkers();
 
   private:
+    /**
+     * Structure that hold LocalizedMarkers based on their id
+     */
     LocalizedMarkerMap m_Markers;
 
     /**
@@ -990,6 +993,8 @@ namespace karto
       ar &BOOST_SERIALIZATION_BASE_OBJECT_NVP(Graph<LocalizedMarker>);
       std::cout << "MarkerGraph <- m_pMapper; ";
       ar &BOOST_SERIALIZATION_NVP(m_pMapper);
+      std::cout << "MarkerGraph <- m_Markers; ";
+      ar &BOOST_SERIALIZATION_NVP(m_Markers);
     }
 
   }; // MarkerGraph
@@ -2076,9 +2081,15 @@ namespace karto
 
     /**
      * Get marker link graph
-     * @return graph
+     * @return markerGraph
      */
     virtual MarkerGraph *GetMarkerGraph() const;
+
+     /**
+     * Get the map of the LocalizedMarkers created
+     * @return map of markers
+     */
+    virtual LocalizedMarkerMap GetMarkers() const;
 
     /**
      * Gets the sequential scan matcher

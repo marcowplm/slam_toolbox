@@ -151,7 +151,7 @@ void LoopClosureAssistant::publishGraph()
     m.id = it->first + 1;
     m.pose.position.x = it->second(0);
     m.pose.position.y = it->second(1);
-    // TODO Questo è un codice veloce per usare frecce orientate invece che sfere come marker delle posizioni (per vedere anche l'orientaento)
+    // TODO: Questo è un codice veloce per usare frecce orientate invece che sfere come marker delle posizioni (per vedere anche l'orientamento)
     /* Eigen::Quaterniond quat;
     quat = Eigen::AngleAxisd(0, Eigen::Vector3d::UnitX()) * 
            Eigen::AngleAxisd(0, Eigen::Vector3d::UnitY()) * 

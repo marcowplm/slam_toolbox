@@ -317,6 +317,11 @@ void CeresSolver::AddNode(karto::Vertex<karto::LocalizedRangeScan>* pVertex)
 void CeresSolver::AddNode(karto::Vertex<karto::LocalizedMarker>* pVertex)
 /*****************************************************************************/
 {
+  // store LocalizedMarker nodes
+  if (!pVertex)
+  {
+    return;
+  }
   std::cout << ">>>>>>>>>> CeresSolver::AddNode! (per ora è vuota)" << std::endl;
 }
 
@@ -521,7 +526,7 @@ std::vector<std::list<int>>* CeresSolver::getConstraints()
   
     return constraints_;
   
-  // TODO Questo pezzo di codice serve solo a stampare il vettore di liste constraints_
+  // TODO: Questo pezzo di codice serve solo a stampare il vettore di liste constraints_
   /* if (constraints_->size() == 0)
   {
     std::cout << "constraints is still empty!" << std::endl;
