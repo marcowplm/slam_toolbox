@@ -58,8 +58,7 @@ inline visualization_msgs::Marker toEdgeMarker(
   edge_marker.header.frame_id = frame;
   edge_marker.header.stamp = ros::Time::now();
   edge_marker.ns = ns;
-  edge_marker.type = visualization_msgs::Marker::LINE_STRIP;
-  edge_marker.pose.position.z = 0.0;
+  edge_marker.type = visualization_msgs::Marker::LINE_LIST;
   edge_marker.pose.orientation.w = 1.;
   edge_marker.scale.x = scale;
   edge_marker.color.r = 0.0;

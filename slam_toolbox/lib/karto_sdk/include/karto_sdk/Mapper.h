@@ -24,6 +24,7 @@
 #include <queue>
 
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 
 #include "tbb/parallel_for.h"
 #include "tbb/blocked_range.h"
@@ -150,9 +151,21 @@ namespace karto
     LinkInfo()
     {
     }
+
     LinkInfo(const Pose2 &rPose1, const Pose2 &rPose2, const Matrix3 &rCovariance)
     {
       Update(rPose1, rPose2, rCovariance);
+    }
+
+    /**
+     * Constructs a link between a marker pose (3D) and a scan pose (2D)
+     * @param rPose1
+     * @param rPose2
+     * @param rCovariance
+     */
+    LinkInfo(const Pose3 &rPose1, const Pose2 &rPose2, const Eigen::Matrix<double, 6, 6> &rCovariance)
+    {
+      Update3(rPose1, rPose2, rCovariance);
     }
 
     /**
@@ -171,7 +184,7 @@ namespace karto
      */
     void Update(const Pose2 &rPose1, const Pose2 &rPose2, const Matrix3 &rCovariance)
     {
-      m_Pose1 = rPose1;
+      m_Pose1 = Pose3(rPose1);
       m_Pose2 = rPose2;
 
       // transform second pose into the coordinate system of the first pose
@@ -186,10 +199,34 @@ namespace karto
     }
 
     /**
-     * Gets the first pose
-     * @return first pose
+     * Changes the link information to be the given parameters
+     * @param rPose1
+     * @param rPose2
+     * @param rCovariance
      */
-    inline const Pose2 &GetPose1()
+    void Update3(const Pose3 &rPose1, const Pose2 &rPose2, const Eigen::Matrix<double, 6, 6> &rCovariance)
+    {
+      m_Pose1 = rPose1;
+      m_Pose2 = rPose2;
+
+      // transform second pose into the coordinate system of the first pose
+      Eigen::Isometry3d transform = poseToIsometry(rPose1).inverse() * poseToIsometry(Pose3(rPose2));
+      m_PoseDifference3 = isometryToPose(transform);
+
+      // TODO: è qui solo per TEST
+      double dist = transform.translation().norm();
+      Eigen::Matrix<double, 6, 6> cov = Eigen::Matrix<double, 6, 6>::Identity();
+      cov(0,0) = cov(1,1) = cov(2,2) = (0.3*0.3);
+      cov(3,3) = cov(4,4) = cov(5,5)= 0.872;
+      cov = (1/pow(dist, 2))*cov;
+      m_Covariance3 = cov;
+    }
+
+    /**
+     * Gets the first pose (in 2D)
+     * @return first pose (in 2D)
+     */
+    inline const Pose3 &GetPose1()
     {
       return m_Pose1;
     }
@@ -213,19 +250,94 @@ namespace karto
     }
 
     /**
-     * Gets the link covariance
-     * @return link covariance
+     * Gets the pose difference (in 3D)
+     * @return pose difference (in 3D)
+     */
+    inline const Pose3 &GetPoseDifference3()
+    {
+      return m_PoseDifference3;
+    }
+
+    /**
+     * Gets the link covariance (in 2D)
+     * @return link covariance (in 2D)
      */
     inline const Matrix3 &GetCovariance()
     {
       return m_Covariance;
     }
 
+    /**
+     * Gets the link covariance (in 3D)
+     * @return link covariance (in 3D)
+     */
+    inline const Eigen::Matrix<double, 6, 6> &GetCovariance3()
+    {
+      return m_Covariance3;
+    }
+
   private:
-    Pose2 m_Pose1;
+    /**
+     * Converts a karto Quaternion in a Eigen Quaternion (normalized)
+     */
+    inline Eigen::Quaterniond quaternionKartoToEigen(const karto::Quaternion &quat_in)
+    {
+        Eigen::Quaterniond quat_out(quat_in.GetW(), quat_in.GetX(), quat_in.GetY(), quat_in.GetZ());
+        quat_out.normalize();
+        return quat_out;
+    };
+
+    /**
+     * Converts a Eigen Quaternion in a karto Quaternion
+     */
+    inline karto::Quaternion quaternionEigenToKarto(const Eigen::Quaterniond &quat_in)
+    {
+        karto::Quaternion quat_out;
+        quat_out.SetW(quat_in.w());
+        quat_out.SetX(quat_in.x());
+        quat_out.SetY(quat_in.y());
+        quat_out.SetZ(quat_in.z());
+        return quat_out;
+    };
+
+    /**
+     * Converts a karto Pose3 in a Eigen Isometry3d (Transform)
+     */
+    inline Eigen::Isometry3d poseToIsometry(const karto::Pose3 &pose_in)
+    {
+        Eigen::Isometry3d isometry_out;
+        isometry_out.linear() = (quaternionKartoToEigen(pose_in.GetOrientation())).toRotationMatrix();
+        isometry_out.translation() = Eigen::Vector3d(
+            pose_in.GetPosition().GetX(),
+            pose_in.GetPosition().GetY(),
+            pose_in.GetPosition().GetZ());   
+        
+        return isometry_out;
+    };
+
+    /**
+     * Converts a Eigen Isometry3d (Transform) in a karto Pose3
+     */
+    inline karto::Pose3 isometryToPose(const Eigen::Isometry3d &isometry_in)
+    {
+        Eigen::Vector3d translation = Eigen::Vector3d(isometry_in.translation());
+        Eigen::Quaterniond rotation(isometry_in.rotation());
+        rotation.normalize();
+
+        karto::Vector3<double> translation_out(translation.x(), translation.y(), translation.z());
+        karto::Quaternion rotation_out = quaternionEigenToKarto(rotation);
+        
+        karto::Pose3 pose_out(translation_out, rotation_out);
+        
+        return pose_out;
+    }; 
+
+    Pose3 m_Pose1;
     Pose2 m_Pose2;
     Pose2 m_PoseDifference;
     Matrix3 m_Covariance;
+    Pose3 m_PoseDifference3;
+    Eigen::Matrix<double, 6, 6> m_Covariance3;
 
     friend class boost::serialization::access;
     template <class Archive>
@@ -236,6 +348,7 @@ namespace karto
       ar &BOOST_SERIALIZATION_NVP(m_Pose2);
       ar &BOOST_SERIALIZATION_NVP(m_PoseDifference);
       ar &BOOST_SERIALIZATION_NVP(m_Covariance);
+      //ar &BOOST_SERIALIZATION_NVP(m_Covariance3);
     }
   }; // LinkInfo
 
@@ -585,7 +698,7 @@ namespace karto
      */
     inline void AddVertex(const Name &rName, Vertex<T> *pVertex)
     {
-      std::cout << "\nGraph<T>::AddVertex:\tName: " << rName.ToString() << "\tStateId: " << pVertex->GetObject()->GetStateId() << std::endl;
+      /*std::cout << "\nGraph<T>::AddVertex:\tName: " << rName.ToString() << "\tStateId: " << pVertex->GetObject()->GetStateId() << std::endl;*/
       m_Vertices[rName].insert({pVertex->GetObject()->GetStateId(), pVertex});
     }
 
@@ -929,14 +1042,221 @@ namespace karto
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
 
+  class MarkerEdge;
+
   /**
-   * Graph for markers
+   * Represents a vertex containing a Marker
    */
-  class KARTO_EXPORT MarkerGraph : public Graph<LocalizedMarker>
+  class MarkerVertex
+  {
+    friend class MarkerEdge;
+
+  public:
+    /**
+     * Constructs a vertex representing a LocalizedMarker
+     * @param pMarker
+     */
+    MarkerVertex()
+        : m_pMarker(NULL), m_Score(1.0)
+    {
+    }
+    MarkerVertex(LocalizedMarker *pMarker)
+        : m_pMarker(pMarker), m_Score(1.0)
+    {
+    }
+
+    /**
+     * Destructor
+     */
+    virtual ~MarkerVertex()
+    {
+    }
+
+    /**
+     * Gets edges adjacent to this vertex
+     * @return adjacent edges
+     */
+    inline const std::vector<MarkerEdge *> &GetMarkerEdges() const
+    {
+      return m_MarkerEdges;
+    }
+
+    /**
+     * Removes an edge at a position
+     */
+    inline void RemoveMarkerEdge(const int &idx)
+    {
+      m_MarkerEdges[idx] = NULL;
+      m_MarkerEdges.erase(m_MarkerEdges.begin() + idx);
+      return;
+    }
+
+    /**
+     * Gets score for vertex
+     * @return score
+     */
+    inline const double GetScore() const
+    {
+      return m_Score;
+    }
+
+    /**
+     * Sets score for vertex
+     */
+    inline void SetScore(const double score)
+    {
+      m_Score = score;
+    }
+
+    /**
+     * Gets the marker associated with this vertex
+     * @return the LocalizedMarker
+     */
+    inline LocalizedMarker *GetLocalizedMarker() const
+    {
+      return m_pMarker;
+    }
+
+    /**
+     * Deletes the marker held by this vertex
+     */
+    inline void RemoveLocalizedMarker()
+    {
+      m_pMarker = NULL;
+    }
+
+  private:
+    /**
+     * Adds the given marker edge to this vertex's edge list
+     * @param pMarkerEdge marker edge to add
+     */
+    inline void AddMarkerEdge(MarkerEdge *pMarkerEdge)
+    {
+      m_MarkerEdges.push_back(pMarkerEdge);
+    }
+
+    LocalizedMarker *m_pMarker;
+    std::vector<MarkerEdge*> m_MarkerEdges;
+    kt_double m_Score;
+
+    friend class boost::serialization::access;
+    template <class Archive>
+    void serialize(Archive &ar, const unsigned int version)
+    {
+      ar &BOOST_SERIALIZATION_NVP(m_pMarker);
+      ar &BOOST_SERIALIZATION_NVP(m_MarkerEdges);
+      ar &BOOST_SERIALIZATION_NVP(m_Score);
+    }
+
+  }; // MarkerVertex
+
+  ////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * Represents an edge between a marker vertex and a scan vertex
+   */
+  class MarkerEdge
   {
   public:
     /**
-     * Graph for graph SLAM
+     * Constructs an edge from the source to target vertex
+     * @param pSource
+     * @param pTarget
+     */
+    MarkerEdge()
+        : m_pSource(NULL), m_pTarget(NULL), m_pLabel(NULL)
+    {
+    }
+    MarkerEdge(MarkerVertex *pSource, Vertex<LocalizedRangeScan> *pTarget)
+        : m_pSource(pSource), m_pTarget(pTarget), m_pLabel(NULL)
+    {
+      m_pSource->AddMarkerEdge(this);
+      // N.B. I Vertex<LocalizedRangeScan> non hanno nessuna struttura che salvi i MarkerEdge di cui fanno parte
+    }
+
+    /**
+     * Destructor
+     */
+    virtual ~MarkerEdge()
+    {
+      m_pSource = NULL;
+      m_pTarget = NULL;
+
+      if (m_pLabel != NULL)
+      {
+        delete m_pLabel;
+        m_pLabel = NULL;
+      }
+    }
+
+  public:
+    /**
+     * Gets the source vertex
+     * @return source vertex
+     */
+    inline MarkerVertex *GetSource() const
+    {
+      return m_pSource;
+    }
+
+    /**
+     * Gets the target vertex
+     * @return target vertex
+     */
+    inline Vertex<LocalizedRangeScan> *GetTarget() const
+    {
+      return m_pTarget;
+    }
+
+    /**
+     * Gets the link info
+     * @return link info
+     */
+    inline EdgeLabel *GetLabel()
+    {
+      return m_pLabel;
+    }
+
+    /**
+     * Sets the link payload
+     * @param pLabel
+     */
+    inline void SetLabel(EdgeLabel *pLabel)
+    {
+      m_pLabel = pLabel;
+    }
+
+  private:
+    MarkerVertex *m_pSource;
+    Vertex<LocalizedRangeScan> *m_pTarget;
+    EdgeLabel *m_pLabel;
+
+    friend class boost::serialization::access;
+    template <class Archive>
+    void serialize(Archive &ar, const unsigned int version)
+    {
+      ar &BOOST_SERIALIZATION_NVP(m_pSource);
+      ar &BOOST_SERIALIZATION_NVP(m_pTarget);
+      ar &BOOST_SERIALIZATION_NVP(m_pLabel);
+    }
+  }; // class MarkerEdge
+
+  ////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * Augmented graph for markers
+   */
+  class KARTO_EXPORT MarkerGraph
+  {
+  public:
+    typedef std::map<Name, std::map<int, MarkerVertex*>> MarkerVertexMap;
+
+    /**
+     * Augmented graph for adding markers to graph SLAM
      * @param pMapper
      */
     MarkerGraph(Mapper *pMapper);
@@ -955,50 +1275,102 @@ namespace karto
      * Adds a vertex representing the given marker to the graph
      * @param pMarker
      */
-    Vertex<LocalizedMarker> *AddVertex(LocalizedMarker *pMarker);
+    MarkerVertex *AddMarkerVertex(LocalizedMarker *pMarker);
 
     /**
-     * Creates an edge between the source marker vertex and the target marker vertex if it
-     * does not already exist; otherwise return the existing edge
+     * Creates a marker edge between the source marker vertex and the target scan vertex if it
+     * does not already exist; otherwise return the existing marker edge
      * @param pSourceMarker
-     * @param pTargetMarker
+     * @param pTargetScan
      * @param rIsNewEdge set to true if the edge is new
-     * @return edge between source and target marker vertices
+     * @return edge between source and target scan vertices
      */
-    Edge<LocalizedMarker> *AddEdge(LocalizedMarker *pSourceMarker,
-                                   LocalizedMarker *pTargetMarker,
-                                   kt_bool &rIsNewEdge);
+    MarkerEdge *AddMarkerEdge(LocalizedMarker *pSourceMarker,
+                              LocalizedRangeScan *pTargetScan,
+                              kt_bool &rIsNewEdge);
 
-    LocalizedMarkerMap &GetLocalizedMarkers();
+    /**
+     * Gets the marker edges of this graph
+     * @return graph marker edges
+     */
+    inline const std::vector<MarkerEdge*> &GetMarkerEdges() const
+    {
+      return m_MarkerEdges;
+    }
+
+    /**
+     * Gets the marker vertices of this graph
+     * @return graph marker vertices
+     */
+    inline const MarkerVertexMap &GetMarkerVertices() const
+    {
+      return m_MarkerVertices;
+    } 
+
+    /**
+     * Adds an edge between the marker and the scan and labels the edge with the given mean and covariance
+     * @param pFromScan
+     * @param pToScan
+     * @param rMean
+     * @param rCovariance
+     */
+    void LinkMarkerToScan(LocalizedMarker *pFromMarker,
+                          LocalizedRangeScan *pToScan,
+                          const Eigen::Matrix<double, 6, 6> &rCovariance);
+
 
   private:
     /**
-     * Structure that hold LocalizedMarkers based on their id
+     * Gets the vertex associated with the given marker
+     * @param pMarker
+     * @return vertex of marker
      */
-    LocalizedMarkerMap m_Markers;
+    inline MarkerVertex *GetMarkerVertex(LocalizedMarker *pMarker)
+    {
+      Name rName = pMarker->GetSensorName();
+      std::map<int, MarkerVertex*>::iterator it = m_MarkerVertices[rName].find(pMarker->GetStateId());
+      if (it != m_MarkerVertices[rName].end())
+      {
+        return it->second;
+      }
+      else
+      {
+        std::cout << "GetMarkerVertex: Failed to get vertex, idx " << pMarker->GetStateId() << " is not in m_MarkerVertices." << std::endl;
+        return nullptr;
+      }
+    }
+
+    /**
+     * Map of names to vector of marker vertices
+     */
+    MarkerVertexMap m_MarkerVertices;
+
+    /**
+     * Edges of this graph
+     */
+    std::vector<MarkerEdge*> m_MarkerEdges;
 
     /**
      * Mapper of this graph
      */
     Mapper *m_pMapper;
 
-     /**
+    /**
      * Serialization: class MarkerGraph
      */
     friend class boost::serialization::access;
     template <class Archive>
     void serialize(Archive &ar, const unsigned int version)
     {
-      std::cout << "MarkerGraph <- Graph; ";
-      ar &BOOST_SERIALIZATION_BASE_OBJECT_NVP(Graph<LocalizedMarker>);
+      std::cout << "MarkerGraph <- m_MarkerEdges; ";
+      ar &BOOST_SERIALIZATION_NVP(m_MarkerEdges);
+      std::cout << "Graph <- m_MarkerVertices\n";
+      ar &BOOST_SERIALIZATION_NVP(m_MarkerVertices);
       std::cout << "MarkerGraph <- m_pMapper; ";
       ar &BOOST_SERIALIZATION_NVP(m_pMapper);
-      std::cout << "MarkerGraph <- m_Markers; ";
-      ar &BOOST_SERIALIZATION_NVP(m_Markers);
     }
 
   }; // MarkerGraph
-
 
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -1013,7 +1385,7 @@ namespace karto
     /**
      * Vector of id-pose pairs
      */
-    typedef std::vector<std::pair<kt_int32s, Pose2>> IdPoseVector;
+    typedef std::vector<std::pair<kt_int32s, Pose3>> IdPoseVector;
 
     /**
      * Default constructor
@@ -1051,7 +1423,7 @@ namespace karto
     /**
      * Adds a node of type LocalizedMarker to the solver
      */
-    virtual void AddNode(Vertex<LocalizedMarker> * /*pVertex*/)
+    virtual void AddNode(MarkerVertex* /*pMarkerVertex*/)
     {
     }
 
@@ -1072,7 +1444,7 @@ namespace karto
     /**
      * Adds a constraint of type LocalizedMarker to the solver
      */
-    virtual void AddConstraint(Edge<LocalizedMarker> * /*pEdge*/)
+    virtual void AddConstraint(MarkerEdge* /*pMarkerEdge*/)
     {
     }
 
@@ -1100,15 +1472,23 @@ namespace karto
     /**
      * Get graph stored
      */
-    virtual std::unordered_map<int, Eigen::Vector3d> *getGraph()
+    virtual std::unordered_map<int, karto::Pose3> *getGraph()
     {
       std::cout << "getGraph method not implemented for this solver type. Graph visualization unavailable." << std::endl;
     }
 
     /**
-     * Get list od constraints stored
+     * Get graph of apriltag markers
      */
-    virtual std::vector<std::list<int>> *getConstraints()
+    virtual std::unordered_map<int, karto::Pose3> *getMarkers()
+    {
+      std::cout << "getMarkers method not implemented for this solver type. Graph visualization unavailable." << std::endl;
+    }
+
+    /**
+     * Get list of constraints stored
+     */
+    virtual std::map<int, std::list<int>> getConstraints()
     {
       std::cout << "getConstraints method not implemented for this solver type. Graph visualization unavailable." << std::endl;
     }
@@ -1385,6 +1765,7 @@ namespace karto
     }
   }; // CorrelationGrid
   BOOST_SERIALIZATION_ASSUME_ABSTRACT(CorrelationGrid)
+
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -1578,7 +1959,6 @@ namespace karto
       ar &BOOST_SERIALIZATION_NVP(m_searchAngleResolution);
       ar &BOOST_SERIALIZATION_NVP(m_nAngles);
       ar &BOOST_SERIALIZATION_NVP(m_searchAngleResolution);
-      ;
       ar &BOOST_SERIALIZATION_NVP(m_doPenalize);
       kt_int32u poseResponseSize = static_cast<kt_int32u>(m_xPoses.size() * m_yPoses.size() * m_nAngles);
       if (Archive::is_loading::value)
@@ -1740,6 +2120,16 @@ namespace karto
      */
     void Clear();
 
+    /**
+     * Gets the next scan id. N.B. Corrisponde allo UniqueId di Scan e Marker!
+     * @return next scan id
+     */
+    kt_int32s GetNextScanId()
+    {
+      m_NextScanId++;
+      return m_NextScanId-1;
+    }
+
   private:
     /**
      * Get scan manager for localized range scan
@@ -1789,6 +2179,87 @@ namespace karto
 
     std::map<int, LocalizedRangeScan *> m_Scans;
   }; // MapperSensorManager
+
+  ////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * Manages the marker data
+   */
+  class KARTO_EXPORT MarkerManager
+  {
+  public:
+    /**
+     * Default constructor
+     */
+    MarkerManager()
+    {
+    }
+
+    /**
+     * Destructor
+     */
+    virtual ~MarkerManager()
+    {
+      Clear();
+    }
+
+    /**
+     * Adds marker to vector of processed markers tagging marker with given unique id
+     * @param pMarker
+     * @param uniqueId
+     */
+    inline void AddMarker(LocalizedMarker *pMarker, kt_int32s uniqueId);
+  
+    /**
+     * Gets list of buffered markers
+     * @return markers
+     */
+    LocalizedMarkerMap &GetMarkers();
+
+    /**
+     * Gets the marker with the given unique id
+     * @param id
+     * @return marker
+     */
+    inline LocalizedMarker *GetMarker(kt_int32s id)
+    {
+      std::map<int, LocalizedMarker *>::iterator it = m_Markers.find(id);
+      if (it != m_Markers.end())
+      {
+        return it->second;
+      }
+      else
+      {
+        std::cout << "GetMarker: id " << id << " does not exist in m_Markers, cannot retrieve it." << std::endl;
+        return nullptr;
+      }
+    }
+
+    /**
+     * Deletes data from this buffer
+     */
+    void Clear();
+
+  private:
+    /**
+     * Serialization: class MarkerManager
+     */
+    friend class boost::serialization::access;
+    template <class Archive>
+    void serialize(Archive &ar, const unsigned int version)
+    {
+      std::cout << "MarkerManager <- m_Markers\n";
+      ar &BOOST_SERIALIZATION_NVP(m_Markers);
+    }
+
+    /**
+     * Struct that hold LocalizedMarkers based on their id
+     */
+    LocalizedMarkerMap m_Markers; 
+
+  }; // MarkerManager
 
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -2039,7 +2510,7 @@ namespace karto
     kt_bool ProcessLocalization(LocalizedRangeScan *pScan);
     kt_bool RemoveNodeFromGraph(Vertex<LocalizedRangeScan> *);
 
-    kt_bool ProcessMarker(LocalizedMarker *pMarker);
+    kt_bool ProcessMarker(LocalizedMarker *pMarker, LocalizedRangeScan *pScan, int &UniqueId);
 
     /**
      * Returns all processed scans added to the mapper.
@@ -2085,12 +2556,6 @@ namespace karto
      */
     virtual MarkerGraph *GetMarkerGraph() const;
 
-     /**
-     * Get the map of the LocalizedMarkers created
-     * @return map of markers
-     */
-    virtual LocalizedMarkerMap GetMarkers() const;
-
     /**
      * Gets the sequential scan matcher
      * @return sequential scan matcher
@@ -2110,6 +2575,15 @@ namespace karto
     inline MapperSensorManager *GetMapperSensorManager() const
     {
       return m_pMapperSensorManager;
+    }
+
+    /**
+     * Gets the marker manager
+     * @return marker manager
+     */
+    inline MarkerManager *GetMarkerManager() const
+    {
+      return m_pMarkerManager;
     }
 
     /**
@@ -2199,6 +2673,7 @@ namespace karto
     ScanMatcher *m_pSequentialScanMatcher;
 
     MapperSensorManager *m_pMapperSensorManager;
+    MarkerManager *m_pMarkerManager;
 
     MapperGraph *m_pGraph;
     MarkerGraph *m_pMarkerGraph;
@@ -2406,6 +2881,8 @@ namespace karto
       ar &BOOST_SERIALIZATION_NVP(m_pMarkerGraph);
       std::cout << "Mapper <- m_pMapperSensorManager\n";
       ar &BOOST_SERIALIZATION_NVP(m_pMapperSensorManager);
+      std::cout << "Mapper <- m_pMarkerManager\n";
+      ar &BOOST_SERIALIZATION_NVP(m_pMarkerManager);
       std::cout << "Mapper <- m_Listeners\n";
       ar &BOOST_SERIALIZATION_NVP(m_Listeners);
       ar &BOOST_SERIALIZATION_NVP(m_pUseScanMatching);

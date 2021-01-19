@@ -30,16 +30,17 @@
 #include "karto_sdk/Mapper.h"
 
 BOOST_CLASS_EXPORT(karto::MapperGraph);
-BOOST_CLASS_EXPORT(karto::MarkerGraph);
 BOOST_CLASS_EXPORT(karto::Graph<karto::LocalizedRangeScan>);
 BOOST_CLASS_EXPORT(karto::EdgeLabel);
 BOOST_CLASS_EXPORT(karto::LinkInfo);
 BOOST_CLASS_EXPORT(karto::Edge<karto::LocalizedRangeScan>);
 BOOST_CLASS_EXPORT(karto::Vertex<karto::LocalizedRangeScan>);
-BOOST_CLASS_EXPORT(karto::Edge<karto::LocalizedMarker>);
-BOOST_CLASS_EXPORT(karto::Vertex<karto::LocalizedMarker>);
 BOOST_CLASS_EXPORT(karto::MapperSensorManager);
 BOOST_CLASS_EXPORT(karto::Mapper);
+BOOST_CLASS_EXPORT(karto::MarkerEdge);
+BOOST_CLASS_EXPORT(karto::MarkerVertex);
+BOOST_CLASS_EXPORT(karto::MarkerGraph);
+BOOST_CLASS_EXPORT(karto::MarkerManager);
 namespace karto
 {
 
@@ -292,6 +293,7 @@ namespace karto
    */
   void MapperSensorManager::AddScan(LocalizedRangeScan *pScan)
   {
+    // N.B.: m_NextScanId corrisponde allo UniqueId dello scan!
     GetScanManager(pScan)->AddScan(pScan, m_NextScanId);
     m_Scans.insert({m_NextScanId, pScan});
     m_NextScanId++;
@@ -393,6 +395,44 @@ namespace karto
     }
 
     m_ScanManagers.clear();
+  }
+
+  ////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////
+
+  /**
+   * Adds marker to vector of processed markers tagging marker with given unique id
+   * @param pMarker
+   * @param uniqueId
+   */
+  inline void MarkerManager::AddMarker(LocalizedMarker *pMarker, kt_int32s uniqueId)
+  {
+    // assign state id to marker.  N.B.: StateId is equivalent to TagID!!!!
+    pMarker->SetStateId(pMarker->GetID());
+
+    // assign unique id to marker (continuando la numerazione univoca degli scan)
+    pMarker->SetUniqueId(uniqueId);
+
+    // add it to marker buffer
+    m_Markers.insert({pMarker->GetUniqueId(), pMarker});
+  }
+
+  /**
+   * Gets list of buffered markers
+   * @return markers
+   */
+  LocalizedMarkerMap &MarkerManager::GetMarkers()
+  {
+    return m_Markers;
+  }
+
+  /**
+   * Deletes data from this buffer
+   */
+  void MarkerManager::Clear()
+  {
+    m_Markers.clear();
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -1977,20 +2017,26 @@ namespace karto
     {
       pSolver->Compute();
 
-      /* std::cout << "\nOutputting CorrectedPoses (Pose2D) after optimization: -----------------------" << std::endl; */
+      /* std::cout << "\nPrinting CorrectedPoses (Pose2D) after optimization:" << std::endl; */
       const_forEach(ScanSolver::IdPoseVector, &pSolver->GetCorrections())
       {
         LocalizedRangeScan *scan = m_pMapper->m_pMapperSensorManager->GetScan(iter->first);
         if (scan == NULL)
         {
+          LocalizedMarker *marker = m_pMapper->m_pMarkerManager->GetMarker(iter->first);
+          if (marker != NULL)
+          {
+            marker->SetCorrectedPose(iter->second);
+          }
           continue;
         }
         /*  std::cout << "\nID scan: " << iter->first << std::endl
                   << "Before:\t" << scan->GetCorrectedPose() << std::endl; */
-        scan->SetSensorPose(iter->second);
+        karto::Pose2 corrected_pose(iter->second);
+        scan->SetSensorPose(corrected_pose);
         /*  std::cout << "After:\t" << scan->GetCorrectedPose() << std::endl; */
       }
-      /* std::cout << "------------------------------------------------------------------------------" << std::endl; */
+      /* std::cout << "------------------------------------------------------" << std::endl; */
       pSolver->Clear();
     }
   }
@@ -2008,28 +2054,78 @@ namespace karto
   {
   }
 
-  Vertex<LocalizedMarker> *MarkerGraph::AddVertex(LocalizedMarker *pMarker)
+  MarkerVertex *MarkerGraph::AddMarkerVertex(LocalizedMarker *pMarker)
   {
     assert(pMarker);
 
     if (pMarker != NULL)
     {
-      m_Markers.insert({pMarker->GetStateId(), pMarker});
-
-      Vertex<LocalizedMarker> *pVertex = new Vertex<LocalizedMarker>(pMarker);
-      Graph<LocalizedMarker>::AddVertex(pMarker->GetSensorName(), pVertex);
-
+      MarkerVertex *pVertex = new MarkerVertex(pMarker);
+      m_MarkerVertices[pMarker->GetSensorName()].insert({pVertex->GetLocalizedMarker()->GetStateId(), pVertex});
       if (m_pMapper->m_pScanOptimizer != NULL)
       {
         m_pMapper->m_pScanOptimizer->AddNode(pVertex);
+
       }
       return pVertex;
     }
   }
 
-  LocalizedMarkerMap &MarkerGraph::GetLocalizedMarkers()
+  MarkerEdge *MarkerGraph::AddMarkerEdge(LocalizedMarker *pSourceMarker,
+                                         LocalizedRangeScan *pTargetScan,
+                                         kt_bool &rIsNewEdge)
   {
-    return m_Markers;
+    std::map<int, MarkerVertex*>::iterator v1 = m_MarkerVertices[pSourceMarker->GetSensorName()].find(pSourceMarker->GetStateId());
+
+    MapperGraph::VertexMap mapperVertices = m_pMapper->GetGraph()->GetVertices();
+    std::map<int, Vertex<LocalizedRangeScan> *>::iterator v2 = mapperVertices[pTargetScan->GetSensorName()].find(pTargetScan->GetStateId());
+
+    if (v1 == m_MarkerVertices[pSourceMarker->GetSensorName()].end() ||
+        v2 == mapperVertices[pTargetScan->GetSensorName()].end())
+    {
+      std::cout << "AddMarkerEdge: At least one vertex is invalid." << std::endl;
+      return NULL;
+    }
+
+    // see if edge already exists
+    const_forEach(std::vector<MarkerEdge*>, &(v1->second->GetMarkerEdges()))
+    {
+      MarkerEdge *pMarkerEdge = *iter;
+
+      if (pMarkerEdge->GetTarget() == v2->second)
+      {
+        rIsNewEdge = false;
+        return pMarkerEdge;
+      }
+    }
+
+    MarkerEdge *pMarkerEdge = new MarkerEdge(v1->second, v2->second);
+    m_MarkerEdges.push_back(pMarkerEdge);
+    rIsNewEdge = true;
+    return pMarkerEdge;
+  }
+
+  // N.B.: quando viene costruito il link, rMean diventa la rPose2, mentre la rPose1 è la SensorPose dello scan (che però per me dovrebbe essere il marker)
+  void MarkerGraph::LinkMarkerToScan(LocalizedMarker *pFromMarker, LocalizedRangeScan *pToScan,
+                                     const Eigen::Matrix<double, 6, 6> &rCovariance)
+  {
+    kt_bool isNewEdge = true;
+    MarkerEdge *pMarkerEdge = AddMarkerEdge(pFromMarker, pToScan, isNewEdge);
+
+    if (pMarkerEdge == NULL)
+    {
+      return;
+    }
+
+    // only attach link information if the marker edge is new
+    if (isNewEdge == true)
+    {
+      pMarkerEdge->SetLabel(new LinkInfo(pFromMarker->GetCorrectedPose(), pToScan->GetCorrectedPose(), rCovariance));
+      if (m_pMapper->m_pScanOptimizer != NULL)
+      {
+        m_pMapper->m_pScanOptimizer->AddConstraint(pMarkerEdge);
+      }
+    }
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -2040,7 +2136,7 @@ namespace karto
    * Default constructor
    */
   Mapper::Mapper()
-      : Module("Mapper"), m_Initialized(false), m_pSequentialScanMatcher(NULL), m_pMapperSensorManager(NULL), m_pGraph(NULL), m_pMarkerGraph(NULL), m_pScanOptimizer(NULL)
+      : Module("Mapper"), m_Initialized(false), m_pSequentialScanMatcher(NULL), m_pMapperSensorManager(NULL), m_pMarkerManager(NULL), m_pGraph(NULL), m_pMarkerGraph(NULL), m_pScanOptimizer(NULL)
   {
     InitializeParameters();
   }
@@ -2049,7 +2145,7 @@ namespace karto
    * Default constructor
    */
   Mapper::Mapper(const std::string &rName)
-      : Module(rName), m_Initialized(false), m_pSequentialScanMatcher(NULL), m_pMapperSensorManager(NULL), m_pGraph(NULL), m_pMarkerGraph(NULL), m_pScanOptimizer(NULL)
+      : Module(rName), m_Initialized(false), m_pSequentialScanMatcher(NULL), m_pMapperSensorManager(NULL), m_pMarkerManager(NULL), m_pGraph(NULL), m_pMarkerGraph(NULL), m_pScanOptimizer(NULL)
   {
     InitializeParameters();
   }
@@ -2062,6 +2158,7 @@ namespace karto
     Reset();
 
     delete m_pMapperSensorManager;
+    delete m_pMarkerManager;
   }
 
   void Mapper::InitializeParameters()
@@ -2589,6 +2686,8 @@ namespace karto
 
       m_pMapperSensorManager = new MapperSensorManager(m_pScanBufferSize->GetValue(),
                                                        m_pScanBufferMaximumScanDistance->GetValue());
+                                                       
+      m_pMarkerManager = new MarkerManager();
 
       m_pGraph = new MapperGraph(this, rangeThreshold);
 
@@ -2635,6 +2734,11 @@ namespace karto
     {
       delete m_pMapperSensorManager;
       m_pMapperSensorManager = NULL;
+    }
+    if (m_pMarkerManager)
+    {
+      delete m_pMarkerManager;
+      m_pMarkerManager = NULL;
     }
     m_Initialized = false;
     while (!m_LocalizationScanVertices.empty())
@@ -3068,15 +3172,24 @@ namespace karto
     return ProcessAgainstNode(pScan, 0);
   }
 
-  kt_bool Mapper::ProcessMarker(LocalizedMarker *pMarker)
+  kt_bool Mapper::ProcessMarker(LocalizedMarker *pMarker, LocalizedRangeScan *pScan, int &UniqueId)
   {
     if (pMarker != NULL)
     {
+
+      // add scan to buffer and assign id (the id follows the enumeration of the unique ids of the scans)
+      UniqueId = m_pMapperSensorManager->GetNextScanId();
+      m_pMarkerManager->AddMarker(pMarker, UniqueId); 
+
       if (m_pUseScanMatching->GetValue())
       {
-        // add to graph
-        m_pMarkerGraph->AddVertex(pMarker);
-        // m_pMarkerGraph->AddEdges(pMarker, covariance);
+        // add to marker graph
+        m_pMarkerGraph->AddMarkerVertex(pMarker);
+
+        Eigen::Matrix<double, 6, 6> rCovariance = Eigen::Matrix<double, 6, 6>::Identity();
+        m_pMarkerGraph->LinkMarkerToScan(pMarker, pScan, rCovariance);
+
+        CorrectPoses();
       }
       return true;
     }
@@ -3240,11 +3353,6 @@ namespace karto
   MarkerGraph *Mapper::GetMarkerGraph() const
   {
     return m_pMarkerGraph;
-  }
-
-  LocalizedMarkerMap Mapper::GetMarkers() const
-  {
-    return m_pMarkerGraph->GetLocalizedMarkers();
   }
 
   ScanMatcher *Mapper::GetSequentialScanMatcher() const

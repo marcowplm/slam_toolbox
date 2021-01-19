@@ -6154,8 +6154,6 @@ namespace karto
         : SensorData(rSensorName), m_ID(rID), m_OdometricPose(rPose)
     {
       assert(rSensorName.ToString() != "");
-      this->SetStateId(rID);
-      this->SetUniqueId(rID);
       std::cout << "LocalizedMarker with ID: " << rID << " created successfully!!" << std::endl;
     }
 
@@ -6212,6 +6210,15 @@ namespace karto
     inline void SetCorrectedPose(const Pose3 &rPose)
     {
       m_CorrectedPose = rPose;
+    }
+
+    /**
+     * Gets the ID of the marker (derived from Apriltag)
+     * @return tag ID
+     */
+    inline const kt_int32u GetID() const
+    {
+      return m_ID;
     }
 
   private:

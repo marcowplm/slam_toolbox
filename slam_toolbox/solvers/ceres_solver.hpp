@@ -11,6 +11,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 
 #include <karto_sdk/Mapper.h>
@@ -40,11 +41,12 @@ public:
   virtual void Reset();
 
   virtual void AddNode(karto::Vertex<karto::LocalizedRangeScan>* pVertex);
-  virtual void AddNode(karto::Vertex<karto::LocalizedMarker>* pVertex);
+  virtual void AddNode(karto::MarkerVertex* pMarkerVertex);
   virtual void AddConstraint(karto::Edge<karto::LocalizedRangeScan>* pEdge); 
-  virtual void AddConstraint(karto::Edge<karto::LocalizedMarker>* pEdge);
-  virtual std::unordered_map<int, Eigen::Vector3d>* getGraph();
-  virtual std::vector<std::list<int>>* getConstraints();
+  virtual void AddConstraint(karto::MarkerEdge* pMarkerEdge);
+  virtual std::unordered_map<int, karto::Pose3>* getGraph();
+  virtual std::unordered_map<int, karto::Pose3>* getMarkers();
+  virtual std::map<int, std::list<int>> getConstraints();
   virtual void RemoveNode(kt_int32s id);
   virtual void RemoveConstraint(kt_int32s sourceId, kt_int32s targetId);
 
@@ -64,7 +66,7 @@ private:
   bool was_constant_set_, debug_logging_;
 
   // graph
-  std::unordered_map<int, Eigen::Vector3d>* nodes2d_;
+  std::unordered_map<int, karto::Pose3>* nodes_;
   std::unordered_map<size_t, ceres::ResidualBlockId>* blocks_;
   std::unordered_map<int, Eigen::Vector3d>::iterator first_node_;
   boost::mutex nodes_mutex_;
@@ -72,7 +74,8 @@ private:
 
   std::unordered_map<int, CeresPose3d>* nodes3d_;
   std::unordered_map<int, CeresPose3d>::iterator first_node3d_;
-  std::vector<std::list<int>>* constraints_;
+  std::map<int, std::list<int>> constraints_;
+  std::unordered_set<int> marker_ids_;
 
 };
 

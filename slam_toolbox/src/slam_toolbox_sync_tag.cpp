@@ -108,10 +108,10 @@ namespace slam_toolbox
 
     VerticeMap mapper_vertices = smapper_->getMapper()->GetGraph()->GetVertices();
     ScanMap scan_vertices = mapper_vertices.find(karto::Name("Custom Described Lidar"))->second;
-    int last_vertex_id = scan_vertices.rbegin()->first;
-    karto::Pose2 last_vertex_pose = scan_vertices.rbegin()->second->GetObject()->GetCorrectedPose();
+    // int last_vertex_id = scan_vertices.rbegin()->first;
+    // karto::Pose2 last_vertex_pose = scan_vertices.rbegin()->second->GetObject()->GetCorrectedPose();
 
-    if (tag_assistant_->processDetection(last_vertex_id, last_vertex_pose, detection_array))
+    if (tag_assistant_->processDetection(scan_vertices.rbegin()->second, detection_array))
     {
       // tag_assistant_->publishLinks();
       // tag_assistant_->publishMarkerGraph();

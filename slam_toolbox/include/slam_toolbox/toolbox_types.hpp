@@ -121,18 +121,8 @@ typedef std::map<int, karto::Vertex<karto::LocalizedRangeScan>*> ScanMap;
 typedef std::vector<karto::Vertex<karto::LocalizedRangeScan>*> ScanVector;
 typedef slam_toolbox_msgs::DeserializePoseGraph::Request procType;
 
-typedef std::unordered_map<int, Eigen::Vector3d>::iterator GraphIterator;
-
-// TODO: Inutile perchè sto usando CeresPose3d per le Pose3D. Lascio solo per scaramanzia
-// typedef std::unordered_map<int, karto::Pose3>::iterator GraphIterator3;
-
-typedef std::unordered_map<int, Eigen::Vector3d>::const_iterator ConstGraphIterator;
-
-// TODO: Inutile perchè sto usando CeresPose3d per le Pose3D. Lascio solo per scaramanzia
-// typedef std::unordered_map<int, karto::Pose3>::const_iterator ConstGraphIterator3;
-
-typedef std::vector<std::list<int>>::iterator ConstraintsIterator;
-typedef std::list<int>::iterator ListIterator;
+typedef std::unordered_map<int, karto::Pose3>::iterator GraphIterator;
+typedef std::unordered_map<int, karto::Pose3>::const_iterator ConstGraphIterator;
 
 }  // end namespace
 

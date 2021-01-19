@@ -202,6 +202,27 @@ struct CeresPose3d
 
     return euler(2); 
   }
+
+  karto::Pose3 ToKartoPose3() const
+  {
+    karto::Pose3 karto_pose;
+    karto_pose.SetPosition(karto::Vector3<kt_double>(p.x(), p.y(), p.z()));
+    karto_pose.SetOrientation(karto::Quaternion(q.x(), q.y(), q.z(), q.w()));
+
+    return karto_pose;
+  }
+
+  /**
+   * Write this CeresPose3d onto output stream
+   * @param rStream output stream
+   * @param rCeresPose3d
+   */
+  friend inline std::ostream &operator<<(std::ostream &rStream, const CeresPose3d &rCeresPose3d)
+  {
+    rStream << "Position:    " << rCeresPose3d.p.transpose() << std::endl 
+            << "Orientation: " << rCeresPose3d.q.coeffs().transpose();
+    return rStream;
+  }
   
 };
 
