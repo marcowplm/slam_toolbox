@@ -18,8 +18,8 @@ namespace tag_assistant
   using namespace ::toolbox_types;
 
   /**
-     * Converts a geometry_msgs Pose in a karto Pose3
-     */
+   * Converts a geometry_msgs Pose in a karto Pose3
+   */
   inline karto::Pose3 poseGeometryToKarto(const geometry_msgs::Pose &pose_in)
   {
     karto::Vector3 position_out(pose_in.position.x, pose_in.position.y, pose_in.position.z);
@@ -30,8 +30,8 @@ namespace tag_assistant
   };
 
   /**
-     * Converts a karto Pose3 in a geometry_msgs Pose
-     */
+   * Converts a karto Pose3 in a geometry_msgs Pose
+   */
   inline geometry_msgs::Pose poseKartoToGeometry(const karto::Pose3 &pose_in)
   {
     geometry_msgs::Point position_out;
@@ -52,8 +52,8 @@ namespace tag_assistant
   };
 
   /**
-     * Converts a karto Quaternion in a Eigen Quaternion (normalized)
-     */
+   * Converts a karto Quaternion in a Eigen Quaternion (normalized)
+   */
   inline Eigen::Quaterniond quaternionKartoToEigen(const karto::Quaternion &quat_in)
   {
     Eigen::Quaterniond quat_out(quat_in.GetW(), quat_in.GetX(), quat_in.GetY(), quat_in.GetZ());
@@ -75,8 +75,8 @@ namespace tag_assistant
   };
 
   /**
-     * Converts a Eigen Isometry3d (Transform) in a karto Pose3
-     */
+   * Converts a Eigen Isometry3d (Transform) in a karto Pose3
+   */
   inline karto::Pose3 isometryEigenToPoseKarto(const Eigen::Isometry3d &isometry_in)
   {
     Eigen::Vector3d translation = Eigen::Vector3d(isometry_in.translation());
@@ -92,12 +92,13 @@ namespace tag_assistant
   };
 
   /**
-     * Converts a karto Pose3 in a Eigen Isometry3d (Transform)
-     */
+   * Converts a karto Pose3 in a Eigen Isometry3d (Transform)
+   */
   inline Eigen::Isometry3d poseKartoToEigenIsometry(const karto::Pose3 &pose_in)
   {
     Eigen::Isometry3d isometry_out;
-    isometry_out.linear() = (quaternionKartoToEigen(pose_in.GetOrientation())).toRotationMatrix();
+    Eigen::Quaterniond quat_out = quaternionKartoToEigen(pose_in.GetOrientation()); 
+    isometry_out.linear() = quat_out.toRotationMatrix();
     isometry_out.translation() = Eigen::Vector3d(
         pose_in.GetPosition().GetX(),
         pose_in.GetPosition().GetY(),
@@ -122,6 +123,7 @@ namespace tag_assistant
     karto::Camera *getCamera();
 
     void publishMarkerGraph();
+    void publishLinks();
     bool processDetection(const karto::Vertex<karto::LocalizedRangeScan> *last_vertex,
                           const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array);
 
@@ -137,6 +139,7 @@ namespace tag_assistant
     tf2_ros::Buffer *tf_;
     ros::NodeHandle &nh_;
     ros::Publisher tag_publisher_;
+    ros::Publisher link_publisher_;
     std::unique_ptr<tf2_ros::TransformBroadcaster> tfB_;
 
     karto::Mapper *mapper_;

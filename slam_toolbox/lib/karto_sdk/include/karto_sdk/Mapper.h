@@ -158,17 +158,6 @@ namespace karto
     }
 
     /**
-     * Constructs a link between a marker pose (3D) and a scan pose (2D)
-     * @param rPose1
-     * @param rPose2
-     * @param rCovariance
-     */
-    LinkInfo(const Pose3 &rPose1, const Pose2 &rPose2, const Eigen::Matrix<double, 6, 6> &rCovariance)
-    {
-      Update3(rPose1, rPose2, rCovariance);
-    }
-
-    /**
      * Destructor
      */
     virtual ~LinkInfo()
@@ -184,7 +173,7 @@ namespace karto
      */
     void Update(const Pose2 &rPose1, const Pose2 &rPose2, const Matrix3 &rCovariance)
     {
-      m_Pose1 = Pose3(rPose1);
+      m_Pose1 = rPose1;
       m_Pose2 = rPose2;
 
       // transform second pose into the coordinate system of the first pose
@@ -199,34 +188,10 @@ namespace karto
     }
 
     /**
-     * Changes the link information to be the given parameters
-     * @param rPose1
-     * @param rPose2
-     * @param rCovariance
+     * Gets the first pose 
+     * @return first pose 
      */
-    void Update3(const Pose3 &rPose1, const Pose2 &rPose2, const Eigen::Matrix<double, 6, 6> &rCovariance)
-    {
-      m_Pose1 = rPose1;
-      m_Pose2 = rPose2;
-
-      // transform second pose into the coordinate system of the first pose
-      Eigen::Isometry3d transform = poseToIsometry(rPose1).inverse() * poseToIsometry(Pose3(rPose2));
-      m_PoseDifference3 = isometryToPose(transform);
-
-      // TODO: è qui solo per TEST
-      double dist = transform.translation().norm();
-      Eigen::Matrix<double, 6, 6> cov = Eigen::Matrix<double, 6, 6>::Identity();
-      cov(0,0) = cov(1,1) = cov(2,2) = (0.3*0.3);
-      cov(3,3) = cov(4,4) = cov(5,5)= 0.872;
-      cov = (1/pow(dist, 2))*cov;
-      m_Covariance3 = cov;
-    }
-
-    /**
-     * Gets the first pose (in 2D)
-     * @return first pose (in 2D)
-     */
-    inline const Pose3 &GetPose1()
+    inline const Pose2 &GetPose1()
     {
       return m_Pose1;
     }
@@ -250,94 +215,19 @@ namespace karto
     }
 
     /**
-     * Gets the pose difference (in 3D)
-     * @return pose difference (in 3D)
-     */
-    inline const Pose3 &GetPoseDifference3()
-    {
-      return m_PoseDifference3;
-    }
-
-    /**
-     * Gets the link covariance (in 2D)
-     * @return link covariance (in 2D)
+     * Gets the link covariance
+     * @return link covariance
      */
     inline const Matrix3 &GetCovariance()
     {
       return m_Covariance;
     }
 
-    /**
-     * Gets the link covariance (in 3D)
-     * @return link covariance (in 3D)
-     */
-    inline const Eigen::Matrix<double, 6, 6> &GetCovariance3()
-    {
-      return m_Covariance3;
-    }
-
   private:
-    /**
-     * Converts a karto Quaternion in a Eigen Quaternion (normalized)
-     */
-    inline Eigen::Quaterniond quaternionKartoToEigen(const karto::Quaternion &quat_in)
-    {
-        Eigen::Quaterniond quat_out(quat_in.GetW(), quat_in.GetX(), quat_in.GetY(), quat_in.GetZ());
-        quat_out.normalize();
-        return quat_out;
-    };
-
-    /**
-     * Converts a Eigen Quaternion in a karto Quaternion
-     */
-    inline karto::Quaternion quaternionEigenToKarto(const Eigen::Quaterniond &quat_in)
-    {
-        karto::Quaternion quat_out;
-        quat_out.SetW(quat_in.w());
-        quat_out.SetX(quat_in.x());
-        quat_out.SetY(quat_in.y());
-        quat_out.SetZ(quat_in.z());
-        return quat_out;
-    };
-
-    /**
-     * Converts a karto Pose3 in a Eigen Isometry3d (Transform)
-     */
-    inline Eigen::Isometry3d poseToIsometry(const karto::Pose3 &pose_in)
-    {
-        Eigen::Isometry3d isometry_out;
-        isometry_out.linear() = (quaternionKartoToEigen(pose_in.GetOrientation())).toRotationMatrix();
-        isometry_out.translation() = Eigen::Vector3d(
-            pose_in.GetPosition().GetX(),
-            pose_in.GetPosition().GetY(),
-            pose_in.GetPosition().GetZ());   
-        
-        return isometry_out;
-    };
-
-    /**
-     * Converts a Eigen Isometry3d (Transform) in a karto Pose3
-     */
-    inline karto::Pose3 isometryToPose(const Eigen::Isometry3d &isometry_in)
-    {
-        Eigen::Vector3d translation = Eigen::Vector3d(isometry_in.translation());
-        Eigen::Quaterniond rotation(isometry_in.rotation());
-        rotation.normalize();
-
-        karto::Vector3<double> translation_out(translation.x(), translation.y(), translation.z());
-        karto::Quaternion rotation_out = quaternionEigenToKarto(rotation);
-        
-        karto::Pose3 pose_out(translation_out, rotation_out);
-        
-        return pose_out;
-    }; 
-
-    Pose3 m_Pose1;
+    Pose2 m_Pose1;
     Pose2 m_Pose2;
     Pose2 m_PoseDifference;
     Matrix3 m_Covariance;
-    Pose3 m_PoseDifference3;
-    Eigen::Matrix<double, 6, 6> m_Covariance3;
 
     friend class boost::serialization::access;
     template <class Archive>
@@ -348,9 +238,168 @@ namespace karto
       ar &BOOST_SERIALIZATION_NVP(m_Pose2);
       ar &BOOST_SERIALIZATION_NVP(m_PoseDifference);
       ar &BOOST_SERIALIZATION_NVP(m_Covariance);
-      //ar &BOOST_SERIALIZATION_NVP(m_Covariance3);
     }
   }; // LinkInfo
+
+  ////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////
+
+  // A MarkerLinkInfo object contains the requisite information for the "spring"
+  // that links a marker to a scan -- the pose difference and the uncertainty
+  // (represented by a covariance matrix).
+  class MarkerLinkInfo : public EdgeLabel
+  {
+  public:
+    /**
+     * Constructs a link between the given poses
+     * @param rPose1
+     * @param rPose2
+     * @param rCovariance
+     */
+    MarkerLinkInfo()
+    {
+    }
+
+    /**
+     * Constructs a link between a marker pose (3D) and a scan pose (2D)
+     * @param rPose1
+     * @param rPose2
+     * @param rCovariance
+     */
+    MarkerLinkInfo(const Pose3 &rPose1, const Pose2 &rPose2, const Eigen::Matrix<double, 6, 6> &rCovariance)
+    {
+      Update(rPose1, rPose2, rCovariance);
+    }
+
+    /**
+     * Destructor
+     */
+    virtual ~MarkerLinkInfo()
+    {
+    }
+
+  public:
+    /**
+     * Changes the link information to be the given parameters
+     * @param rPose1
+     * @param rPose2
+     * @param rCovariance
+     */
+    void Update(const Pose3 &rPose1, const Pose2 &rPose2, const Eigen::Matrix<double, 6, 6> &rCovariance)
+    {
+      m_Pose1 = rPose1;
+      m_Pose2 = rPose2;
+      
+      // transform second pose into the coordinate system of the first pose
+      Eigen::Isometry3d transform = poseToIsometry(rPose1).inverse() * poseToIsometry(rPose2);
+      m_PoseDifference = isometryToPose(transform);
+
+      // TODO: è qui solo per TEST
+      double dist = transform.translation().norm();
+      Eigen::Matrix<double, 6, 6> cov = Eigen::Matrix<double, 6, 6>::Identity();
+      cov(0, 0) = cov(1, 1) = cov(2, 2) = (50 * 50);
+      cov(3, 3) = cov(4, 4) = cov(5, 5) = 1;
+      cov = (1 / pow(dist, 2)) * cov;
+      
+      m_Covariance = cov;
+    }
+
+    /**
+     * Gets the first pose (3D pose of the marker)
+     * @return first pose
+     */
+    inline const Pose3 &GetPose1()
+    {
+      return m_Pose1;
+    }
+
+    /**
+     * Gets the second pose (2D pose of the scan)
+     * @return second pose
+     */
+    inline const Pose2 &GetPose2()
+    {
+      return m_Pose2;
+    }
+
+    /**
+     * Gets the pose difference
+     * @return pose difference
+     */
+    inline const Pose3 &GetPoseDifference()
+    {
+      return m_PoseDifference;
+    }
+
+    /**
+     * Gets the link covariance 
+     * @return link covariance 
+     */
+    inline const Eigen::Matrix<double, 6, 6> &GetCovariance()
+    {
+      return m_Covariance;
+    }
+
+  private:
+  /**
+     * Converts a karto Pose3 in a Eigen Isometry3d (Transform)
+     */
+    inline Eigen::Isometry3d poseToIsometry(const karto::Pose3 &pose_in)
+    {
+      Eigen::Isometry3d isometry_out;
+      Eigen::Quaterniond quat_out(pose_in.GetOrientation().GetW(),
+                                  pose_in.GetOrientation().GetX(),
+                                  pose_in.GetOrientation().GetY(),
+                                  pose_in.GetOrientation().GetZ());
+      quat_out.normalize();
+
+      isometry_out.linear() = quat_out.toRotationMatrix();
+      isometry_out.translation() = Eigen::Vector3d(
+          pose_in.GetPosition().GetX(),
+          pose_in.GetPosition().GetY(),
+          pose_in.GetPosition().GetZ());
+
+      return isometry_out;
+    };
+
+    /**
+     * Converts a Eigen Isometry3d (Transform) in a karto Pose3
+     */
+    inline karto::Pose3 isometryToPose(const Eigen::Isometry3d &isometry_in)
+    {
+      Eigen::Vector3d translation = Eigen::Vector3d(isometry_in.translation());
+      Eigen::Quaterniond rotation(isometry_in.rotation());
+      rotation.normalize();
+
+      karto::Vector3<double> translation_out(translation.x(), translation.y(), translation.z());
+      karto::Quaternion rotation_out;
+      rotation_out.SetX(rotation.x());
+      rotation_out.SetY(rotation.y());
+      rotation_out.SetZ(rotation.z());
+      rotation_out.SetW(rotation.w());
+
+      karto::Pose3 pose_out(translation_out, rotation_out);
+
+      return pose_out;
+    };
+
+    Pose3 m_Pose1; // marker
+    Pose2 m_Pose2; // scan
+    Pose3 m_PoseDifference;
+    Eigen::Matrix<double, 6, 6> m_Covariance;
+
+    friend class boost::serialization::access;
+    template <class Archive>
+    void serialize(Archive &ar, const unsigned int version)
+    {
+      ar &BOOST_SERIALIZATION_BASE_OBJECT_NVP(EdgeLabel);
+      ar &BOOST_SERIALIZATION_NVP(m_Pose1);
+      ar &BOOST_SERIALIZATION_NVP(m_Pose2);
+      // FIXME: trova un modo di serializzare m_Covariance, che è una Eigen::Matrix
+      //ar &BOOST_SERIALIZATION_NVP(m_Covariance);
+    }
+  }; // MarkerLinkInfo
 
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -1136,7 +1185,7 @@ namespace karto
     }
 
     LocalizedMarker *m_pMarker;
-    std::vector<MarkerEdge*> m_MarkerEdges;
+    std::vector<MarkerEdge *> m_MarkerEdges;
     kt_double m_Score;
 
     friend class boost::serialization::access;
@@ -1172,8 +1221,8 @@ namespace karto
     MarkerEdge(MarkerVertex *pSource, Vertex<LocalizedRangeScan> *pTarget)
         : m_pSource(pSource), m_pTarget(pTarget), m_pLabel(NULL)
     {
-      m_pSource->AddMarkerEdge(this);
       // N.B. I Vertex<LocalizedRangeScan> non hanno nessuna struttura che salvi i MarkerEdge di cui fanno parte
+      m_pSource->AddMarkerEdge(this);
     }
 
     /**
@@ -1253,7 +1302,7 @@ namespace karto
   class KARTO_EXPORT MarkerGraph
   {
   public:
-    typedef std::map<Name, std::map<int, MarkerVertex*>> MarkerVertexMap;
+    typedef std::map<Name, std::map<int, MarkerVertex *>> MarkerVertexMap;
 
     /**
      * Augmented graph for adding markers to graph SLAM
@@ -1293,7 +1342,7 @@ namespace karto
      * Gets the marker edges of this graph
      * @return graph marker edges
      */
-    inline const std::vector<MarkerEdge*> &GetMarkerEdges() const
+    inline const std::vector<MarkerEdge *> &GetMarkerEdges() const
     {
       return m_MarkerEdges;
     }
@@ -1305,7 +1354,7 @@ namespace karto
     inline const MarkerVertexMap &GetMarkerVertices() const
     {
       return m_MarkerVertices;
-    } 
+    }
 
     /**
      * Adds an edge between the marker and the scan and labels the edge with the given mean and covariance
@@ -1318,7 +1367,6 @@ namespace karto
                           LocalizedRangeScan *pToScan,
                           const Eigen::Matrix<double, 6, 6> &rCovariance);
 
-
   private:
     /**
      * Gets the vertex associated with the given marker
@@ -1328,7 +1376,7 @@ namespace karto
     inline MarkerVertex *GetMarkerVertex(LocalizedMarker *pMarker)
     {
       Name rName = pMarker->GetSensorName();
-      std::map<int, MarkerVertex*>::iterator it = m_MarkerVertices[rName].find(pMarker->GetStateId());
+      std::map<int, MarkerVertex *>::iterator it = m_MarkerVertices[rName].find(pMarker->GetStateId());
       if (it != m_MarkerVertices[rName].end())
       {
         return it->second;
@@ -1348,7 +1396,7 @@ namespace karto
     /**
      * Edges of this graph
      */
-    std::vector<MarkerEdge*> m_MarkerEdges;
+    std::vector<MarkerEdge *> m_MarkerEdges;
 
     /**
      * Mapper of this graph
@@ -1423,7 +1471,7 @@ namespace karto
     /**
      * Adds a node of type LocalizedMarker to the solver
      */
-    virtual void AddNode(MarkerVertex* /*pMarkerVertex*/)
+    virtual void AddNode(MarkerVertex * /*pMarkerVertex*/)
     {
     }
 
@@ -1444,7 +1492,7 @@ namespace karto
     /**
      * Adds a constraint of type LocalizedMarker to the solver
      */
-    virtual void AddConstraint(MarkerEdge* /*pMarkerEdge*/)
+    virtual void AddConstraint(MarkerEdge * /*pMarkerEdge*/)
     {
     }
 
@@ -2127,7 +2175,7 @@ namespace karto
     kt_int32s GetNextScanId()
     {
       m_NextScanId++;
-      return m_NextScanId-1;
+      return m_NextScanId - 1;
     }
 
   private:
@@ -2211,7 +2259,7 @@ namespace karto
      * @param uniqueId
      */
     inline void AddMarker(LocalizedMarker *pMarker, kt_int32s uniqueId);
-  
+
     /**
      * Gets list of buffered markers
      * @return markers
@@ -2257,7 +2305,7 @@ namespace karto
     /**
      * Struct that hold LocalizedMarkers based on their id
      */
-    LocalizedMarkerMap m_Markers; 
+    LocalizedMarkerMap m_Markers;
 
   }; // MarkerManager
 
@@ -2865,6 +2913,8 @@ namespace karto
 
     // whether to increase the search space if no good matches are initially found
     Parameter<kt_bool> *m_pUseResponseExpansion;
+
+    int count = 0;
 
     friend class boost::serialization::access;
     template <class Archive>

@@ -17,6 +17,7 @@
 /* Author: Steven Macenski */
 
 #include "slam_toolbox/loop_closure_assistant.hpp"
+#include <eigen_conversions/eigen_msg.h>
 
 namespace loop_closure_assistant
 {
@@ -49,6 +50,8 @@ namespace loop_closure_assistant
     node.setParam("interactive_mode", interactive_mode_);
     marker_publisher_ = node.advertise<visualization_msgs::MarkerArray>(
         "karto_graph_visualization", 1);
+    edges_publisher_ = node.advertise<visualization_msgs::MarkerArray>(
+    "karto_edges_visualization", 1);
     node.param("map_frame", map_frame_, std::string("map"));
     node.param("enable_interactive_mode", enable_interactive_mode_, false);
   }
@@ -125,7 +128,7 @@ namespace loop_closure_assistant
   {
     interactive_server_->clear();
     std::unordered_map<int, karto::Pose3> *graph = solver_->getGraph();
-    std::map<int, std::list<int>> constraints = solver_->getConstraints();
+    std::map<int, std::list<int>> constraints = solver_->getConstraints();  
 
     if (graph->size() == 0)
     {
@@ -140,23 +143,17 @@ namespace loop_closure_assistant
     }
 
     visualization_msgs::MarkerArray marray;
-    visualization_msgs::Marker m = vis_utils::toMarker(map_frame_, "slam_toolbox", 0.1);
+    // visualization_msgs::Marker m = vis_utils::toMarker(map_frame_, "slam_toolbox", 0.1);
+    visualization_msgs::Marker m = vis_utils::toTagMarker(map_frame_, "slam_toolbox");
     visualization_msgs::Marker e = vis_utils::toEdgeMarker(map_frame_, "slam_toolbox", 0.05);
     for (ConstGraphIterator it = graph->begin(); it != graph->end(); ++it)
     {
       geometry_msgs::Pose mPose = tag_assistant::poseKartoToGeometry(it->second);
       m.id = it->first + 1;
       m.pose = mPose;
-
-      // Questo è un codice veloce per usare frecce orientate invece che sfere come marker delle posizioni (per vedere anche l'orientamento)
-      /* Eigen::Quaterniond quat;
-    quat = Eigen::AngleAxisd(0, Eigen::Vector3d::UnitX()) * 
-           Eigen::AngleAxisd(0, Eigen::Vector3d::UnitY()) * 
-           Eigen::AngleAxisd(it->second(2), Eigen::Vector3d::UnitZ());
-    m.pose.orientation.x = 0.0;
-    m.pose.orientation.y = 0.0;
-    m.pose.orientation.z = (double)quat.z();
-    m.pose.orientation.w = (double)quat.w(); */
+      m.color.r = 1;
+      m.color.g = 0;
+      m.color.b = 0;
 
       if (interactive_mode && enable_interactive_mode_)
       {
@@ -194,6 +191,62 @@ namespace loop_closure_assistant
     // if disabled, clears out old markers
     interactive_server_->applyChanges();
     marker_publisher_.publish(marray);
+    
+    publishEdges();
+
+    return;
+  }
+
+  /*****************************************************************************/
+  void LoopClosureAssistant::publishEdges()
+  /*****************************************************************************/
+  {
+    std::vector<karto::Edge<karto::LocalizedRangeScan>*> edges = mapper_->GetGraph()->GetEdges();
+
+    if (edges.size() == 0)
+    {
+      return;
+    }
+
+    visualization_msgs::MarkerArray marray;
+    visualization_msgs::Marker e = vis_utils::toEdgeMarker(map_frame_, "slam_toolbox", 0.02);
+
+    int count = 0;
+    //std::cout << std::endl;
+    std::vector<karto::Edge<karto::LocalizedRangeScan>*>::const_iterator edgesIter = edges.cbegin();
+    for (edgesIter; edgesIter != edges.end(); ++edgesIter)
+    {
+      count++;
+      karto::Pose2 sourcePose_karto = (*edgesIter)->GetSource()->GetObject()->GetCorrectedPose();
+      geometry_msgs::Pose sourcePose = tag_assistant::poseKartoToGeometry(sourcePose_karto);
+      Eigen::Isometry3d sourcePose_eigen = tag_assistant::poseKartoToEigenIsometry(sourcePose_karto);
+    
+      karto::LinkInfo *pLinkInfo = (karto::LinkInfo *)((*edgesIter)->GetLabel());
+      karto::Pose2 linkPose_karto(pLinkInfo->GetPoseDifference());
+      Eigen::Isometry3d linkPose_eigen = tag_assistant::poseKartoToEigenIsometry(linkPose_karto);
+
+      // Applico la transform rappresentata dal link alla posizione del source scan per ottenere la posizione del target scan!
+      Eigen::Isometry3d targetPose_eigen = sourcePose_eigen * linkPose_eigen;
+      geometry_msgs::Pose targetPose;
+      tf::poseEigenToMsg(targetPose_eigen, targetPose);
+
+      e.points.clear();
+
+      geometry_msgs::Point p = targetPose.position; // Posizione del target scan calcolata tramite transform
+      e.points.push_back(p);
+
+      p = sourcePose.position; // Posizione del source scan
+      e.points.push_back(p);
+
+      e.id = count;
+      e.color.r = 0.25;
+      e.color.g = 0.80;
+      e.color.b = 0.85;
+
+      marray.markers.push_back(e);
+    }
+
+    edges_publisher_.publish(marray);
     return;
   }
 

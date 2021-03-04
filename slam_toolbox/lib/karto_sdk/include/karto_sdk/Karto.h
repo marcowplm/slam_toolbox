@@ -1607,7 +1607,7 @@ namespace karto
   ////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////////
 
-  /**
+  /** TODO: da aggiornare!
    * Defines an orientation as a quaternion rotation using the positive Z axis as the zero reference.
    * <BR>
    * Q = w + ix + jy + kz <BR>
@@ -1747,93 +1747,61 @@ namespace karto
      */
     kt_double GetEulerHeading() const
     {
-      // NOTA BENE La convenzione di roll, pitch, yaw usata è la seguente (seguendo la regola della mano destra):
-      //  x = medio
-      //  y = pollice
-      //  z = indice
-      // Questa convenzione è DIVERSA da quella che uso io!
+      // NOTA BENE: La convenzione di roll, pitch, yaw usata è la seguente (seguendo la regola della mano destra):
+      //  x = indice  | roll
+      //  y = medio   | pitch
+      //  z = pollice | yaw
 
       kt_double m_EulerHeading;
-      kt_double test = m_Values[0] * m_Values[1] + m_Values[2] * m_Values[3];
 
-      if (test > 0.499)
-      {
-        // singularity at north pole
-        m_EulerHeading = 2 * atan2(m_Values[0], m_Values[3]);
-      }
-      else if (test < -0.499)
-      {
-        // singularity at south pole
-        m_EulerHeading = -2 * atan2(m_Values[0], m_Values[3]);
-      }
-      else
-      {
-        kt_double sqy = m_Values[1] * m_Values[1];
-        kt_double sqz = m_Values[2] * m_Values[2];
-
-        m_EulerHeading = atan2(2 * m_Values[1] * m_Values[3] - 2 * m_Values[0] * m_Values[2], 1 - 2 * sqy - 2 * sqz);
-      }
+      kt_double sqx = m_Values[0] * m_Values[0];
+      kt_double sqz = m_Values[1] * m_Values[1];
+      kt_double sqy = m_Values[2] * m_Values[2];
+      kt_double sqw = m_Values[3] * m_Values[3];
+      
+      m_EulerHeading = atan2(2 * (m_Values[0] * m_Values[1] + m_Values[3] * m_Values[2]), sqw + sqx - sqy - sqz);
 
       return m_EulerHeading;
     }
 
     /**
      * Converts this quaternion into Euler angles
-     * Source: http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/index.htm
+     * Copiato da Bullet3
      * @param rYaw
      * @param rPitch
      * @param rRoll
      */
     void ToEulerAngles(kt_double &rYaw, kt_double &rPitch, kt_double &rRoll) const
     {
-      // NOTA BENE La convenzione di roll, pitch, yaw usata è la seguente (seguendo la regola della mano destra):
-      //  x = medio
-      //  y = pollice
-      //  z = indice
-      // Questa convenzione è DIVERSA da quella che uso io!
+      // NOTA BENE: La convenzione di roll, pitch, yaw usata è la seguente (seguendo la regola della mano destra):
+      //  x = indice  | roll
+      //  y = medio   | pitch
+      //  z = pollice | yaw
 
-      kt_double test = m_Values[0] * m_Values[1] + m_Values[2] * m_Values[3];
+      kt_double sqx = m_Values[0] * m_Values[0];
+      kt_double sqz = m_Values[1] * m_Values[1];
+      kt_double sqy = m_Values[2] * m_Values[2];
+      kt_double sqw = m_Values[3] * m_Values[3];
+      kt_double sarg = -2.0 * (m_Values[0] * m_Values[2] - m_Values[1] * m_Values[3]);
 
-      if (test > 0.499)
-      {
-        // singularity at north pole
-        rYaw = 2 * atan2(m_Values[0], m_Values[3]);
-        rPitch = KT_PI_2;
-        rRoll = 0;
-      }
-      else if (test < -0.499)
-      {
-        // singularity at south pole
-        rYaw = -2 * atan2(m_Values[0], m_Values[3]);
-        rPitch = -KT_PI_2;
-        rRoll = 0;
-      }
-      else
-      {
-        kt_double sqx = m_Values[0] * m_Values[0];
-        kt_double sqy = m_Values[1] * m_Values[1];
-        kt_double sqz = m_Values[2] * m_Values[2];
-
-        rYaw = atan2(2 * m_Values[1] * m_Values[3] - 2 * m_Values[0] * m_Values[2], 1 - 2 * sqy - 2 * sqz);
-        rPitch = asin(2 * test);
-        rRoll = atan2(2 * m_Values[0] * m_Values[3] - 2 * m_Values[1] * m_Values[2], 1 - 2 * sqx - 2 * sqz);
-      }
+      rRoll = atan2(2 * (m_Values[1] * m_Values[2] + m_Values[3] * m_Values[0]), sqw - sqx - sqy + sqz);
+      rPitch = sarg <= (-1.0) ? (-0.5) * KT_PI : (sarg >= (1.0) ? (0.5) * KT_PI : asin(sarg));
+      rYaw = atan2(2 * (m_Values[0] * m_Values[1] + m_Values[3] * m_Values[2]), sqw + sqx - sqy - sqz);
     }
 
     /**
      * Set x,y,z,w values of the quaternion based on Euler angles.
-     * Source: http://www.euclideanspace.com/maths/geometry/rotations/conversions/eulerToQuaternion/index.htm
+     * Copiato da Bullet3
      * @param yaw
      * @param pitch
      * @param roll
      */
     void FromEulerAngles(kt_double yaw, kt_double pitch, kt_double roll)
     {
-      // NOTA BENE La convenzione di roll, pitch, yaw usata è la seguente (seguendo la regola della mano destra):
-      //  x = medio
-      //  y = pollice
-      //  z = indice
-      // Questa convenzione è DIVERSA da quella che uso io!
+      // NOTA BENE: La convenzione di roll, pitch, yaw usata è la seguente (seguendo la regola della mano destra):
+      //  x = indice  | roll
+      //  y = medio   | pitch
+      //  z = pollice | yaw
 
       kt_double angle;
 
@@ -1849,10 +1817,10 @@ namespace karto
       kt_double cRoll = cos(angle);
       kt_double sRoll = sin(angle);
 
-      m_Values[0] = sYaw * sPitch * cRoll + cYaw * cPitch * sRoll;
-      m_Values[1] = sYaw * cPitch * cRoll + cYaw * sPitch * sRoll;
-      m_Values[2] = cYaw * sPitch * cRoll - sYaw * cPitch * sRoll;
-      m_Values[3] = cYaw * cPitch * cRoll - sYaw * sPitch * sRoll;
+      m_Values[0] = sRoll * cPitch * cYaw - cRoll * sPitch * sYaw; 
+      m_Values[1] = cRoll * sPitch * cYaw + sRoll * cPitch * sYaw;   
+      m_Values[2] = cRoll * cPitch * sYaw - sRoll * sPitch * cYaw;   
+      m_Values[3] = cRoll * cPitch * cYaw + sRoll * sPitch * sYaw;
     }
 
     /**
@@ -2385,7 +2353,8 @@ namespace karto
    * The value of angle when defining orientation in two dimensions must be in units of radians.
    * The definition of orientation in three dimensions uses quaternions.
    */
-  class Pose3
+  class 
+  Pose3
   {
   public:
     /**
@@ -2517,7 +2486,8 @@ namespace karto
      */
     friend inline std::ostream &operator<<(std::ostream &rStream, const Pose3 &rPose)
     {
-      rStream << rPose.GetPosition() << ", " << rPose.GetOrientation();
+      rStream << "Position:    " << rPose.GetPosition() << std::endl 
+              << "Orientation: " << rPose.GetOrientation();
       return rStream;
     }
 
@@ -6154,7 +6124,7 @@ namespace karto
         : SensorData(rSensorName), m_ID(rID), m_OdometricPose(rPose)
     {
       assert(rSensorName.ToString() != "");
-      std::cout << "LocalizedMarker with ID: " << rID << " created successfully!!" << std::endl;
+      std::cout << "\033[1;33mLocalizedMarker with ID: " << rID << " created successfully!!\033[0m" << std::endl;
     }
 
     LocalizedMarker()

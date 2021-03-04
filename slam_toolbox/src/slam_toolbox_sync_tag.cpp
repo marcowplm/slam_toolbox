@@ -14,7 +14,7 @@ namespace slam_toolbox
                                    &SynchronousSlamToolboxAT::clearQueueCallback, this);
 
     tag_detection_filter_sub_ = std::make_unique<message_filters::Subscriber<apriltag_ros::AprilTagDetectionArray>>(nh, tag_topic_, 5);
-    tag_detection_filter_ = std::make_unique<tf2_ros::MessageFilter<apriltag_ros::AprilTagDetectionArray>>(*tag_detection_filter_sub_, *tf_, camera_frame_, 5, nh); //check nel caso sia odom_frame_
+    tag_detection_filter_ = std::make_unique<tf2_ros::MessageFilter<apriltag_ros::AprilTagDetectionArray>>(*tag_detection_filter_sub_, *tf_, camera_frame_, 5, nh);
     tag_detection_filter_->registerCallback(boost::bind(&SynchronousSlamToolboxAT::tagCallback, this, _1));
 
     threads_.push_back(std::make_unique<boost::thread>(
@@ -34,30 +34,15 @@ namespace slam_toolbox
       {
         PosedScan scan_w_pose = q_.front();
         q_.pop();
+
         if (q_.size() > 10)
         {
           ROS_WARN_THROTTLE(10., "Queue size has grown to: %i. "
                                  "Recommend stopping until message is gone if online mapping.",
                             (int)q_.size());
         }
-        if (addScan(getLaser(scan_w_pose.scan), scan_w_pose) != nullptr)
-        /* {
-          VerticeMap mapper_vertices = smapper_->getMapper()->GetGraph()->GetVertices();
-          VerticeMap::iterator vertex_map_it = mapper_vertices.begin();
-          ScanMap::iterator vertex_it = vertex_map_it->second.begin();
 
-          std::cout << "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl; 
-          for (vertex_it; vertex_it != vertex_map_it->second.end(); ++vertex_it)
-          {
-            if (vertex_it->second != nullptr)
-            {
-              std::cout << "\nScan ID:\t" << vertex_it->first << std::endl
-                        << "Scan Corrected Pose:\t" << vertex_it->second->GetObject()->GetCorrectedPose() << std::endl
-                        << "Scan Odometric pose:\t" << vertex_it->second->GetObject()->GetOdometricPose() << std::endl;
-            }
-          }
-        } */
-
+        addScan(getLaser(scan_w_pose.scan), scan_w_pose);
         continue;
       }
 
@@ -108,14 +93,8 @@ namespace slam_toolbox
 
     VerticeMap mapper_vertices = smapper_->getMapper()->GetGraph()->GetVertices();
     ScanMap scan_vertices = mapper_vertices.find(karto::Name("Custom Described Lidar"))->second;
-    // int last_vertex_id = scan_vertices.rbegin()->first;
-    // karto::Pose2 last_vertex_pose = scan_vertices.rbegin()->second->GetObject()->GetCorrectedPose();
+    tag_assistant_->processDetection(scan_vertices.rbegin()->second, detection_array);
 
-    if (tag_assistant_->processDetection(scan_vertices.rbegin()->second, detection_array))
-    {
-      // tag_assistant_->publishLinks();
-      // tag_assistant_->publishMarkerGraph();
-    }
     return;
   }
 

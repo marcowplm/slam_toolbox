@@ -41,6 +41,7 @@ BOOST_CLASS_EXPORT(karto::MarkerEdge);
 BOOST_CLASS_EXPORT(karto::MarkerVertex);
 BOOST_CLASS_EXPORT(karto::MarkerGraph);
 BOOST_CLASS_EXPORT(karto::MarkerManager);
+BOOST_CLASS_EXPORT(karto::MarkerLinkInfo);
 namespace karto
 {
 
@@ -1560,6 +1561,7 @@ namespace karto
 
           pScan->SetSensorPose(bestPose);
           LinkChainToScan(candidateChain, pScan, bestPose, covariance);
+          std::cout << "Mapper: loop closed!" << std::endl;
           CorrectPoses();
 
           m_pMapper->FireEndLoopClosure("Loop closed!");
@@ -2017,7 +2019,7 @@ namespace karto
     {
       pSolver->Compute();
 
-      /* std::cout << "\nPrinting CorrectedPoses (Pose2D) after optimization:" << std::endl; */
+      /* std::cout << "\nPrinting CorrectedPoses of Scans (Pose2D) after optimization:" << std::endl; */
       const_forEach(ScanSolver::IdPoseVector, &pSolver->GetCorrections())
       {
         LocalizedRangeScan *scan = m_pMapper->m_pMapperSensorManager->GetScan(iter->first);
@@ -2030,11 +2032,12 @@ namespace karto
           }
           continue;
         }
-        /*  std::cout << "\nID scan: " << iter->first << std::endl
+        /* std::cout << "\nID scan: " << iter->first << std::endl
                   << "Before:\t" << scan->GetCorrectedPose() << std::endl; */
+        
         karto::Pose2 corrected_pose(iter->second);
         scan->SetSensorPose(corrected_pose);
-        /*  std::cout << "After:\t" << scan->GetCorrectedPose() << std::endl; */
+        /* std::cout << "After:\t" << scan->GetCorrectedPose() << std::endl; */
       }
       /* std::cout << "------------------------------------------------------" << std::endl; */
       pSolver->Clear();
@@ -2120,7 +2123,7 @@ namespace karto
     // only attach link information if the marker edge is new
     if (isNewEdge == true)
     {
-      pMarkerEdge->SetLabel(new LinkInfo(pFromMarker->GetCorrectedPose(), pToScan->GetCorrectedPose(), rCovariance));
+      pMarkerEdge->SetLabel(new MarkerLinkInfo(pFromMarker->GetCorrectedPose(), pToScan->GetCorrectedPose(), rCovariance));
       if (m_pMapper->m_pScanOptimizer != NULL)
       {
         m_pMapper->m_pScanOptimizer->AddConstraint(pMarkerEdge);
@@ -2823,8 +2826,8 @@ namespace karto
         // TEST TEST TEST!!
         // Serve per triggerare la Loop Closure dopo un certo numero di nodi aggiunti al grafo
         /* count = count + 1;
-        std::cout << "\nCount: " << count << std::endl;
-        if (count == 5)
+        std::cout << "\n\033[1;32m>>>>>>>>>>>  Count: " << count << "\033[0m" << std::endl;
+        if (count == 10)
         {
           CorrectPoses();
           count = 0;
@@ -3188,7 +3191,7 @@ namespace karto
 
         Eigen::Matrix<double, 6, 6> rCovariance = Eigen::Matrix<double, 6, 6>::Identity();
         m_pMarkerGraph->LinkMarkerToScan(pMarker, pScan, rCovariance);
-
+        
         CorrectPoses();
       }
       return true;

@@ -145,12 +145,13 @@ struct CeresPose3d
 
   /**
    * Constructs a CeresPose3d object from a karto::Pose2
+   * N.B.: Segue la stessa convenzione degli assi di karto::Quaternion -> YawPitchRoll | yzx
    */
   CeresPose3d(const karto::Pose2& rPose) :
     p(rPose.GetX(), rPose.GetY(), 0.0),
-    q(Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitX())
-    * Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitY())
-    * Eigen::AngleAxisd(rPose.GetHeading(), Eigen::Vector3d::UnitZ()))
+    q(Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitX()) *
+      Eigen::AngleAxisd(0.0, Eigen::Vector3d::UnitY()) *
+      Eigen::AngleAxisd(rPose.GetHeading(), Eigen::Vector3d::UnitZ()))
   // NON serve normalizzare il quaternione perchè è già normalizzato per costruzione!
   // Il quaternione costruito in questo modo è corretto! Se si prova ad estrarre la matrice di rotazione e 
   // lo Heading (o Yaw) con GetEulerHeading() si ottiene l'angolo della Pose2 iniziale!
@@ -159,29 +160,29 @@ struct CeresPose3d
 
   /**
    * Constructs the quaternion from the 3 Euler angles
-   * @param roll (rotation along x axis)
+   * @param yaw   (rotation along z axis)
    * @param pitch (rotation along y axis)
-   * @param yaw (rotation along z axis)
+   * @param roll  (rotation along x axis)
    */
-  void FromEulerAngles(const kt_double roll, const kt_double pitch, const kt_double yaw)  
+  void FromEulerAngles(const kt_double yaw, const kt_double pitch, const kt_double roll )
   {
-    q = Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX())
-      * Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY())
-      * Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ());
+    q = Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX()) *
+        Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY()) *
+        Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ());
   }
 
   /**
    * Converts the orientation stored in the quaternion in Euler angles
-   * @param rRoll (rotation along x axis)
+   * @param rYaw   (rotation along z axis)
    * @param rPitch (rotation along y axis)
-   * @param RYaw (rotation along z axis)
+   * @param rRoll  (rotation along x axis)
    */
-  void ToEulerAngles(kt_double& rRoll, kt_double& rPitch, kt_double& rYaw) const
+  void ToEulerAngles(kt_double& rYaw, kt_double& rPitch, kt_double& rRoll) const
   {
-    Eigen::Vector3d euler = q.toRotationMatrix().eulerAngles(0, 1, 2);
-    rRoll = euler(0);
+    Eigen::Vector3d euler = q.toRotationMatrix().eulerAngles(0, 1, 2); // x=0, y=1, z=2
+    rYaw   = euler(2);
     rPitch = euler(1);
-    rYaw = euler(2);
+    rRoll  = euler(0);
   }    
 
   /**
@@ -190,14 +191,13 @@ struct CeresPose3d
    */
   kt_double GetEulerHeading() const
   {
-    Eigen::Vector3d euler = q.toRotationMatrix().eulerAngles(0, 1, 2);
-
+    Eigen::Vector3d euler = q.toRotationMatrix().eulerAngles(0, 1, 2); // x=0, y=1, z=2
     if (euler(0) != 0 || euler(1) != 0)
     {
       std::cout << "\n\nGetEulerHeading: Pitch e/o Roll sono diversi da zero! "
                 << "Questo non dovrebbe succedere!!" << std::endl
-                << "Roll: "  << euler(0)             << std::endl
-                << "Pitch: " << euler(1)             << std::endl;
+                << "Roll:  " << euler(0) << std::endl
+                << "Pitch: " << euler(1) << std::endl;
     }            
 
     return euler(2); 

@@ -172,7 +172,7 @@ namespace solver_plugins
   /*****************************************************************************/
   {
     boost::mutex::scoped_lock lock(nodes_mutex_);
-    std::cout << "\nCOMPUTE!  =====================================================\n";
+    std::cout << "\n\033[1;35mCOMPUTE!  =====================================================\033[0m\n";
     if (nodes3d_->size() == 0)
     {
       ROS_ERROR("CeresSolver: Ceres was called when there are no nodes."
@@ -216,16 +216,15 @@ namespace solver_plugins
     corrections_.reserve(nodes3d_->size());
     karto::Pose3 pose;
     ConstGraphIterator3d iter = nodes3d_->begin();
-    std::cout << "\nPrint 3D nodes after optimization: ---------------------------" << std::endl;
+    /* std::cout << "\nPrint 3D nodes after optimization: ---------------------------" << std::endl; */
     for (iter; iter != nodes3d_->end(); ++iter)
     {
       pose = (iter->second).ToKartoPose3();
 
       corrections_.push_back(std::make_pair(iter->first, pose));
-      std::cout << "\nCorrected pose of node with ID: " << iter->first << std::endl
-                << pose << std::endl;
+      /* std::cout << "\nCorrected pose of node with ID: " << iter->first << std::endl << pose << std::endl; */
     }
-    std::cout << "\n================================================================================" << std::endl;
+    std::cout << "\n\n\033[1;35m=====================================================\033[0m" << std::endl;
     return;
   }
 
@@ -293,7 +292,21 @@ namespace solver_plugins
 
     boost::mutex::scoped_lock lock(nodes_mutex_);
     nodes3d_->insert(std::pair<int, CeresPose3d>(id, pose3d));
-    //std::cout << "\n\n[CeresPose3d] AddNode SCAN: " << id << std::endl << pose3d << std::endl;
+
+    /* double yaw, pitch, roll;    
+    std::cout << "\n\n[CeresPose3d] AddNode SCAN:\t" << id << std::endl << pose3d << std::endl;
+    karto::Pose3 pose_karto(pVertex->GetObject()->GetCorrectedPose());
+    std::cout << "\n[karto::Pose3] AddNode SCAN:\t" << id << std::endl << pose_karto << std::endl;
+    
+    pose3d.ToEulerAngles(yaw, pitch, roll);
+    Eigen::Vector3d vect(yaw, pitch, roll);
+    std::cout << "\n\n[CeresPose3d]  YPR: " << vect.transpose() << std::endl;
+    
+    pose_karto.GetOrientation().ToEulerAngles(yaw, pitch, roll);
+    Eigen::Vector3d vect2(yaw, pitch, roll);
+    std::cout << "[karto::Pose3] YPR: " << vect2.transpose() << std::endl;
+    std::cout << "[Original Pose2] Y: " << pVertex->GetObject()->GetCorrectedPose().GetHeading() << std::endl;
+ */
     if (nodes3d_->size() == 1)
     {
       first_node3d_ = nodes3d_->find(id);
@@ -315,6 +328,20 @@ namespace solver_plugins
     CeresPose3d pose3d(pMarkerVertex->GetLocalizedMarker()->GetCorrectedPose());
     const int id = pMarkerVertex->GetLocalizedMarker()->GetUniqueId();
     //std::cout << "\n\n[CeresPose3d] AddNode MARKER: " << id << std::endl << pose3d << std::endl;
+    
+    /* double yaw, pitch, roll;
+    std::cout << "\n\n[CeresPose3d] AddNode MARKER:\t" << id << std::endl << pose3d << std::endl;
+    karto::Pose3 pose_karto = pMarkerVertex->GetLocalizedMarker()->GetCorrectedPose();
+    std::cout << "\n[karto::Pose3] AddNode MARKER:\t" << id << std::endl << pose_karto << std::endl;
+
+    pose3d.ToEulerAngles(yaw, pitch, roll);
+    Eigen::Vector3d vect(yaw, pitch, roll);
+    std::cout << "\n\n[CeresPose3d]  YPR: " << vect.transpose() << std::endl;
+    
+    pose_karto.GetOrientation().ToEulerAngles(yaw, pitch, roll);
+    Eigen::Vector3d vect2(yaw, pitch, roll);
+    std::cout << "[karto::Pose3] YPR: " << vect2.transpose() << std::endl; */
+
     boost::mutex::scoped_lock lock(nodes_mutex_);
     nodes3d_->insert(std::pair<int, CeresPose3d>(id, pose3d));
     marker_ids_.insert(id);
@@ -434,14 +461,14 @@ namespace solver_plugins
     }
 
     // extract transformation
-    karto::LinkInfo *pLinkInfo = (karto::LinkInfo *)(pMarkerEdge->GetLabel());
-    CeresPose3d pose3d(pLinkInfo->GetPoseDifference3());
+    karto::MarkerLinkInfo *pMarkerLinkInfo = (karto::MarkerLinkInfo *)(pMarkerEdge->GetLabel());
+    CeresPose3d pose3d(pMarkerLinkInfo->GetPoseDifference());
 
-    Eigen::Matrix<double, 6, 6> precisionMatrix3 = pLinkInfo->GetCovariance3().inverse();
+    Eigen::Matrix<double, 6, 6> precisionMatrix3 = pMarkerLinkInfo->GetCovariance().inverse();
     Eigen::Matrix<double, 6, 6> sqrt_information = precisionMatrix3.llt().matrixL();
 
     /* std::cout << "\n\ncovariance_matrix 3D (x, y, z, roll, pitch, yaw)\n"
-              << pLinkInfo->GetCovariance3() << std::endl;
+              << pMarkerLinkInfo->GetCovariance() << std::endl;
     std::cout << "\nsqrt_information (square root of precision matrix) (x, y, z, roll, pitch, yaw)\n"
               << sqrt_information << std::endl;
     std::cout << "\n\npose3d for cost function (t_ab_measured = diff btw node1 and node2):\n"
@@ -524,7 +551,7 @@ namespace solver_plugins
     {
       double yaw_updated = it->second.GetEulerHeading() + pose[2];
       CeresPose3d tmp;
-      tmp.FromEulerAngles(0.0, 0.0, yaw_updated);
+      tmp.FromEulerAngles(yaw_updated, 0.0, 0.0);
       tmp.p << (pose[0], pose[1], 0.0);
       it->second = tmp;
     }
@@ -573,7 +600,6 @@ namespace solver_plugins
     boost::mutex::scoped_lock lock(nodes_mutex_);
 
     nodes_ = new std::unordered_map<int, karto::Pose3>();
-
     karto::Pose3 node;
     ConstGraphIterator3d iter = nodes3d_->begin();
     for (iter; iter != nodes3d_->end(); ++iter)

@@ -16,6 +16,7 @@ namespace tag_assistant
     nh_.getParam("odom_frame", odom_frame_);
     nh_.getParam("camera_frame", camera_frame_);
     tag_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("tag_visualization", 1);
+    link_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("link_visualization", 1);
     //tfB_ = std::make_unique<tf2_ros::TransformBroadcaster>();
     solver_ = mapper_->getScanSolver();
     camera_ = makeCamera();
@@ -85,12 +86,12 @@ namespace tag_assistant
     }
     ids_.insert(std::pair<int, int>(detection.id[0], unique_id));
 
-    std::cout << "\nContenuto di ids_:\n tagID\t|  UniqueId" << std::endl;
+    /* std::cout << "\nContenuto di ids_:\n tagID\t|  UniqueId" << std::endl;
     std::map<int, int>::const_iterator ids_Iter = ids_.begin();
     for (ids_Iter; ids_Iter != ids_.end(); ++ids_Iter)
     {
       std::cout << "   " << ids_Iter->first << "\t|    " << ids_Iter->second << std::endl;
-    }
+    } */
 
     return true;
   }
@@ -148,7 +149,7 @@ namespace tag_assistant
     return true;
   }
 
-  // Qui prendo semplicemente i Marker e i Vertex del grafo e visualizzo gli edge tra queste due posiioni
+  // Qui prendo semplicemente i Marker e i Vertex del grafo e visualizzo gli edge tra le loro Pose
   /*****************************************************************************/
   void ApriltagAssistant::publishMarkerGraph()
   /*****************************************************************************/
@@ -171,6 +172,8 @@ namespace tag_assistant
       geometry_msgs::Pose mPose = poseKartoToGeometry(it->second);
       m.id = it->first + 1;
       m.pose = mPose;
+      /* std::cout << "Marker pose: " << m.id << "\tYaw: " << tf::getYaw(mPose.orientation) << std::endl;
+      std::cout << m.pose << std::endl; */
 
       marray.markers.push_back(m);
 
@@ -195,6 +198,9 @@ namespace tag_assistant
     }
 
     tag_publisher_.publish(marray);
+
+    publishLinks();
+    
     return;
   }
 
@@ -212,6 +218,59 @@ namespace tag_assistant
   /*****************************************************************************/
   {
     return camera_;
+  }
+
+  /*****************************************************************************/
+  void ApriltagAssistant::publishLinks()
+  /*****************************************************************************/
+  {
+    std::vector<karto::MarkerEdge *> marker_edges = mapper_->GetMarkerGraph()->GetMarkerEdges();
+
+    if (marker_edges.size() == 0)
+    {
+      return;
+    }
+
+    visualization_msgs::MarkerArray marray;
+    visualization_msgs::Marker e = vis_utils::toEdgeMarker(map_frame_, nh_.getNamespace(), 0.02);
+
+    int count = 0;
+    //std::cout << std::endl;
+    std::vector<karto::MarkerEdge *>::const_iterator edgesIter = marker_edges.cbegin();
+    for (edgesIter; edgesIter != marker_edges.end(); ++edgesIter)
+    {
+      count++;
+      karto::Pose3 mPose_karto = (*edgesIter)->GetSource()->GetLocalizedMarker()->GetCorrectedPose();
+      geometry_msgs::Pose mPose = poseKartoToGeometry(mPose_karto);
+      Eigen::Isometry3d mPose_eigen = poseKartoToEigenIsometry(mPose_karto);
+      
+      karto::MarkerLinkInfo *pMarkerLinkInfo = (karto::MarkerLinkInfo *)((*edgesIter)->GetLabel());
+      karto::Pose3 linkPose_karto(pMarkerLinkInfo->GetPoseDifference());
+      Eigen::Isometry3d linkPose_eigen = poseKartoToEigenIsometry(linkPose_karto);
+      
+      // Applico la transform rappresentata dal link alla posizione del marker per ottenere la posizione dello scan!
+      Eigen::Isometry3d scanPose_eigen = mPose_eigen * linkPose_eigen;
+      geometry_msgs::Pose scanPose;
+      tf::poseEigenToMsg(scanPose_eigen, scanPose);
+
+      e.points.clear();
+
+      geometry_msgs::Point p = scanPose.position; // Posizione dello scan calcolata tramite transform
+      e.points.push_back(p);
+
+      p = mPose.position; // Posizione del marker
+      e.points.push_back(p);
+
+      e.id = count;
+      e.color.r = 0.25;
+      e.color.g = 0.85;
+      e.color.b = 0.75;
+
+      marray.markers.push_back(e);
+    }
+
+    link_publisher_.publish(marray);
+    return;
   }
 
 } // end namespace tag_assistant
