@@ -23,6 +23,8 @@
 #include <sensor_msgs/LaserScan.h>
 #include <nav_msgs/GetMap.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <sensor_msgs/CameraInfo.h>
+
 
 #include <visualization_msgs/MarkerArray.h>
 #include <visualization_msgs/InteractiveMarker.h>

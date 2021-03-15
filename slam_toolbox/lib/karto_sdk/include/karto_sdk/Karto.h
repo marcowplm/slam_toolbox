@@ -6124,7 +6124,7 @@ namespace karto
         : SensorData(rSensorName), m_ID(rID), m_OdometricPose(rPose)
     {
       assert(rSensorName.ToString() != "");
-      std::cout << "\033[1;33mLocalizedMarker with ID: " << rID << " created successfully!!\033[0m" << std::endl;
+      std::cout << "\n\033[1;33mLocalizedMarker with ID " << rID << " created successfully!!\033[0m" << std::endl;
     }
 
     LocalizedMarker()
@@ -6823,7 +6823,7 @@ namespace karto
      */
     void SaveToFile(const std::string &filename)
     {
-      printf("Save To File\n");
+      printf("Save To File %s \n", filename.c_str());
       std::ofstream ofs(filename.c_str());
       boost::archive::binary_oarchive oa(ofs, boost::archive::no_codecvt);
       oa << BOOST_SERIALIZATION_NVP(*this);
@@ -6835,7 +6835,7 @@ namespace karto
      */
     void LoadFromFile(const std::string &filename)
     {
-      printf("Load From File\n");
+      printf("Load From File %s \n", filename.c_str());
       std::ifstream ifs(filename.c_str());
       boost::archive::binary_iarchive ia(ifs, boost::archive::no_codecvt); //no second arg?
       ia >> BOOST_SERIALIZATION_NVP(*this);
@@ -6858,8 +6858,14 @@ namespace karto
             m_SensorNameLookup[pSensor->GetName()] = pSensor;
             karto::SensorManager::GetInstance()->RegisterSensor(pSensor, overrideSensorName);
           }
-
-          m_Lasers.push_back(pObject);
+          if(IsCamera(pSensor))
+          {
+            m_Cameras.push_back(pObject);
+          }
+          else if(IsLaserRangeFinder(pSensor))
+          {
+            m_Lasers.push_back(pObject);
+          }
         }
         else if (dynamic_cast<SensorData *>(pObject))
         {
@@ -6879,11 +6885,20 @@ namespace karto
 
     /**
      * Get sensor states
-     * @return sensor state
+     * @return sensor state (lasers)
      */
     inline const ObjectVector &GetLasers() const
     {
       return m_Lasers;
+    }
+
+    /**
+     * Get sensor states
+     * @return sensor state (cameras)
+     */
+    inline const ObjectVector &GetCameras() const
+    {
+      return m_Cameras;
     }
 
     /**
@@ -6943,6 +6958,16 @@ namespace karto
         }
       }
 
+      forEach(ObjectVector, &m_Cameras)
+      {
+        if (*iter)
+        {
+          delete *iter;
+          *iter = NULL;
+        }
+      }
+      
+
       for (auto iter = m_Data.begin(); iter != m_Data.end(); ++iter)
       {
         if (iter->second)
@@ -6953,6 +6978,7 @@ namespace karto
       }
 
       m_Lasers.clear();
+      m_Cameras.clear();
       m_Data.clear();
 
       if (m_pDatasetInfo != NULL)
@@ -6965,11 +6991,13 @@ namespace karto
   private:
     std::map<Name, Sensor *> m_SensorNameLookup;
     ObjectVector m_Lasers;
+    ObjectVector m_Cameras;
     DataMap m_Data;
     DatasetInfo *m_pDatasetInfo;
+
     /**
-   * Serialization: class Dataset
-   */
+     * Serialization: class Dataset
+     */
     friend class boost::serialization::access;
     template <class Archive>
     void serialize(Archive &ar, const unsigned int version)
@@ -6981,6 +7009,8 @@ namespace karto
       ar &BOOST_SERIALIZATION_NVP(m_Data);
       std::cout << "Dataset <- m_Lasers\n";
       ar &BOOST_SERIALIZATION_NVP(m_Lasers);
+      std::cout << "Dataset <- m_Cameras\n";
+      ar &BOOST_SERIALIZATION_NVP(m_Cameras);
       std::cout << "Dataset <- m_pDatasetInfo\n";
       ar &BOOST_SERIALIZATION_NVP(m_pDatasetInfo);
       std::cout << "**Finished serializing Dataset**\n";
@@ -7421,6 +7451,7 @@ BOOST_CLASS_EXPORT_KEY(karto::LocalizedRangeScan);
 BOOST_CLASS_EXPORT_KEY(karto::LocalizedMarker);
 BOOST_CLASS_EXPORT_KEY(karto::LaserRangeScan);
 BOOST_CLASS_EXPORT_KEY(karto::LaserRangeFinder);
+BOOST_CLASS_EXPORT_KEY(karto::Camera);
 BOOST_CLASS_EXPORT_KEY(karto::CustomData);
 BOOST_CLASS_EXPORT_KEY(karto::Module);
 BOOST_CLASS_EXPORT_KEY(karto::Rectangle2<kt_double>);

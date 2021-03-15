@@ -268,6 +268,26 @@ void SMapper::configure(const ros::NodeHandle& nh)
   {
     mapper_->setParamUseResponseExpansion(use_response_expansion);
   }
+
+  // Setting parameters related to the Markers
+  double use_markers;
+  if(nh.getParam("use_markers", use_markers))
+  {
+    mapper_->setParamUseMarkers(use_markers);
+  }
+  
+  double marker_link_covariance;
+  if(nh.getParam("marker_link_covariance", marker_link_covariance))
+  {
+    mapper_->setParamMarkerLinkCovariance(marker_link_covariance);
+  }
+
+  bool correct_poses_after_new_marker;
+  if(nh.getParam("correct_poses_after_new_marker", correct_poses_after_new_marker))
+  {
+    mapper_->setParamCorrectPosesAfterNewMarker(correct_poses_after_new_marker);
+  }
+
   return;
 }
 

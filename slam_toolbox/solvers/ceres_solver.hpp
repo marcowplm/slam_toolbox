@@ -63,6 +63,7 @@ private:
   ceres::LossFunction* loss_function_;
   ceres::Problem* problem_;
   ceres::LocalParameterization* quaternion_local_parameterization_;
+  ceres::LocalParameterization* subset_local_parameterization_;
   bool was_constant_set_, debug_logging_;
 
   // graph

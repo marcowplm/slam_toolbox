@@ -1561,7 +1561,7 @@ namespace karto
 
           pScan->SetSensorPose(bestPose);
           LinkChainToScan(candidateChain, pScan, bestPose, covariance);
-          std::cout << "Mapper: loop closed!" << std::endl;
+          std::cout << "\n\033[1;32mMapper: loop closed!\033[0m" << std::endl;
           CorrectPoses();
 
           m_pMapper->FireEndLoopClosure("Loop closed!");
@@ -2108,7 +2108,6 @@ namespace karto
     return pMarkerEdge;
   }
 
-  // N.B.: quando viene costruito il link, rMean diventa la rPose2, mentre la rPose1 è la SensorPose dello scan (che però per me dovrebbe essere il marker)
   void MarkerGraph::LinkMarkerToScan(LocalizedMarker *pFromMarker, LocalizedRangeScan *pToScan,
                                      const Eigen::Matrix<double, 6, 6> &rCovariance)
   {
@@ -2120,7 +2119,7 @@ namespace karto
       return;
     }
 
-    // only attach link information if the marker edge is new
+    // only attach marker link information if the marker edge is new
     if (isNewEdge == true)
     {
       pMarkerEdge->SetLabel(new MarkerLinkInfo(pFromMarker->GetCorrectedPose(), pToScan->GetCorrectedPose(), rCovariance));
@@ -2369,6 +2368,25 @@ namespace karto
         "Whether to increase the search space if no good matches are initially "
         "found.",
         false, GetParameterManager());
+
+    //////////////////////////////////////////////////////////////////////////////
+    // Parameters related to the Markers
+
+    m_pUseMarkers = new Parameter<kt_bool>(
+      "UseMarkers",
+      "When set to true, the mapper will use the markers.",
+      false, GetParameterManager());
+
+    m_pMarkerLinkCovariance = new Parameter<kt_double>(
+      "MarkerLinkCovariance",
+      "The covariance along the x, y, z axes of the link between a marker and a scan.",
+      1.0, GetParameterManager());
+
+    m_pCorrectPosesAfterNewMarker = new Parameter<kt_bool>(
+      "CorrectPosesAfterNewMarker",
+      "Enable/disable the correction of poses (the optimization) after each new Marker "
+      "is created.",
+      true, GetParameterManager());
   }
   /* Adding in getters and setters here for easy parameter access */
 
@@ -2525,6 +2543,23 @@ namespace karto
     return static_cast<bool>(m_pUseResponseExpansion->GetValue());
   }
 
+  // Parameters related to the Markers
+
+  bool Mapper::getParamUseMarkers()
+  {
+    return static_cast<bool>(m_pUseMarkers->GetValue());
+  }
+
+  double Mapper::getParamMarkerLinkCovariance()
+  {
+    return static_cast<double>(m_pMarkerLinkCovariance->GetValue());
+  }
+
+  bool Mapper::getParamCorrectPosesAfterNewMarker()
+  {
+    return static_cast<bool>(m_pCorrectPosesAfterNewMarker->GetValue());
+  }
+
   /* Setters for parameters */
   // General Parameters
   void Mapper::setParamUseScanMatching(bool b)
@@ -2673,6 +2708,22 @@ namespace karto
   void Mapper::setParamUseResponseExpansion(bool b)
   {
     m_pUseResponseExpansion->SetValue((kt_bool)b);
+  }
+
+  // Parameters related to the Markers
+  void Mapper::setParamUseMarkers(bool b)
+  {
+    m_pUseMarkers->SetValue((kt_bool)b);
+  }
+  
+  void Mapper::setParamMarkerLinkCovariance(double d)
+  {
+    m_pMarkerLinkCovariance->SetValue((kt_double)d);
+  }
+
+  void Mapper::setParamCorrectPosesAfterNewMarker(bool b)
+  {
+    m_pCorrectPosesAfterNewMarker->SetValue((kt_bool)b);
   }
 
   void Mapper::Initialize(kt_double rangeThreshold)
@@ -3189,10 +3240,14 @@ namespace karto
         // add to marker graph
         m_pMarkerGraph->AddMarkerVertex(pMarker);
 
-        Eigen::Matrix<double, 6, 6> rCovariance = Eigen::Matrix<double, 6, 6>::Identity();
-        m_pMarkerGraph->LinkMarkerToScan(pMarker, pScan, rCovariance);
+        Eigen::Matrix<double, 6, 6> covariance = Eigen::Matrix<double, 6, 6>::Identity();
+        covariance(0,0) = covariance(1,1) = covariance(2,2) = m_pMarkerLinkCovariance->GetValue();
+        m_pMarkerGraph->LinkMarkerToScan(pMarker, pScan, covariance);
         
-        CorrectPoses();
+        if(m_pCorrectPosesAfterNewMarker->GetValue())
+        {
+          CorrectPoses();
+        }
       }
       return true;
     }

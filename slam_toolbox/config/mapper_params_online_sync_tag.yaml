@@ -13,6 +13,7 @@ base_frame: base_footprint
 camera_frame: camera_rgb_optical_frame
 scan_topic: /scan
 tag_topic: /tag_detections
+camera_topic: /camera/rgb/camera_info
 mode: mapping #localization
 
 # if you'd like to immediately start continuing a map at a given pose
@@ -70,3 +71,8 @@ coarse_angle_resolution: 0.0349
 minimum_angle_penalty: 0.9
 minimum_distance_penalty: 0.5
 use_response_expansion: true
+
+# Parameters related to the Markers
+use_markers: true
+marker_link_covariance: 0.1
+correct_poses_after_new_marker: true

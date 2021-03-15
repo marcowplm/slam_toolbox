@@ -37,6 +37,7 @@ namespace solver_plugins
     // formulate problem
     // quaternion_local_parameterization_ = QuaternionAngleLocalParameterization::Create();
     quaternion_local_parameterization_ = new ceres::EigenQuaternionParameterization;
+    subset_local_parameterization_ = new ceres::SubsetParameterization(3, {2});
 
     // choose loss function default squared loss (NULL)
     loss_function_ = NULL;
@@ -224,7 +225,7 @@ namespace solver_plugins
       corrections_.push_back(std::make_pair(iter->first, pose));
       /* std::cout << "\nCorrected pose of node with ID: " << iter->first << std::endl << pose << std::endl; */
     }
-    std::cout << "\n\n\033[1;35m=====================================================\033[0m" << std::endl;
+    std::cout << "\n\n\033[1;35m===============================================================\033[0m" << std::endl;
     return;
   }
 
@@ -292,9 +293,10 @@ namespace solver_plugins
 
     boost::mutex::scoped_lock lock(nodes_mutex_);
     nodes3d_->insert(std::pair<int, CeresPose3d>(id, pose3d));
-
-    /* double yaw, pitch, roll;    
     std::cout << "\n\n[CeresPose3d] AddNode SCAN:\t" << id << std::endl << pose3d << std::endl;
+
+    // TODO: questo pezzo serve solo per controllare la coerenza delle trasformazioni tra quat e RPY -> da eliminare
+    /* double yaw, pitch, roll;    
     karto::Pose3 pose_karto(pVertex->GetObject()->GetCorrectedPose());
     std::cout << "\n[karto::Pose3] AddNode SCAN:\t" << id << std::endl << pose_karto << std::endl;
     
@@ -327,8 +329,9 @@ namespace solver_plugins
 
     CeresPose3d pose3d(pMarkerVertex->GetLocalizedMarker()->GetCorrectedPose());
     const int id = pMarkerVertex->GetLocalizedMarker()->GetUniqueId();
-    //std::cout << "\n\n[CeresPose3d] AddNode MARKER: " << id << std::endl << pose3d << std::endl;
+    std::cout << "\n\n[CeresPose3d] AddNode MARKER: " << id << std::endl << pose3d << std::endl;
     
+    // TODO: questo pezzo serve solo per controllare la coerenza delle trasformazioni tra quat e RPY -> da eliminare
     /* double yaw, pitch, roll;
     std::cout << "\n\n[CeresPose3d] AddNode MARKER:\t" << id << std::endl << pose3d << std::endl;
     karto::Pose3 pose_karto = pMarkerVertex->GetLocalizedMarker()->GetCorrectedPose();
@@ -365,12 +368,13 @@ namespace solver_plugins
     const int node2 = pEdge->GetTarget()->GetObject()->GetUniqueId();
     GraphIterator3d node2it = nodes3d_->find(node2);
 
-    /* std::cout << "\nNode1 ID: " << (int)node1it->first << std::endl;
+  // TODO: solo per test  -> da eliminare
+  /* std::cout << "\nNode1 ID: " << (int)node1it->first << std::endl;
   std::cout << "Position   \t" << node1it->second.p.transpose() <<std::endl;
-  std::cout << "Orientation\t" << node1it->second.q.coeffs().transpose() <<std::endl;
+  std::cout << "Orientation\t" << node1it->second.q.coeffs().transpose() << std::endl;
   std::cout << "\nNode2 ID: " << (int)node2it->first << std::endl;
-  std::cout << "Position   \t" << node2it->second.p.transpose() <<std::endl;
-  std::cout << "Orientation\t" << node2it->second.q.coeffs().transpose() <<std::endl; */
+  std::cout << "Position   \t" << node2it->second.p.transpose() << std::endl;
+  std::cout << "Orientation\t" << node2it->second.q.coeffs().transpose() << std::endl; */
 
     if (node1it == nodes3d_->end() ||
         node2it == nodes3d_->end() ||
@@ -396,6 +400,7 @@ namespace solver_plugins
     precisionMatrix3(5, 5) = precisionMatrix(2, 2); // yaw
     Eigen::Matrix<double, 6, 6> sqrt_information = precisionMatrix3.llt().matrixL();
 
+    // TODO: solo per test  -> da eliminare
     /* std::cout << "\n\ncovariance_matrix 2D (x, y, heading)\n"
               << pLinkInfo->GetCovariance() << std::endl;
     std::cout << "\nsqrt_information (square root of precision matrix) (x, y, z, roll, pitch, yaw)\n"
@@ -412,11 +417,13 @@ namespace solver_plugins
                                                               node1it->second.p.data(), node1it->second.q.coeffs().data(),
                                                               node2it->second.p.data(), node2it->second.q.coeffs().data());
 
-    // imposta una LocalParameterization per un parameter block
+    // imposta la LocalParameterization per i parameter block relativi all'orientamento dei due nodi
     problem_->SetParameterization(node1it->second.q.coeffs().data(), quaternion_local_parameterization_);
-
-    // imposta una LocalParameterization per un parameter block
     problem_->SetParameterization(node2it->second.q.coeffs().data(), quaternion_local_parameterization_);
+
+    // imposta la LocalParameterization per i parameter block relativi alla traslazione dei due nodi
+    problem_->SetParameterization(node1it->second.p.data(), subset_local_parameterization_);
+    problem_->SetParameterization(node2it->second.p.data(), subset_local_parameterization_);
 
     blocks_->insert(std::pair<std::size_t, ceres::ResidualBlockId>(
         GetHash(node1, node2), block));
@@ -445,6 +452,7 @@ namespace solver_plugins
     const int node2 = pMarkerEdge->GetTarget()->GetObject()->GetUniqueId();
     GraphIterator3d node2it = nodes3d_->find(node2);
 
+    // TODO: solo per test  -> da eliminare
     /* std::cout << "\nNode1 ID: " << (int)node1it->first << std::endl
             << "Position   \t" << node1it->second.p.transpose() << std::endl
             << "Orientation\t" << node1it->second.q.coeffs().transpose() << std::endl
@@ -467,6 +475,7 @@ namespace solver_plugins
     Eigen::Matrix<double, 6, 6> precisionMatrix3 = pMarkerLinkInfo->GetCovariance().inverse();
     Eigen::Matrix<double, 6, 6> sqrt_information = precisionMatrix3.llt().matrixL();
 
+    // TODO: solo per test  -> da eliminare
     /* std::cout << "\n\ncovariance_matrix 3D (x, y, z, roll, pitch, yaw)\n"
               << pMarkerLinkInfo->GetCovariance() << std::endl;
     std::cout << "\nsqrt_information (square root of precision matrix) (x, y, z, roll, pitch, yaw)\n"
@@ -483,11 +492,12 @@ namespace solver_plugins
                                                               node1it->second.p.data(), node1it->second.q.coeffs().data(),
                                                               node2it->second.p.data(), node2it->second.q.coeffs().data());
 
-    // imposta una LocalParameterization per un parameter block
+    // imposta la LocalParameterization per i parameter block relativi all'orientamento
     problem_->SetParameterization(node1it->second.q.coeffs().data(), quaternion_local_parameterization_);
-
-    // imposta una LocalParameterization per un parameter block
     problem_->SetParameterization(node2it->second.q.coeffs().data(), quaternion_local_parameterization_);
+
+    // imposta la LocalParameterization per il parameter block relativo alla traslazione del nodo 2 (blocca la z!)
+    problem_->SetParameterization(node2it->second.p.data(), subset_local_parameterization_);
 
     blocks_->insert(std::pair<std::size_t, ceres::ResidualBlockId>(
         GetHash(node1, node2), block));

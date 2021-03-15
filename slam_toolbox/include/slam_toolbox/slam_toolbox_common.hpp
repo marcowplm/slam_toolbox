@@ -106,17 +106,18 @@ protected:
   std::unique_ptr<tf2_ros::TransformBroadcaster> tfB_;
   std::unique_ptr<message_filters::Subscriber<sensor_msgs::LaserScan> > scan_filter_sub_;
   std::unique_ptr<tf2_ros::MessageFilter<sensor_msgs::LaserScan> > scan_filter_;
+  std::unique_ptr<message_filters::Subscriber<sensor_msgs::CameraInfo> > camera_sub_;
   ros::Publisher sst_, sstm_;
   ros::ServiceServer ssMap_, ssPauseMeasurements_, ssSerialize_, ssDesserialize_;
 
   // Storage for ROS parameters
-  std::string odom_frame_, map_frame_, base_frame_, map_name_, scan_topic_;
+  std::string odom_frame_, map_frame_, base_frame_, map_name_, scan_topic_, camera_topic_;
   std::string camera_frame_, tag_topic_;
   ros::Duration transform_timeout_, tf_buffer_dur_, minimum_time_interval_;
   int throttle_scans_;
 
   double resolution_;
-  bool first_measurement_, enable_interactive_mode_;
+  bool first_measurement_, enable_interactive_mode_, use_markers_;
 
   // Book keeping
   std::unique_ptr<mapper_utils::SMapper> smapper_;

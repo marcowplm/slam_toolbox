@@ -124,6 +124,11 @@ typedef slam_toolbox_msgs::DeserializePoseGraph::Request procType;
 typedef std::unordered_map<int, karto::Pose3>::iterator GraphIterator;
 typedef std::unordered_map<int, karto::Pose3>::const_iterator ConstGraphIterator;
 
+typedef std::map<karto::Name, std::map<int, karto::MarkerVertex*>> MarkerVerticeMap;
+typedef std::vector<karto::MarkerEdge*> MarkerEdgeVector;
+typedef std::map<int, karto::MarkerVertex*> MarkerMap;
+typedef std::vector<karto::MarkerVertex*> MarkerVector;
+
 }  // end namespace
 
 #endif //SLAM_TOOLBOX_TOOLBOX_TYPES_H_

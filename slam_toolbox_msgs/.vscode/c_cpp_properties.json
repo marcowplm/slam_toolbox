@@ -1,0 +1,19 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "",
+        "limitSymbolsToIncludedHeaders": true
+      },
+      "includePath": [
+        "/home/marco/catkin_ws/devel/include/**",
+        "/opt/ros/melodic/include/**",
+        "/home/marco/catkin_ws/src/my_sim/include/**",
+        "/home/marco/catkin_ws/src/slam_toolbox/slam_toolbox/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS"
+    }
+  ],
+  "version": 4
+}

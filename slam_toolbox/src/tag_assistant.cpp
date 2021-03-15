@@ -8,18 +8,20 @@ namespace tag_assistant
 
   /*****************************************************************************/
   ApriltagAssistant::ApriltagAssistant(
-      ros::NodeHandle &nh, tf2_ros::Buffer *tf, karto::Mapper *mapper)
-      : nh_(nh), tf_(tf), mapper_(mapper)
+      ros::NodeHandle &nh, tf2_ros::Buffer *tf, karto::Mapper *mapper, karto::Dataset *dataset)
+      : nh_(nh), tf_(tf), mapper_(mapper), dataset_(dataset)
   /*****************************************************************************/
   {
     nh_.getParam("map_frame", map_frame_);
     nh_.getParam("odom_frame", odom_frame_);
     nh_.getParam("camera_frame", camera_frame_);
+    nh_.getParam("marker_link_covariance", m_cov_);
     tag_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("tag_visualization", 1);
     link_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("link_visualization", 1);
     //tfB_ = std::make_unique<tf2_ros::TransformBroadcaster>();
     solver_ = mapper_->getScanSolver();
     camera_ = makeCamera();
+    dataset_->Add(camera_, true);
   }
 
   /*****************************************************************************/
@@ -41,10 +43,13 @@ namespace tag_assistant
           // Recupero il marker con lo UniqueId associato al tag_id di questo tag
           int marker_unique_id = ids_[tags_Iter->first];
           karto::LocalizedMarker *pMarker = mapper_->GetMarkerManager()->GetMarker(marker_unique_id);
-          Eigen::Matrix<double, 6, 6> rCovariance = Eigen::Matrix<double, 6, 6>::Identity();
-          mapper_->GetMarkerGraph()->LinkMarkerToScan(pMarker, pScan, rCovariance);
+          
+          Eigen::Matrix<double, 6, 6> cov = Eigen::Matrix<double, 6, 6>::Identity();
+          cov(0,0) = cov(1,1) = cov(2,2) = m_cov_;
+          mapper_->GetMarkerGraph()->LinkMarkerToScan(pMarker, pScan, cov);
+          
           tags_Iter->second.insert(scan_id); // aggiungo l'id dello scan alla struttura dati, in corrispondenza dell'id del tag
-          //mapper_->CorrectPoses();
+          // mapper_->CorrectPoses(); // così sparo l'ottimizzazione ad OGNI nuovo MarkerEdge (un po' troppo...)
           processed = true;
         } // else: il tag è già associato allo scan -> non fare niente
       }
@@ -106,7 +111,7 @@ namespace tag_assistant
     tag->SetCorrectedPose(tag_pose);
     return tag;
   }
-
+  
   // Ottiene la posizione del tag nel riferimento mondo (map_frame_), nel momento in cui il tag viene creato
   /*****************************************************************************/
   bool ApriltagAssistant::getTagPose(karto::Pose3 &tag_pose_karto,
@@ -198,8 +203,7 @@ namespace tag_assistant
     }
 
     tag_publisher_.publish(marray);
-
-    publishLinks();
+    // publishLinks(); // FIXME: non funziona con la serializzazione!
     
     return;
   }
@@ -209,7 +213,6 @@ namespace tag_assistant
   /*****************************************************************************/
   {
     karto::Camera *camera = karto::Camera::CreateCamera(karto::Name("Custom Camera"));
-    karto::SensorManager::GetInstance()->RegisterSensor(camera);
     return camera;
   }
 
@@ -220,6 +223,7 @@ namespace tag_assistant
     return camera_;
   }
 
+  // TODO: è qui solo per TEST - poi deve essere eliminato!
   /*****************************************************************************/
   void ApriltagAssistant::publishLinks()
   /*****************************************************************************/
@@ -270,6 +274,13 @@ namespace tag_assistant
     }
 
     link_publisher_.publish(marray);
+    return;
+  }
+
+  // TODO: sta roba deve sparire
+  void ApriltagAssistant::setCamera(karto::Camera *cam)
+  {
+    camera_ = cam;
     return;
   }
 

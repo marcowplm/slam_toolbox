@@ -35,6 +35,7 @@
 #include <karto_sdk/Karto.h>
 
 #include "nanoflann_adaptors.h"
+#include "serialization_eigen.h"
 
 namespace karto
 {
@@ -295,14 +296,9 @@ namespace karto
       Eigen::Isometry3d transform = poseToIsometry(rPose1).inverse() * poseToIsometry(rPose2);
       m_PoseDifference = isometryToPose(transform);
 
-      // TODO: è qui solo per TEST
       double dist = transform.translation().norm();
-      Eigen::Matrix<double, 6, 6> cov = Eigen::Matrix<double, 6, 6>::Identity();
-      cov(0, 0) = cov(1, 1) = cov(2, 2) = (50 * 50);
-      cov(3, 3) = cov(4, 4) = cov(5, 5) = 1;
-      cov = (1 / pow(dist, 2)) * cov;
-      
-      m_Covariance = cov;
+      m_Covariance = rCovariance;
+      m_Covariance.topLeftCorner(3,3) *= math::Square(dist);
     }
 
     /**
@@ -396,8 +392,8 @@ namespace karto
       ar &BOOST_SERIALIZATION_BASE_OBJECT_NVP(EdgeLabel);
       ar &BOOST_SERIALIZATION_NVP(m_Pose1);
       ar &BOOST_SERIALIZATION_NVP(m_Pose2);
-      // FIXME: trova un modo di serializzare m_Covariance, che è una Eigen::Matrix
-      //ar &BOOST_SERIALIZATION_NVP(m_Covariance);
+      ar &BOOST_SERIALIZATION_NVP(m_PoseDifference);
+      ar &BOOST_SERIALIZATION_EIGEN_H(m_Covariance);
     }
   }; // MarkerLinkInfo
 
@@ -1357,10 +1353,9 @@ namespace karto
     }
 
     /**
-     * Adds an edge between the marker and the scan and labels the edge with the given mean and covariance
-     * @param pFromScan
+     * Adds an edge between the marker and the scan and labels the edge with the given covariance
+     * @param pFromMarker
      * @param pToScan
-     * @param rMean
      * @param rCovariance
      */
     void LinkMarkerToScan(LocalizedMarker *pFromMarker,
@@ -2893,26 +2888,54 @@ namespace karto
     //////////////////////////////////////////////////////////////////////////////
     // ScanMatcherParameters;
 
-    // Variance of penalty for deviating from odometry when scan-matching.
-    // The penalty is a multiplier (less than 1.0) is a function of the
-    // delta of the scan position being tested and the odometric pose
+    /** 
+     * Variance of penalty for deviating from odometry when scan-matching.
+     * The penalty is a multiplier (less than 1.0) is a function of the
+     * delta of the scan position being tested and the odometric pose
+     */
     Parameter<kt_double> *m_pDistanceVariancePenalty;
     Parameter<kt_double> *m_pAngleVariancePenalty;
 
-    // The range of angles to search during a coarse search and a finer search
+    /**
+     * The range of angles to search during a coarse search and a finer search
+     */
     Parameter<kt_double> *m_pFineSearchAngleOffset;
     Parameter<kt_double> *m_pCoarseSearchAngleOffset;
 
-    // Resolution of angles to search during a coarse search
+    /** 
+     * Resolution of angles to search during a coarse search
+     */
     Parameter<kt_double> *m_pCoarseAngleResolution;
 
-    // Minimum value of the penalty multiplier so scores do not
-    // become too small
+    /**
+     * Minimum value of the penalty multiplier so scores do not become too small
+     */
     Parameter<kt_double> *m_pMinimumAnglePenalty;
     Parameter<kt_double> *m_pMinimumDistancePenalty;
 
-    // whether to increase the search space if no good matches are initially found
+    /** 
+     * Whether to increase the search space if no good matches are initially found
+     */
     Parameter<kt_bool> *m_pUseResponseExpansion;
+
+    //////////////////////////////////////////////////////////////////////////////
+    // Parameters related to the Markers
+
+    /**
+     * When set to true, the mapper will use the markers
+     */
+    Parameter<kt_bool> *m_pUseMarkers;
+
+    /** 
+     * The covariance along the x, y, z axes of the link between a marker and a scan
+     */
+    Parameter<kt_double> *m_pMarkerLinkCovariance;
+
+    /** 
+     * Enable/disable the correction of poses (the optimization) after each new Marker
+     * is created
+     */
+    Parameter<kt_bool> *m_pCorrectPosesAfterNewMarker;
 
     int count = 0;
 
@@ -2964,6 +2987,9 @@ namespace karto
       ar &BOOST_SERIALIZATION_NVP(m_pMinimumAnglePenalty);
       ar &BOOST_SERIALIZATION_NVP(m_pMinimumDistancePenalty);
       ar &BOOST_SERIALIZATION_NVP(m_pUseResponseExpansion);
+      ar &BOOST_SERIALIZATION_NVP(m_pUseMarkers);
+      ar &BOOST_SERIALIZATION_NVP(m_pMarkerLinkCovariance);
+      ar &BOOST_SERIALIZATION_NVP(m_pCorrectPosesAfterNewMarker);
       std::cout << "**Finished serializing Mapper**\n";
     }
 
@@ -3008,6 +3034,11 @@ namespace karto
     double getParamMinimumDistancePenalty();
     bool getParamUseResponseExpansion();
 
+    // Parameters related to the Markers
+    bool getParamUseMarkers();
+    double getParamMarkerLinkCovariance();
+    bool getParamCorrectPosesAfterNewMarker();
+
     /* Setters */
     // General Parameters
     void setParamUseScanMatching(bool b);
@@ -3045,6 +3076,11 @@ namespace karto
     void setParamMinimumAnglePenalty(double d);
     void setParamMinimumDistancePenalty(double d);
     void setParamUseResponseExpansion(bool b);
+
+    // Parameters related to the Markers
+    void setParamUseMarkers(bool b);
+    void setParamMarkerLinkCovariance(double d);
+    void setParamCorrectPosesAfterNewMarker(bool b);
   };
   BOOST_SERIALIZATION_ASSUME_ABSTRACT(Mapper)
 } // namespace karto

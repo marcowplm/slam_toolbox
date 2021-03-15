@@ -154,7 +154,7 @@ namespace loop_closure_assistant
       m.color.r = 1;
       m.color.g = 0;
       m.color.b = 0;
-
+      
       if (interactive_mode && enable_interactive_mode_)
       {
         visualization_msgs::InteractiveMarker int_marker =
@@ -191,12 +191,12 @@ namespace loop_closure_assistant
     // if disabled, clears out old markers
     interactive_server_->applyChanges();
     marker_publisher_.publish(marray);
-    
-    publishEdges();
+    // publishEdges(); // FIXME: non funziona con la serializzazione!
 
     return;
   }
 
+  // TODO: è qui solo per TEST - poi deve essere eliminato!
   /*****************************************************************************/
   void LoopClosureAssistant::publishEdges()
   /*****************************************************************************/

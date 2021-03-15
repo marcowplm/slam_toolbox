@@ -117,10 +117,11 @@ namespace tag_assistant
   class ApriltagAssistant
   {
   public:
-    ApriltagAssistant(ros::NodeHandle &nh, tf2_ros::Buffer *tf, karto::Mapper *mapper);
+    ApriltagAssistant(ros::NodeHandle &nh, tf2_ros::Buffer *tf, karto::Mapper *mapper, karto::Dataset *dataset);
 
     karto::Camera *makeCamera();
     karto::Camera *getCamera();
+    void setCamera(karto::Camera *cam);
 
     void publishMarkerGraph();
     void publishLinks();
@@ -143,10 +144,12 @@ namespace tag_assistant
     std::unique_ptr<tf2_ros::TransformBroadcaster> tfB_;
 
     karto::Mapper *mapper_;
+    karto::Dataset *dataset_;
     karto::ScanSolver *solver_;
     karto::Camera *camera_;
 
     std::string map_frame_, odom_frame_, camera_frame_;
+    double m_cov_;
 
     std::map<int, std::set<int>> tags_; // Maps each tag id (int key) to many vertices id (set<int>)
     std::map<int, std::set<int>>::iterator tags_Iter;
