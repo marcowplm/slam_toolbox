@@ -2092,6 +2092,18 @@ namespace karto
     void SetLastScan(LocalizedRangeScan *pScan);
 
     /**
+     * Clears the laser scan of device
+     * @param pScan
+     */
+    void ClearLastScan(LocalizedRangeScan* pScan);
+
+    /**
+     * Clears the laser scan of device name
+     * @param pScan
+     */
+    void ClearLastScan(const Name& name);
+
+    /**
      * Gets the scan with the given unique id
      * @param id
      * @return scan
@@ -2547,11 +2559,13 @@ namespace karto
     virtual kt_bool Process(Object *pObject);
 
     // processors
-    kt_bool ProcessAtDock(LocalizedRangeScan *pScan);
-    kt_bool ProcessAgainstNode(LocalizedRangeScan *pScan, const int &nodeId);
-    kt_bool ProcessAgainstNodesNearBy(LocalizedRangeScan *pScan);
-    kt_bool ProcessLocalization(LocalizedRangeScan *pScan);
-    kt_bool RemoveNodeFromGraph(Vertex<LocalizedRangeScan> *);
+    kt_bool ProcessAtDock(LocalizedRangeScan* pScan);
+    kt_bool ProcessAgainstNode(LocalizedRangeScan* pScan,  const int& nodeId);
+    kt_bool ProcessAgainstNodesNearBy(LocalizedRangeScan* pScan, kt_bool addScanToLocalizationBuffer = false);
+    kt_bool ProcessLocalization(LocalizedRangeScan* pScan);
+    kt_bool RemoveNodeFromGraph(Vertex<LocalizedRangeScan>*);
+    void AddScanToLocalizationBuffer(LocalizedRangeScan* pScan, Vertex<LocalizedRangeScan>* scan_vertex);
+    void ClearLocalizationBuffer();
 
     kt_bool ProcessMarker(LocalizedMarker *pMarker, LocalizedRangeScan *pScan, int &UniqueId);
 
