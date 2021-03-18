@@ -13,8 +13,8 @@
 
   <node pkg="image_proc" type="image_proc" name="image_proc" ns="$(arg camera)"/>
 
-  <node pkg="slam_toolbox" type="sync_tag_slam_toolbox_node" name="slam_toolbox" output="screen">
-    <rosparam command="load" file="$(find slam_toolbox)/config/mapper_params_online_sync_tag.yaml"/>
+  <node pkg="slam_toolbox" type="sync_slam_toolbox_node" name="slam_toolbox" output="screen">
+    <rosparam command="load" file="$(find slam_toolbox)/config/mapper_params_online_sync.yaml"/>
   </node>
 
 </launch>

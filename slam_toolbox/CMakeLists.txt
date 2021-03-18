@@ -151,11 +151,6 @@ target_link_libraries(lifelong_slam_toolbox toolbox_common kartoSlamToolbox ${ca
 add_executable(lifelong_slam_toolbox_node src/experimental/slam_toolbox_lifelong_node.cpp )
 target_link_libraries(lifelong_slam_toolbox_node lifelong_slam_toolbox)
 
-add_library(sync_tag_slam_toolbox src/slam_toolbox_sync_tag.cpp)
-target_link_libraries(sync_tag_slam_toolbox toolbox_common kartoSlamToolbox ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-add_executable(sync_tag_slam_toolbox_node src/slam_toolbox_sync_tag_node.cpp )
-target_link_libraries(sync_tag_slam_toolbox_node sync_tag_slam_toolbox)
-
 #### Merging maps tool
 add_executable(merge_maps_kinematic src/merge_maps_kinematic.cpp)
 target_link_libraries(merge_maps_kinematic toolbox_common)
@@ -180,8 +175,6 @@ install(TARGETS toolbox_common
                 lifelong_slam_toolbox_node
                 ceres_solver_plugin
                 merge_maps_kinematic
-                sync_tag_slam_toolbox
-                sync_tag_slam_toolbox_node
                 SlamToolboxPlugin
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

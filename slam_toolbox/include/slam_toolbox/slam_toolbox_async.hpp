@@ -34,6 +34,8 @@ public:
 protected:
   virtual void laserCallback(
     const sensor_msgs::LaserScan::ConstPtr& scan) override final;
+  virtual void tagCallback(
+    const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array) override final;
   virtual bool deserializePoseGraphCallback(
     slam_toolbox_msgs::DeserializePoseGraph::Request& req,
     slam_toolbox_msgs::DeserializePoseGraph::Response& resp) override final;

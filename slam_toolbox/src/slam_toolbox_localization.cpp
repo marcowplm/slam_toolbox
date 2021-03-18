@@ -21,210 +21,238 @@
 namespace slam_toolbox
 {
 
-/*****************************************************************************/
-LocalizationSlamToolbox::LocalizationSlamToolbox(ros::NodeHandle& nh)
-: SlamToolbox(nh)
-/*****************************************************************************/
-{
-  processor_type_ = PROCESS_LOCALIZATION;
-  localization_pose_sub_ = nh.subscribe("/initialpose", 1,
-    &LocalizationSlamToolbox::localizePoseCallback, this);
-  clear_localization_ = nh.advertiseService(
-    "clear_localization_buffer",
-    &LocalizationSlamToolbox::clearLocalizationBuffer, this);
-
-  std::string filename;
-  geometry_msgs::Pose2D pose;
-  bool dock = false;
-  if (shouldStartWithPoseGraph(filename, pose, dock))
+  /*****************************************************************************/
+  LocalizationSlamToolbox::LocalizationSlamToolbox(ros::NodeHandle &nh)
+      : SlamToolbox(nh)
+  /*****************************************************************************/
   {
-    slam_toolbox_msgs::DeserializePoseGraph::Request req;
-    slam_toolbox_msgs::DeserializePoseGraph::Response resp;
-    req.initial_pose = pose;
-    req.filename = filename;
-    req.match_type = 
-      slam_toolbox_msgs::DeserializePoseGraph::Request::LOCALIZE_AT_POSE;
-    if (dock)
+    processor_type_ = PROCESS_LOCALIZATION;
+    localization_pose_sub_ = nh.subscribe("/initialpose", 1,
+                                          &LocalizationSlamToolbox::localizePoseCallback, this);
+    clear_localization_ = nh.advertiseService(
+        "clear_localization_buffer",
+        &LocalizationSlamToolbox::clearLocalizationBuffer, this);
+
+    std::string filename;
+    geometry_msgs::Pose2D pose;
+    bool dock = false;
+    if (shouldStartWithPoseGraph(filename, pose, dock))
     {
-      ROS_ERROR("LocalizationSlamToolbox: Starting localization "
-        "at first node (dock) is correctly not supported.");
+      slam_toolbox_msgs::DeserializePoseGraph::Request req;
+      slam_toolbox_msgs::DeserializePoseGraph::Response resp;
+      req.initial_pose = pose;
+      req.filename = filename;
+      req.match_type =
+          slam_toolbox_msgs::DeserializePoseGraph::Request::LOCALIZE_AT_POSE;
+      if (dock)
+      {
+        ROS_ERROR("LocalizationSlamToolbox: Starting localization "
+                  "at first node (dock) is correctly not supported.");
+      }
+
+      deserializePoseGraphCallback(req, resp);
     }
 
-    deserializePoseGraphCallback(req, resp);
+    // in localization mode, we cannot allow for interactive mode
+    enable_interactive_mode_ = false;
+
+    // in localization mode, disable map saver
+    map_saver_.reset();
+    return;
   }
 
-  // in localization mode, we cannot allow for interactive mode
-  enable_interactive_mode_ = false;
-
-  // in localization mode, disable map saver
-  map_saver_.reset();
-  return;
-}
-
-/*****************************************************************************/
-bool LocalizationSlamToolbox::clearLocalizationBuffer(
-  std_srvs::Empty::Request& req,
-  std_srvs::Empty::Response& resp)
-/*****************************************************************************/
-{
-  ROS_INFO("LocalizationSlamToolbox: Clearing localization buffer.");
-  smapper_->clearLocalizationBuffer();
-  return true;
-}
-
-/*****************************************************************************/
-bool LocalizationSlamToolbox::serializePoseGraphCallback(
-  slam_toolbox_msgs::SerializePoseGraph::Request& req,
-  slam_toolbox_msgs::SerializePoseGraph::Response& resp)
-/*****************************************************************************/
-{
-  ROS_FATAL("LocalizationSlamToolbox: Cannot call serialize map "
-    "in localization mode!");
-  return false;
-}
-
-/*****************************************************************************/
-bool LocalizationSlamToolbox::deserializePoseGraphCallback(
-  slam_toolbox_msgs::DeserializePoseGraph::Request& req,
-  slam_toolbox_msgs::DeserializePoseGraph::Response& resp)
-/*****************************************************************************/
-{
-  if (req.match_type != procType::LOCALIZE_AT_POSE)
+  /*****************************************************************************/
+  bool LocalizationSlamToolbox::clearLocalizationBuffer(
+      std_srvs::Empty::Request &req,
+      std_srvs::Empty::Response &resp)
+  /*****************************************************************************/
   {
-    ROS_ERROR("Requested a non-localization deserialization "
-      "in localization mode.");
+    ROS_INFO("LocalizationSlamToolbox: Clearing localization buffer.");
+    smapper_->clearLocalizationBuffer();
+    return true;
+  }
+
+  /*****************************************************************************/
+  bool LocalizationSlamToolbox::serializePoseGraphCallback(
+      slam_toolbox_msgs::SerializePoseGraph::Request &req,
+      slam_toolbox_msgs::SerializePoseGraph::Response &resp)
+  /*****************************************************************************/
+  {
+    ROS_FATAL("LocalizationSlamToolbox: Cannot call serialize map "
+              "in localization mode!");
     return false;
   }
-  return SlamToolbox::deserializePoseGraphCallback(req, resp);
-}
 
-/*****************************************************************************/
-void LocalizationSlamToolbox::laserCallback(
-  const sensor_msgs::LaserScan::ConstPtr& scan)
-/*****************************************************************************/
-{
-  // no odom info
-  Pose2 pose;
-  if(!pose_helper_->getOdomPose(pose, scan->header.stamp))
+  /*****************************************************************************/
+  bool LocalizationSlamToolbox::deserializePoseGraphCallback(
+      slam_toolbox_msgs::DeserializePoseGraph::Request &req,
+      slam_toolbox_msgs::DeserializePoseGraph::Response &resp)
+  /*****************************************************************************/
   {
-    return;
-  }
-
-  // ensure the laser can be used
-  LaserRangeFinder* laser = getLaser(scan);
-
-  if(!laser)
-  {
-    ROS_WARN_THROTTLE(5., "SynchronousSlamToolbox: Failed to create laser"
-      " device for %s; discarding scan", scan->header.frame_id.c_str());
-    return;
-  }
-
-  if (shouldProcessScan(scan, pose))
-  {
-    addScan(laser, scan, pose);
-  }
-  
-  return;
-}
-
-/*****************************************************************************/
-LocalizedRangeScan* LocalizationSlamToolbox::addScan(
-  LaserRangeFinder* laser,
-  const sensor_msgs::LaserScan::ConstPtr& scan, 
-  Pose2& karto_pose)
-/*****************************************************************************/
-{
-  boost::mutex::scoped_lock l(pose_mutex_);
-
-  if (PROCESS_LOCALIZATION && process_near_pose_)
-  {
-    processor_type_ = PROCESS_NEAR_REGION;
-  }
-
-  LocalizedRangeScan* range_scan = getLocalizedRangeScan(
-    laser, scan, karto_pose);
-
-  // Add the localized range scan to the smapper
-  boost::mutex::scoped_lock lock(smapper_mutex_);
-  bool processed = false, update_reprocessing_transform = false;
-  if (processor_type_ == PROCESS_NEAR_REGION)
-  {
-    if (!process_near_pose_)
+    if (req.match_type != procType::LOCALIZE_AT_POSE)
     {
-      ROS_ERROR("Process near region called without a "
-        "valid region request. Ignoring scan.");
-      return nullptr;
+      ROS_ERROR("Requested a non-localization deserialization "
+                "in localization mode.");
+      return false;
+    }
+    return SlamToolbox::deserializePoseGraphCallback(req, resp);
+  }
+
+  /*****************************************************************************/
+  void LocalizationSlamToolbox::laserCallback(
+      const sensor_msgs::LaserScan::ConstPtr &scan)
+  /*****************************************************************************/
+  {
+    // no odom info
+    Pose2 pose;
+    if (!pose_helper_->getOdomPose(pose, scan->header.stamp))
+    {
+      return;
     }
 
-    // set our position to the requested pose and process
-    range_scan->SetOdometricPose(*process_near_pose_);
-    range_scan->SetCorrectedPose(range_scan->GetOdometricPose());
-    process_near_pose_.reset(nullptr);
-    processed = smapper_->getMapper()->ProcessAgainstNodesNearBy(range_scan, true);
+    // ensure the laser can be used
+    LaserRangeFinder *laser = getLaser(scan);
 
-    // reset to localization mode
-    processor_type_ = PROCESS_LOCALIZATION;
-    update_reprocessing_transform = true;
-  }
-  else if (processor_type_ == PROCESS_LOCALIZATION)
-  {
-    processed = smapper_->getMapper()->ProcessLocalization(range_scan);
-    update_reprocessing_transform = false;
-  }
-  else
-  {
-    ROS_FATAL("LocalizationSlamToolbox: "
-      "No valid processor type set! Exiting.");
-    exit(-1);
-  }
+    if (!laser)
+    {
+      ROS_WARN_THROTTLE(5., "SynchronousSlamToolbox: Failed to create laser"
+                            " device for %s; discarding scan",
+                        scan->header.frame_id.c_str());
+      return;
+    }
 
-  // if successfully processed, create odom to map transformation
-  if(!processed)
-  {
-    delete range_scan;
-    range_scan = nullptr;
-  } else {
-    // compute our new transform
-    setTransformFromPoses(range_scan->GetCorrectedPose(), karto_pose,
-      scan->header.stamp, update_reprocessing_transform);
-  }
+    if (shouldProcessScan(scan, pose))
+    {
+      addScan(laser, scan, pose);
+    }
 
-  return range_scan;
-}
-
-/*****************************************************************************/
-void LocalizationSlamToolbox::localizePoseCallback(const
-  geometry_msgs::PoseWithCovarianceStampedConstPtr& msg)
-/*****************************************************************************/
-{
-  if (processor_type_ != PROCESS_LOCALIZATION)
-  {
-    ROS_ERROR("LocalizePoseCallback: Cannot process localization command "
-      "if not in localization mode.");
     return;
   }
 
-  boost::mutex::scoped_lock l(pose_mutex_);
-  if (process_near_pose_)
+  // FIXME: da implementare correttamente!
+  /*****************************************************************************/
+  void LocalizationSlamToolbox::tagCallback(
+      const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array)
+  /*****************************************************************************/
   {
-    process_near_pose_.reset(new Pose2(msg->pose.pose.position.x, 
-      msg->pose.pose.position.y, tf2::getYaw(msg->pose.pose.orientation)));
+    // ensure the camera can be used
+    karto::Camera *camera = getCamera();
+    if (!camera)
+    {
+      ROS_WARN_THROTTLE(5., "LocalizationSlamToolbox: Failed to create camera");
+      return;
+    }
+
+    if (detection_array->detections.size() == 0)
+    {
+      return;
+    }
+
+    VerticeMap mapper_vertices = smapper_->getMapper()->GetGraph()->GetVertices();
+    ScanMap scan_vertices = mapper_vertices.find(karto::Name("Custom Described Lidar"))->second;
+    tag_assistant_->processDetection(scan_vertices.rbegin()->second, detection_array);
+
+    return;
   }
-  else
+
+  /*****************************************************************************/
+  LocalizedRangeScan *LocalizationSlamToolbox::addScan(
+      LaserRangeFinder *laser,
+      const sensor_msgs::LaserScan::ConstPtr &scan,
+      Pose2 &karto_pose)
+  /*****************************************************************************/
   {
-    process_near_pose_ = std::make_unique<Pose2>(msg->pose.pose.position.x, 
-      msg->pose.pose.position.y, tf2::getYaw(msg->pose.pose.orientation));    
+    boost::mutex::scoped_lock l(pose_mutex_);
+
+    if (PROCESS_LOCALIZATION && process_near_pose_)
+    {
+      processor_type_ = PROCESS_NEAR_REGION;
+    }
+
+    LocalizedRangeScan *range_scan = getLocalizedRangeScan(
+        laser, scan, karto_pose);
+
+    // Add the localized range scan to the smapper
+    boost::mutex::scoped_lock lock(smapper_mutex_);
+    bool processed = false, update_reprocessing_transform = false;
+    if (processor_type_ == PROCESS_NEAR_REGION)
+    {
+      if (!process_near_pose_)
+      {
+        ROS_ERROR("Process near region called without a "
+                  "valid region request. Ignoring scan.");
+        return nullptr;
+      }
+
+      // set our position to the requested pose and process
+      range_scan->SetOdometricPose(*process_near_pose_);
+      range_scan->SetCorrectedPose(range_scan->GetOdometricPose());
+      process_near_pose_.reset(nullptr);
+      processed = smapper_->getMapper()->ProcessAgainstNodesNearBy(range_scan, true);
+
+      // reset to localization mode
+      processor_type_ = PROCESS_LOCALIZATION;
+      update_reprocessing_transform = true;
+    }
+    else if (processor_type_ == PROCESS_LOCALIZATION)
+    {
+      processed = smapper_->getMapper()->ProcessLocalization(range_scan);
+      update_reprocessing_transform = false;
+    }
+    else
+    {
+      ROS_FATAL("LocalizationSlamToolbox: "
+                "No valid processor type set! Exiting.");
+      exit(-1);
+    }
+
+    // if successfully processed, create odom to map transformation
+    if (!processed)
+    {
+      delete range_scan;
+      range_scan = nullptr;
+    }
+    else
+    {
+      // compute our new transform
+      setTransformFromPoses(range_scan->GetCorrectedPose(), karto_pose,
+                            scan->header.stamp, update_reprocessing_transform);
+    }
+
+    return range_scan;
   }
 
-  first_measurement_ = true;
+  /*****************************************************************************/
+  void LocalizationSlamToolbox::localizePoseCallback(const geometry_msgs::PoseWithCovarianceStampedConstPtr &msg)
+  /*****************************************************************************/
+  {
+    if (processor_type_ != PROCESS_LOCALIZATION)
+    {
+      ROS_ERROR("LocalizePoseCallback: Cannot process localization command "
+                "if not in localization mode.");
+      return;
+    }
 
-  smapper_->clearLocalizationBuffer();
+    boost::mutex::scoped_lock l(pose_mutex_);
+    if (process_near_pose_)
+    {
+      process_near_pose_.reset(new Pose2(msg->pose.pose.position.x,
+                                         msg->pose.pose.position.y, tf2::getYaw(msg->pose.pose.orientation)));
+    }
+    else
+    {
+      process_near_pose_ = std::make_unique<Pose2>(msg->pose.pose.position.x,
+                                                   msg->pose.pose.position.y, tf2::getYaw(msg->pose.pose.orientation));
+    }
 
-  ROS_INFO("LocalizePoseCallback: Localizing to: (%0.2f %0.2f), theta=%0.2f",
-    msg->pose.pose.position.x, msg->pose.pose.position.y,
-    tf2::getYaw(msg->pose.pose.orientation));
-  return;
-}
+    first_measurement_ = true;
+
+    smapper_->clearLocalizationBuffer();
+
+    ROS_INFO("LocalizePoseCallback: Localizing to: (%0.2f %0.2f), theta=%0.2f",
+             msg->pose.pose.position.x, msg->pose.pose.position.y,
+             tf2::getYaw(msg->pose.pose.orientation));
+    return;
+  }
 
 } // end namespace

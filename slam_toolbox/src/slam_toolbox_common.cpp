@@ -171,12 +171,12 @@ namespace slam_toolbox
     scan_filter_ = std::make_unique<tf2_ros::MessageFilter<sensor_msgs::LaserScan>>(*scan_filter_sub_, *tf_, odom_frame_, 5, node);
     scan_filter_->registerCallback(boost::bind(&SlamToolbox::laserCallback, this, _1));
 
-    /* if (use_markers_)
+    if (use_markers_)
     {
-      tag_detection_filter_sub_ = std::make_unique<message_filters::Subscriber<apriltag_ros::AprilTagDetectionArray>>(nh, tag_topic_, 5);
-      tag_detection_filter_ = std::make_unique<tf2_ros::MessageFilter<apriltag_ros::AprilTagDetectionArray>>(*tag_detection_filter_sub_, *tf_, camera_frame_, 5, nh);
-      tag_detection_filter_->registerCallback(boost::bind(&SynchronousSlamToolboxAT::tagCallback, this, _1));
-    } */
+      tag_detection_filter_sub_ = std::make_unique<message_filters::Subscriber<apriltag_ros::AprilTagDetectionArray>>(node, tag_topic_, 5);
+      tag_detection_filter_ = std::make_unique<tf2_ros::MessageFilter<apriltag_ros::AprilTagDetectionArray>>(*tag_detection_filter_sub_, *tf_, camera_frame_, 5, node);
+      tag_detection_filter_->registerCallback(boost::bind(&SlamToolbox::tagCallback, this, _1));
+    }
   }
 
   /*****************************************************************************/

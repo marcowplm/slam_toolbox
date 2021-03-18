@@ -22,54 +22,81 @@
 namespace slam_toolbox
 {
 
-/*****************************************************************************/
-AsynchronousSlamToolbox::AsynchronousSlamToolbox(ros::NodeHandle& nh)
-: SlamToolbox(nh)
-/*****************************************************************************/
-{
-  loadPoseGraphByParams(nh);
-}
-
-/*****************************************************************************/
-void AsynchronousSlamToolbox::laserCallback(
-  const sensor_msgs::LaserScan::ConstPtr& scan)
-/*****************************************************************************/
-{
-  // no odom info
-  karto::Pose2 pose;
-  if(!pose_helper_->getOdomPose(pose, scan->header.stamp))
+  /*****************************************************************************/
+  AsynchronousSlamToolbox::AsynchronousSlamToolbox(ros::NodeHandle &nh)
+      : SlamToolbox(nh)
+  /*****************************************************************************/
   {
+    loadPoseGraphByParams(nh);
+  }
+
+  /*****************************************************************************/
+  void AsynchronousSlamToolbox::laserCallback(
+      const sensor_msgs::LaserScan::ConstPtr &scan)
+  /*****************************************************************************/
+  {
+    // no odom info
+    karto::Pose2 pose;
+    if (!pose_helper_->getOdomPose(pose, scan->header.stamp))
+    {
+      return;
+    }
+
+    // ensure the laser can be used
+    karto::LaserRangeFinder *laser = getLaser(scan);
+
+    if (!laser)
+    {
+      ROS_WARN_THROTTLE(5., "Failed to create laser device for"
+                            " %s; discarding scan",
+                        scan->header.frame_id.c_str());
+      return;
+    }
+
+    addScan(laser, scan, pose);
     return;
   }
 
-  // ensure the laser can be used
-  karto::LaserRangeFinder* laser = getLaser(scan);
-
-  if(!laser)
+  // FIXME: da implementare correttamente!
+  /*****************************************************************************/
+  void AsynchronousSlamToolbox::tagCallback(
+      const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array)
+  /*****************************************************************************/
   {
-    ROS_WARN_THROTTLE(5., "Failed to create laser device for"
-      " %s; discarding scan", scan->header.frame_id.c_str());
+    // ensure the camera can be used
+    karto::Camera *camera = getCamera();
+    if (!camera)
+    {
+      ROS_WARN_THROTTLE(5., "AsynchronousSlamToolbox: Failed to create camera");
+      return;
+    }
+
+    if (detection_array->detections.size() == 0)
+    {
+      return;
+    }
+
+    VerticeMap mapper_vertices = smapper_->getMapper()->GetGraph()->GetVertices();
+    ScanMap scan_vertices = mapper_vertices.find(karto::Name("Custom Described Lidar"))->second;
+    tag_assistant_->processDetection(scan_vertices.rbegin()->second, detection_array);
+
     return;
   }
 
-  addScan(laser, scan, pose);
-  return;
-}
-
-/*****************************************************************************/
-bool AsynchronousSlamToolbox::deserializePoseGraphCallback(
-  slam_toolbox_msgs::DeserializePoseGraph::Request& req,
-  slam_toolbox_msgs::DeserializePoseGraph::Response& resp)
-/*****************************************************************************/
-{
-  if (req.match_type == procType::LOCALIZE_AT_POSE)
+  /*****************************************************************************/
+  bool AsynchronousSlamToolbox::deserializePoseGraphCallback(
+      slam_toolbox_msgs::DeserializePoseGraph::Request &req,
+      slam_toolbox_msgs::DeserializePoseGraph::Response &resp)
+  /*****************************************************************************/
   {
-    ROS_ERROR("Requested a localization deserialization "
-      "in non-localization mode.");
-    return false;
-  }
+    if (req.match_type == procType::LOCALIZE_AT_POSE)
+    {
+      ROS_ERROR("Requested a localization deserialization "
+                "in non-localization mode.");
+      return false;
+    }
 
-  return SlamToolbox::deserializePoseGraphCallback(req, resp);
-}
+    return SlamToolbox::deserializePoseGraphCallback(req, resp);
+  }
 
 } // end namespace

@@ -36,6 +36,8 @@ public:
 protected:
   virtual void laserCallback(
     const sensor_msgs::LaserScan::ConstPtr& scan) override final;
+  virtual void tagCallback(
+    const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array) override final;
   void localizePoseCallback(
     const geometry_msgs::PoseWithCovarianceStampedConstPtr& msg);
 

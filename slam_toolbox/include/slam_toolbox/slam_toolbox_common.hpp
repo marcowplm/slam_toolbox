@@ -72,6 +72,7 @@ protected:
 
   // callbacks
   virtual void laserCallback(const sensor_msgs::LaserScan::ConstPtr& scan) = 0;
+  virtual void tagCallback(const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array) = 0;
   bool mapCallback(nav_msgs::GetMap::Request& req,
     nav_msgs::GetMap::Response& res);
   virtual bool serializePoseGraphCallback(slam_toolbox_msgs::SerializePoseGraph::Request& req,
@@ -108,6 +109,8 @@ protected:
   std::unique_ptr<tf2_ros::TransformBroadcaster> tfB_;
   std::unique_ptr<message_filters::Subscriber<sensor_msgs::LaserScan> > scan_filter_sub_;
   std::unique_ptr<tf2_ros::MessageFilter<sensor_msgs::LaserScan> > scan_filter_;
+  std::unique_ptr<message_filters::Subscriber<apriltag_ros::AprilTagDetectionArray>> tag_detection_filter_sub_;
+  std::unique_ptr<tf2_ros::MessageFilter<apriltag_ros::AprilTagDetectionArray>> tag_detection_filter_;
   ros::Publisher sst_, sstm_;
   ros::ServiceServer ssMap_, ssPauseMeasurements_, ssSerialize_, ssDesserialize_;
 
