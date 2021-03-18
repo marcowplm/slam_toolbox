@@ -13,6 +13,7 @@ namespace slam_toolbox
     ssClear_ = nh.advertiseService("clear_queue",
                                    &SynchronousSlamToolboxAT::clearQueueCallback, this);
 
+    // TODO: sta roba deve essere spostata in SlamToolbox::setROSInterfaces! (probabilmente con un if(use_markers))
     tag_detection_filter_sub_ = std::make_unique<message_filters::Subscriber<apriltag_ros::AprilTagDetectionArray>>(nh, tag_topic_, 5);
     tag_detection_filter_ = std::make_unique<tf2_ros::MessageFilter<apriltag_ros::AprilTagDetectionArray>>(*tag_detection_filter_sub_, *tf_, camera_frame_, 5, nh);
     tag_detection_filter_->registerCallback(boost::bind(&SynchronousSlamToolboxAT::tagCallback, this, _1));
@@ -86,6 +87,14 @@ namespace slam_toolbox
       const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array)
   /*****************************************************************************/
   {
+    // ensure the camera can be used
+    karto::Camera *camera = getCamera();
+    if (!camera)
+    {
+      ROS_WARN_THROTTLE(5., "SynchronousSlamToolboxAT: Failed to create camera");
+      return;
+    }
+
     if (detection_array->detections.size() == 0)
     {
       return;

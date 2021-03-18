@@ -11,50 +11,26 @@
 namespace camera_utils
 {
 
-  // Store camera information
-  class CameraMetadata
+  /**
+   * Help take an image from a camera and create a camera object
+   */
+  class CameraAssistant
   {
   public:
-    CameraMetadata();
-    ~CameraMetadata();
-    CameraMetadata(karto::Camera *cam);
+    CameraAssistant(ros::NodeHandle &nh, tf2_ros::Buffer *tf, 
+      const std::string &base_frame, const std::string &camera_frame);
+    ~CameraAssistant();
     karto::Camera *getCamera();
+    karto::Camera *makeCamera();
 
   private:
-    karto::Camera *camera;
-  };
-
-  // Help take a scan from a laser and create a laser object
-  class LaserAssistant
-  {
-  public:
-    LaserAssistant(ros::NodeHandle &nh, tf2_ros::Buffer *tf, const std::string &base_frame);
-    ~LaserAssistant();
-    CameraMetadata toLaserMetadata(sensor_msgs::LaserScan scan);
-
-  private:
-    karto::Camera *makeLaser(const double &mountingYaw);
-    bool isInverted(double &mountingYaw);
+    double setCameraPose();
 
     ros::NodeHandle nh_;
     tf2_ros::Buffer *tf_;
-    sensor_msgs::LaserScan scan_;
-    std::string frame_, base_frame_;
-    geometry_msgs::TransformStamped laser_pose_;
-  };
-
-  // Hold some scans and utilities around them
-  class ScanHolder
-  {
-  public:
-    ScanHolder(std::map<std::string, camera_utils::CameraMetadata> &lasers);
-    ~ScanHolder();
-    sensor_msgs::LaserScan getCorrectedScan(const int &id);
-    void addScan(const sensor_msgs::LaserScan scan);
-
-  private:
-    std::unique_ptr<std::vector<sensor_msgs::LaserScan>> current_scans_;
-    std::map<std::string, camera_utils::CameraMetadata> &lasers_;
+    karto::Camera *camera_;
+    std::string camera_frame_, base_frame_;
+    geometry_msgs::TransformStamped camera_pose_;
   };
 
 } // end namespace

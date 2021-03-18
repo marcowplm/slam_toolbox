@@ -127,7 +127,7 @@ add_library(SlamToolboxPlugin ${SOURCE_FILES} ${HEADER_FILES})
 target_link_libraries(SlamToolboxPlugin ${rviz_DEFAULT_PLUGIN_LIBRARIES} ${QT_LIBRARIES} ${catkin_LIBRARIES})
 
 #### Tool lib for mapping
-add_library(toolbox_common src/slam_toolbox_common.cpp src/map_saver.cpp src/loop_closure_assistant.cpp src/laser_utils.cpp src/slam_mapper.cpp src/tag_assistant.cpp)
+add_library(toolbox_common src/slam_toolbox_common.cpp src/map_saver.cpp src/loop_closure_assistant.cpp src/laser_utils.cpp src/camera_utils.cpp src/slam_mapper.cpp src/tag_assistant.cpp)
 target_link_libraries(toolbox_common kartoSlamToolbox ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 #### Mapping executibles

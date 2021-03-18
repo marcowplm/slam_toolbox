@@ -50,8 +50,7 @@ namespace loop_closure_assistant
     node.setParam("interactive_mode", interactive_mode_);
     marker_publisher_ = node.advertise<visualization_msgs::MarkerArray>(
         "karto_graph_visualization", 1);
-    edges_publisher_ = node.advertise<visualization_msgs::MarkerArray>(
-    "karto_edges_visualization", 1);
+    // edges_publisher_ = node.advertise<visualization_msgs::MarkerArray>("karto_edges_visualization", 1);
     node.param("map_frame", map_frame_, std::string("map"));
     node.param("enable_interactive_mode", enable_interactive_mode_, false);
   }

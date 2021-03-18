@@ -8,6 +8,7 @@
 #include "ros/ros.h"
 #include "slam_toolbox/toolbox_types.hpp"
 #include "slam_toolbox/visualization_utils.hpp"
+#include "slam_toolbox/camera_utils.hpp"
 #include "tf2/utils.h"
 #include "tf2_ros/transform_broadcaster.h"
 #include "karto_sdk/Mapper.h"
@@ -117,11 +118,10 @@ namespace tag_assistant
   class ApriltagAssistant
   {
   public:
-    ApriltagAssistant(ros::NodeHandle &nh, tf2_ros::Buffer *tf, karto::Mapper *mapper, karto::Dataset *dataset);
-
-    karto::Camera *makeCamera();
-    karto::Camera *getCamera();
-    void setCamera(karto::Camera *cam);
+    ApriltagAssistant(ros::NodeHandle &nh, 
+                      tf2_ros::Buffer *tf, 
+                      karto::Mapper *mapper, 
+                      camera_utils::CameraAssistant *cam_ass);
 
     void publishMarkerGraph();
     void publishLinks();
@@ -129,7 +129,7 @@ namespace tag_assistant
                           const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array);
 
   private:
-    karto::LocalizedMarker *createLocalizedMarker(karto::Camera *camera, int tag_id, karto::Pose3 tag_pose);
+    karto::LocalizedMarker *createLocalizedMarker(int tag_id, karto::Pose3 tag_pose);
     bool getTagPose(karto::Pose3 &karto_pose, const apriltag_ros::AprilTagDetection &detection);
     bool addLocalizedMarker(karto::LocalizedRangeScan *pScan,
                             const apriltag_ros::AprilTagDetection &detection);
@@ -144,9 +144,8 @@ namespace tag_assistant
     std::unique_ptr<tf2_ros::TransformBroadcaster> tfB_;
 
     karto::Mapper *mapper_;
-    karto::Dataset *dataset_;
     karto::ScanSolver *solver_;
-    karto::Camera *camera_;
+    camera_utils::CameraAssistant *cam_ass_;
 
     std::string map_frame_, odom_frame_, camera_frame_;
     double m_cov_;

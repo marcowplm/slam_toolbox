@@ -33,6 +33,7 @@
 #include "slam_toolbox/slam_mapper.hpp"
 #include "slam_toolbox/snap_utils.hpp"
 #include "slam_toolbox/laser_utils.hpp"
+#include "slam_toolbox/camera_utils.hpp"
 #include "slam_toolbox/get_pose_helper.hpp"
 #include "slam_toolbox/map_saver.hpp"
 #include "slam_toolbox/loop_closure_assistant.hpp"
@@ -82,6 +83,7 @@ protected:
 
   // functional bits
   karto::LaserRangeFinder* getLaser(const sensor_msgs::LaserScan::ConstPtr& scan);
+  karto::Camera* getCamera();
   virtual karto::LocalizedRangeScan* addScan(karto::LaserRangeFinder* laser, const sensor_msgs::LaserScan::ConstPtr& scan,
     karto::Pose2& karto_pose);
   karto::LocalizedRangeScan* addScan(karto::LaserRangeFinder* laser, PosedScan& scanWPose);
@@ -106,18 +108,17 @@ protected:
   std::unique_ptr<tf2_ros::TransformBroadcaster> tfB_;
   std::unique_ptr<message_filters::Subscriber<sensor_msgs::LaserScan> > scan_filter_sub_;
   std::unique_ptr<tf2_ros::MessageFilter<sensor_msgs::LaserScan> > scan_filter_;
-  std::unique_ptr<message_filters::Subscriber<sensor_msgs::CameraInfo> > camera_sub_;
   ros::Publisher sst_, sstm_;
   ros::ServiceServer ssMap_, ssPauseMeasurements_, ssSerialize_, ssDesserialize_;
 
   // Storage for ROS parameters
-  std::string odom_frame_, map_frame_, base_frame_, map_name_, scan_topic_, camera_topic_;
+  std::string odom_frame_, map_frame_, base_frame_, map_name_, scan_topic_;
   std::string camera_frame_, tag_topic_;
   ros::Duration transform_timeout_, tf_buffer_dur_, minimum_time_interval_;
   int throttle_scans_;
 
   double resolution_;
-  bool first_measurement_, enable_interactive_mode_, use_markers_;
+  bool first_measurement_, enable_interactive_mode_, use_markers_, is_camera_set_;
 
   // Book keeping
   std::unique_ptr<mapper_utils::SMapper> smapper_;
@@ -126,6 +127,7 @@ protected:
 
   // helpers
   std::unique_ptr<laser_utils::LaserAssistant> laser_assistant_;
+  std::unique_ptr<camera_utils::CameraAssistant> camera_assistant_;
   std::unique_ptr<pose_utils::GetPoseHelper> pose_helper_;
   std::unique_ptr<map_saver::MapSaver> map_saver_;
   std::unique_ptr<loop_closure_assistant::LoopClosureAssistant> closure_assistant_;

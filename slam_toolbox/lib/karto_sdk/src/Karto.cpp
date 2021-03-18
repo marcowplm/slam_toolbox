@@ -44,7 +44,7 @@ BOOST_CLASS_EXPORT_IMPLEMENT(karto::ParameterEnum);
 BOOST_CLASS_EXPORT_IMPLEMENT(karto::Parameters);
 BOOST_CLASS_EXPORT_IMPLEMENT(karto::ParameterManager);
 BOOST_CLASS_EXPORT_IMPLEMENT(karto::Parameter<kt_double >);
-BOOST_CLASS_EXPORT_IMPLEMENT(karto::Parameter<karto::Pose2>);
+BOOST_CLASS_EXPORT_IMPLEMENT(karto::Parameter<karto::Pose3>);
 BOOST_CLASS_EXPORT_IMPLEMENT(karto::Parameter<kt_bool>);
 BOOST_CLASS_EXPORT_IMPLEMENT(karto::Parameter<kt_int32u>);
 BOOST_CLASS_EXPORT_IMPLEMENT(karto::Parameter<kt_int32s>);
@@ -103,7 +103,7 @@ namespace karto
   Sensor::Sensor(const Name& rName)
     : Object(rName)
   {
-    m_pOffsetPose = new Parameter<Pose2>("OffsetPose", Pose2(), GetParameterManager());
+    m_pOffsetPose = new Parameter<Pose3>("OffsetPose", Pose3(), GetParameterManager());
   }
 
   Sensor::~Sensor()

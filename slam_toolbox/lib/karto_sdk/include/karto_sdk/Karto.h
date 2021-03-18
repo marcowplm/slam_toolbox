@@ -3698,19 +3698,19 @@ namespace karto
 
   public:
     /**
-     * Gets this range finder sensor's offset
+     * Gets this sensor's offset
      * @return offset pose
      */
-    inline const Pose2 &GetOffsetPose() const
+    inline const Pose3 &GetOffsetPose() const
     {
       return m_pOffsetPose->GetValue();
     }
 
     /**
-     * Sets this range finder sensor's offset
+     * Sets this sensor's offset
      * @param rPose
      */
-    inline void SetOffsetPose(const Pose2 &rPose)
+    inline void SetOffsetPose(const Pose3 &rPose)
     {
       m_pOffsetPose->SetValue(rPose);
     }
@@ -3743,7 +3743,7 @@ namespace karto
     /**
      * Sensor offset pose
      */
-    Parameter<Pose2> *m_pOffsetPose;
+    Parameter<Pose3> *m_pOffsetPose;
     friend class boost::serialization::access;
     template <class Archive>
     void serialize(Archive &ar, const unsigned int version)
@@ -3993,6 +3993,7 @@ namespace karto
     Camera()
     {
     }
+
     /**
      * Destructor
      */
@@ -4018,10 +4019,10 @@ namespace karto
 
   public:
     /**
-   * Create a camera 
-   * @param rName name of sensor - if no name is specified default name will be assigned
-   * @return camera
-   */
+     * Create a camera 
+     * @param rName name of sensor - if no name is specified default name will be assigned
+     * @return camera
+     */
     static Camera *CreateCamera(const Name &rName)
     {
       Camera *pCam = NULL;
@@ -7466,7 +7467,7 @@ BOOST_CLASS_EXPORT_KEY(karto::ParameterEnum);
 BOOST_CLASS_EXPORT_KEY(karto::Parameters);
 BOOST_CLASS_EXPORT_KEY(karto::ParameterManager);
 BOOST_CLASS_EXPORT_KEY(karto::Parameter<kt_double>);
-BOOST_CLASS_EXPORT_KEY(karto::Parameter<karto::Pose2>);
+BOOST_CLASS_EXPORT_KEY(karto::Parameter<karto::Pose3>);
 BOOST_CLASS_EXPORT_KEY(karto::Parameter<kt_bool>);
 BOOST_CLASS_EXPORT_KEY(karto::Parameter<kt_int32u>);
 BOOST_CLASS_EXPORT_KEY(karto::Parameter<kt_int32s>);

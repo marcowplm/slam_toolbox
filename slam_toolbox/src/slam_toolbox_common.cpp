@@ -49,11 +49,16 @@ namespace slam_toolbox
     closure_assistant_ =
         std::make_unique<loop_closure_assistant::LoopClosureAssistant>(
             nh_, smapper_->getMapper(), scan_holder_.get(), state_, processor_type_);
-    if(use_markers_) 
+
+    if (use_markers_)
     {
+      camera_assistant_ = std::make_unique<camera_utils::CameraAssistant>(
+          nh_, tf_.get(), base_frame_, camera_frame_);
       tag_assistant_ = std::make_unique<tag_assistant::ApriltagAssistant>(
-        nh_, tf_.get(), smapper_->getMapper(), dataset_.get());
+          nh_, tf_.get(), smapper_->getMapper(), camera_assistant_.get());
+      is_camera_set_ = false;
     }
+
     reprocessing_transform_.setIdentity();
 
     double transform_publish_period;
@@ -80,6 +85,7 @@ namespace slam_toolbox
     map_saver_.reset();
     pose_helper_.reset();
     laser_assistant_.reset();
+    camera_assistant_.reset();
     scan_holder_.reset();
     tag_assistant_.reset();
   }
@@ -123,7 +129,6 @@ namespace slam_toolbox
     private_nh.param("throttle_scans", throttle_scans_, 1);
     private_nh.param("enable_interactive_mode", enable_interactive_mode_, false);
     private_nh.param("camera_frame", camera_frame_, std::string("camera_rgb_optical_frame"));
-    private_nh.param("camera_topic", camera_topic_, std::string("/camera/rgb/camera_info"));
     private_nh.param("tag_topic", tag_topic_, std::string("/tag_detections"));
     private_nh.param("use_markers", use_markers_, false);
 
@@ -165,7 +170,13 @@ namespace slam_toolbox
     scan_filter_sub_ = std::make_unique<message_filters::Subscriber<sensor_msgs::LaserScan>>(node, scan_topic_, 5);
     scan_filter_ = std::make_unique<tf2_ros::MessageFilter<sensor_msgs::LaserScan>>(*scan_filter_sub_, *tf_, odom_frame_, 5, node);
     scan_filter_->registerCallback(boost::bind(&SlamToolbox::laserCallback, this, _1));
-    camera_sub_ = std::make_unique<message_filters::Subscriber<sensor_msgs::CameraInfo>>(node, camera_topic_, 5);
+
+    /* if (use_markers_)
+    {
+      tag_detection_filter_sub_ = std::make_unique<message_filters::Subscriber<apriltag_ros::AprilTagDetectionArray>>(nh, tag_topic_, 5);
+      tag_detection_filter_ = std::make_unique<tf2_ros::MessageFilter<apriltag_ros::AprilTagDetectionArray>>(*tag_detection_filter_sub_, *tf_, camera_frame_, 5, nh);
+      tag_detection_filter_->registerCallback(boost::bind(&SynchronousSlamToolboxAT::tagCallback, this, _1));
+    } */
   }
 
   /*****************************************************************************/
@@ -318,6 +329,29 @@ namespace slam_toolbox
   }
 
   /*****************************************************************************/
+  karto::Camera *SlamToolbox::getCamera()
+  /*****************************************************************************/
+  {
+    if (!is_camera_set_)
+    {
+      try
+      {
+        camera_assistant_->makeCamera();
+        dataset_->Add(camera_assistant_->getCamera(), true);
+      }
+      catch (tf2::TransformException &e)
+      {
+        ROS_ERROR("Failed to compute camera pose, aborting initialization (%s)",
+                  e.what());
+        return nullptr;
+      }
+      is_camera_set_ = true;
+    }
+
+    return camera_assistant_->getCamera();
+  }
+
+  /*****************************************************************************/
   bool SlamToolbox::updateMap()
   /*****************************************************************************/
   {
@@ -442,7 +476,7 @@ namespace slam_toolbox
       return true;
     }
 
-    // we are in a paused mode, reject incomming information
+    // we are in a paused mode, reject incoming information
     if (isPaused(NEW_MEASUREMENTS))
     {
       return false;
@@ -663,16 +697,16 @@ namespace slam_toolbox
           }
         }
       }
-    
-    MarkerEdgeVector marker_edges = mapper->GetMarkerGraph()->GetMarkerEdges();
-    MarkerEdgeVector::iterator m_edges_it = marker_edges.begin();
-    for (m_edges_it; m_edges_it != marker_edges.end(); ++m_edges_it)
-    {
-      if (*m_edges_it != nullptr)
+
+      MarkerEdgeVector marker_edges = mapper->GetMarkerGraph()->GetMarkerEdges();
+      MarkerEdgeVector::iterator m_edges_it = marker_edges.begin();
+      for (m_edges_it; m_edges_it != marker_edges.end(); ++m_edges_it)
       {
-        solver_->AddConstraint(*m_edges_it);
+        if (*m_edges_it != nullptr)
+        {
+          solver_->AddConstraint(*m_edges_it);
+        }
       }
-    }
     }
 
     mapper->SetScanSolver(solver_.get());
@@ -743,9 +777,6 @@ namespace slam_toolbox
         exit(-1);
       }
 
-      // FIXME: al momento la camera è creata a mano in ApriltagAssistant. Poi bisognerà adeguare allo stesso
-      // meccanismo dei laser di slam_toolbox - di conseguenza anche queto blocco dovrà essere adeguato
-
       // create a current camera sensor
       karto::Camera *camera =
           dynamic_cast<karto::Camera *>(dataset_->GetCameras()[0]);
@@ -753,21 +784,7 @@ namespace slam_toolbox
       if (pCameraSensor)
       {
         karto::SensorManager::GetInstance()->RegisterSensor(pCameraSensor);
-
-        while (ros::ok())
-        {
-          ROS_INFO("Waiting for incoming images to get metadata...");
-          boost::shared_ptr<sensor_msgs::CameraInfo const> camera_info =
-              ros::topic::waitForMessage<sensor_msgs::CameraInfo>(
-                  camera_topic_, ros::Duration(1.0));
-          if (camera_info)
-          {
-            ROS_INFO("Got camera info!");
-            karto::Camera *cam = tag_assistant_->makeCamera();
-            tag_assistant_->setCamera(cam);
-            break;
-          }
-        }
+        camera_assistant_->makeCamera();
       }
       else
       {

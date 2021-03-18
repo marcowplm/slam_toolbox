@@ -78,10 +78,6 @@ LaserAssistant::~LaserAssistant()
 {
 };
 
-//TODO: qui viene associato un frame al laser, prendendolo da uno scan ricevuto da questo laser.
-// in makeLaser (che è chiamata da questa funzione) vengono estratti gli altri parametri del laser,
-// sempre a partire dallo scan (vedi codice) - Dovrei fare una cosa analoga anche per la camera!
-// N.B. Vedi image_transport.h!
 LaserMetadata LaserAssistant::toLaserMetadata(sensor_msgs::LaserScan scan)
 {
   scan_ = scan;

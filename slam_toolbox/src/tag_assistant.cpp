@@ -8,8 +8,9 @@ namespace tag_assistant
 
   /*****************************************************************************/
   ApriltagAssistant::ApriltagAssistant(
-      ros::NodeHandle &nh, tf2_ros::Buffer *tf, karto::Mapper *mapper, karto::Dataset *dataset)
-      : nh_(nh), tf_(tf), mapper_(mapper), dataset_(dataset)
+      ros::NodeHandle &nh, tf2_ros::Buffer *tf, karto::Mapper *mapper, 
+      camera_utils::CameraAssistant *cam_ass)
+      : nh_(nh), tf_(tf), mapper_(mapper), cam_ass_(cam_ass)
   /*****************************************************************************/
   {
     nh_.getParam("map_frame", map_frame_);
@@ -17,11 +18,9 @@ namespace tag_assistant
     nh_.getParam("camera_frame", camera_frame_);
     nh_.getParam("marker_link_covariance", m_cov_);
     tag_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("tag_visualization", 1);
-    link_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("link_visualization", 1);
+    //link_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("link_visualization", 1);
     //tfB_ = std::make_unique<tf2_ros::TransformBroadcaster>();
     solver_ = mapper_->getScanSolver();
-    camera_ = makeCamera();
-    dataset_->Add(camera_, true);
   }
 
   /*****************************************************************************/
@@ -82,7 +81,7 @@ namespace tag_assistant
       return false;
     }
 
-    karto::LocalizedMarker *tag = createLocalizedMarker(getCamera(), detection.id[0], tag_pose);
+    karto::LocalizedMarker *tag = createLocalizedMarker(detection.id[0], tag_pose);
     int unique_id;
     if (!mapper_->ProcessMarker(tag, pScan, unique_id))
     {
@@ -103,11 +102,10 @@ namespace tag_assistant
 
   // Chiama il costruttore di karto::LocalizedMarker
   /*****************************************************************************/
-  karto::LocalizedMarker *ApriltagAssistant::createLocalizedMarker(karto::Camera *camera, int tag_id,
-                                                                   karto::Pose3 tag_pose)
+  karto::LocalizedMarker *ApriltagAssistant::createLocalizedMarker(int tag_id, karto::Pose3 tag_pose)
   /*****************************************************************************/
   {
-    karto::LocalizedMarker *tag = new karto::LocalizedMarker(camera->GetName(), tag_id, tag_pose);
+    karto::LocalizedMarker *tag = new karto::LocalizedMarker(cam_ass_->getCamera()->GetName(), tag_id, tag_pose);
     tag->SetCorrectedPose(tag_pose);
     return tag;
   }
@@ -118,7 +116,7 @@ namespace tag_assistant
                                      const apriltag_ros::AprilTagDetection &detection)
   /*****************************************************************************/
   {
-    // camera_ident è un "contenitore" che tf_->transform userà per tirare fuori il suo source frame,
+    // camera_ident è un "contenitore" che tf_->transform usa per tirare fuori il suo source frame,
     // camera_rgb_optical, che è in camera_ident.header.frame_id
     geometry_msgs::TransformStamped camera_ident;
     camera_ident.header.stamp = detection.pose.header.stamp;
@@ -154,7 +152,7 @@ namespace tag_assistant
     return true;
   }
 
-  // Qui prendo semplicemente i Marker e i Vertex del grafo e visualizzo gli edge tra le loro Pose
+  // Qui prendo i Marker e i Vertex del grafo e visualizzo gli edge tra le loro Pose
   /*****************************************************************************/
   void ApriltagAssistant::publishMarkerGraph()
   /*****************************************************************************/
@@ -208,21 +206,6 @@ namespace tag_assistant
     return;
   }
 
-  /*****************************************************************************/
-  karto::Camera *ApriltagAssistant::makeCamera()
-  /*****************************************************************************/
-  {
-    karto::Camera *camera = karto::Camera::CreateCamera(karto::Name("Custom Camera"));
-    return camera;
-  }
-
-  /*****************************************************************************/
-  karto::Camera *ApriltagAssistant::getCamera()
-  /*****************************************************************************/
-  {
-    return camera_;
-  }
-
   // TODO: è qui solo per TEST - poi deve essere eliminato!
   /*****************************************************************************/
   void ApriltagAssistant::publishLinks()
@@ -274,13 +257,6 @@ namespace tag_assistant
     }
 
     link_publisher_.publish(marray);
-    return;
-  }
-
-  // TODO: sta roba deve sparire
-  void ApriltagAssistant::setCamera(karto::Camera *cam)
-  {
-    camera_ = cam;
     return;
   }
 

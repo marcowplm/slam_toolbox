@@ -29,77 +29,83 @@
 namespace laser_utils
 {
 
-// Convert a laser scan to a vector of readings
-inline std::vector<double> scanToReadings(const sensor_msgs::LaserScan& scan, const bool& inverted)
-{
-  std::vector<double> readings;
-
-  if (inverted)
+  // Convert a laser scan to a vector of readings
+  inline std::vector<double> scanToReadings(const sensor_msgs::LaserScan &scan, const bool &inverted)
   {
-    for(std::vector<float>::const_reverse_iterator it = scan.ranges.rbegin(); it != scan.ranges.rend(); ++it)
+    std::vector<double> readings;
+
+    if (inverted)
     {
-      readings.push_back(*it);
+      for (std::vector<float>::const_reverse_iterator it = scan.ranges.rbegin(); it != scan.ranges.rend(); ++it)
+      {
+        readings.push_back(*it);
+      }
     }
-  }
-  else 
+    else
+    {
+      for (std::vector<float>::const_iterator it = scan.ranges.begin(); it != scan.ranges.end(); ++it)
+      {
+        readings.push_back(*it);
+      }
+    }
+
+    return readings;
+  };
+
+  /**
+   * Store laser scanner information
+   */
+  class LaserMetadata
   {
-    for(std::vector<float>::const_iterator it = scan.ranges.begin(); it != scan.ranges.end(); ++it)
-    {
-      readings.push_back(*it);
-    }
-  }
+  public:
+    LaserMetadata();
+    ~LaserMetadata();
+    LaserMetadata(karto::LaserRangeFinder *lsr, bool invert);
+    bool isInverted() const;
+    karto::LaserRangeFinder *getLaser();
+    void invertScan(sensor_msgs::LaserScan &scan) const;
 
-  return readings;
-};
+  private:
+    karto::LaserRangeFinder *laser;
+    bool inverted;
+  };
 
-// Store laser scanner information
-class LaserMetadata
-{
-public:
-  LaserMetadata();
-  ~LaserMetadata();
-  LaserMetadata(karto::LaserRangeFinder* lsr, bool invert);
-  bool isInverted() const;
-  karto::LaserRangeFinder* getLaser();
-  void invertScan(sensor_msgs::LaserScan& scan) const;
+  /** 
+   * Help take a scan from a laser and create a laser object
+   */
+  class LaserAssistant
+  {
+  public:
+    LaserAssistant(ros::NodeHandle &nh, tf2_ros::Buffer *tf, const std::string &base_frame);
+    ~LaserAssistant();
+    LaserMetadata toLaserMetadata(sensor_msgs::LaserScan scan);
 
-private:
-  karto::LaserRangeFinder* laser;
-  bool inverted;
-};
+  private:
+    karto::LaserRangeFinder *makeLaser(const double &mountingYaw);
+    bool isInverted(double &mountingYaw);
 
-// Help take a scan from a laser and create a laser object
-class LaserAssistant
-{
-public:
-  LaserAssistant(ros::NodeHandle& nh, tf2_ros::Buffer* tf, const std::string& base_frame);
-  ~LaserAssistant();
-  LaserMetadata toLaserMetadata(sensor_msgs::LaserScan scan);
+    ros::NodeHandle nh_;
+    tf2_ros::Buffer *tf_;
+    sensor_msgs::LaserScan scan_;
+    std::string frame_, base_frame_;
+    geometry_msgs::TransformStamped laser_pose_;
+  };
 
-private:
-  karto::LaserRangeFinder* makeLaser(const double& mountingYaw);
-  bool isInverted(double& mountingYaw);
+  /** 
+   * Hold some scans and utilities around them
+   */
+  class ScanHolder
+  {
+  public:
+    ScanHolder(std::map<std::string, laser_utils::LaserMetadata> &lasers);
+    ~ScanHolder();
+    sensor_msgs::LaserScan getCorrectedScan(const int &id);
+    void addScan(const sensor_msgs::LaserScan scan);
 
-  ros::NodeHandle nh_;
-  tf2_ros::Buffer* tf_;
-  sensor_msgs::LaserScan scan_;
-  std::string frame_, base_frame_;
-  geometry_msgs::TransformStamped laser_pose_;
-};
-
-// Hold some scans and utilities around them
-class ScanHolder
-{
-public:
-  ScanHolder(std::map<std::string, laser_utils::LaserMetadata>& lasers);
-  ~ScanHolder();
-  sensor_msgs::LaserScan getCorrectedScan(const int& id);
-  void addScan(const sensor_msgs::LaserScan scan);
-
-private:
-  std::unique_ptr<std::vector<sensor_msgs::LaserScan> > current_scans_;
-  std::map<std::string, laser_utils::LaserMetadata>& lasers_;
-};
+  private:
+    std::unique_ptr<std::vector<sensor_msgs::LaserScan>> current_scans_;
+    std::map<std::string, laser_utils::LaserMetadata> &lasers_;
+  };
 
 } // end namespace
 
