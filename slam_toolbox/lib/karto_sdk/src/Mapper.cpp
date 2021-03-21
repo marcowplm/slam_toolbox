@@ -301,7 +301,7 @@ namespace karto
    * Clears the last scan of device of given scan
    * @param pScan
    */
-  void MapperSensorManager::ClearLastScan(LocalizedRangeScan* pScan)
+  void MapperSensorManager::ClearLastScan(LocalizedRangeScan *pScan)
   {
     GetScanManager(pScan)->ClearLastScan();
   }
@@ -310,7 +310,7 @@ namespace karto
    * Clears the last scan of device name
    * @param pScan
    */
-  void MapperSensorManager::ClearLastScan(const Name& name)
+  void MapperSensorManager::ClearLastScan(const Name &name)
   {
     GetScanManager(name)->ClearLastScan();
   }
@@ -321,7 +321,7 @@ namespace karto
    */
   void MapperSensorManager::AddScan(LocalizedRangeScan *pScan)
   {
-    // N.B.: m_NextScanId corrisponde allo UniqueId dello scan!
+    // NB: m_NextScanId corrisponde allo UniqueId dello scan!
     GetScanManager(pScan)->AddScan(pScan, m_NextScanId);
     m_Scans.insert({m_NextScanId, pScan});
     m_NextScanId++;
@@ -430,29 +430,50 @@ namespace karto
   ////////////////////////////////////////////////////////////////////////////////////////
 
   /**
-   * Adds marker to vector of processed markers tagging marker with given unique id
+   * Adds marker to map of processed markers tagging it with given unique id
    * @param pMarker
    * @param uniqueId
    */
   inline void MarkerManager::AddMarker(LocalizedMarker *pMarker, kt_int32s uniqueId)
   {
-    // assign state id to marker.  N.B.: StateId is equivalent to TagID!!!!
-    pMarker->SetStateId(pMarker->GetID());
+    // assign state id to marker.  NB: StateId is equivalent to ApriltagID!!!!
+    pMarker->SetStateId(pMarker->GetApriltagID());
 
     // assign unique id to marker (continuando la numerazione univoca degli scan)
     pMarker->SetUniqueId(uniqueId);
 
     // add it to marker buffer
     m_Markers.insert({pMarker->GetUniqueId(), pMarker});
+
+    // add it to marker buffer ordered by StateId (for processing detections)
+    m_MarkersByStateId.insert({pMarker->GetStateId(), pMarker});
   }
 
   /**
-   * Gets list of buffered markers
-   * @return markers
+   * Gets list of buffered markers, ordered using their UniqueId
+   * @return map of markers
    */
   LocalizedMarkerMap &MarkerManager::GetMarkers()
   {
     return m_Markers;
+  }
+
+  /**
+   * Gets the marker with the given stateId
+   * @param stateId
+   * @return marker
+   */
+  LocalizedMarker *MarkerManager::GetMarkerByStateId(kt_int32s stateId)
+  {
+    std::map<int, LocalizedMarker *>::iterator it = m_MarkersByStateId.find(stateId);
+    if (it != m_MarkersByStateId.end())
+    {
+      return it->second;
+    }
+    else
+    {
+      return nullptr;
+    }
   }
 
   /**
@@ -2061,7 +2082,7 @@ namespace karto
         }
         /* std::cout << "\nID scan: " << iter->first << std::endl
                   << "Before:\t" << scan->GetCorrectedPose() << std::endl; */
-        
+
         karto::Pose2 corrected_pose(iter->second);
         scan->SetSensorPose(corrected_pose);
         /* std::cout << "After:\t" << scan->GetCorrectedPose() << std::endl; */
@@ -2095,7 +2116,6 @@ namespace karto
       if (m_pMapper->m_pScanOptimizer != NULL)
       {
         m_pMapper->m_pScanOptimizer->AddNode(pVertex);
-
       }
       return pVertex;
     }
@@ -2105,7 +2125,7 @@ namespace karto
                                          LocalizedRangeScan *pTargetScan,
                                          kt_bool &rIsNewEdge)
   {
-    std::map<int, MarkerVertex*>::iterator v1 = m_MarkerVertices[pSourceMarker->GetSensorName()].find(pSourceMarker->GetStateId());
+    std::map<int, MarkerVertex *>::iterator v1 = m_MarkerVertices[pSourceMarker->GetSensorName()].find(pSourceMarker->GetStateId());
 
     MapperGraph::VertexMap mapperVertices = m_pMapper->GetGraph()->GetVertices();
     std::map<int, Vertex<LocalizedRangeScan> *>::iterator v2 = mapperVertices[pTargetScan->GetSensorName()].find(pTargetScan->GetStateId());
@@ -2118,7 +2138,7 @@ namespace karto
     }
 
     // see if edge already exists
-    const_forEach(std::vector<MarkerEdge*>, &(v1->second->GetMarkerEdges()))
+    const_forEach(std::vector<MarkerEdge *>, &(v1->second->GetMarkerEdges()))
     {
       MarkerEdge *pMarkerEdge = *iter;
 
@@ -2135,8 +2155,7 @@ namespace karto
     return pMarkerEdge;
   }
 
-  void MarkerGraph::LinkMarkerToScan(LocalizedMarker *pFromMarker, LocalizedRangeScan *pToScan,
-                                     const Eigen::Matrix<double, 6, 6> &rCovariance)
+  void MarkerGraph::LinkMarkerToScan(LocalizedMarker *pFromMarker, LocalizedRangeScan *pToScan)
   {
     kt_bool isNewEdge = true;
     MarkerEdge *pMarkerEdge = AddMarkerEdge(pFromMarker, pToScan, isNewEdge);
@@ -2149,7 +2168,10 @@ namespace karto
     // only attach marker link information if the marker edge is new
     if (isNewEdge == true)
     {
-      pMarkerEdge->SetLabel(new MarkerLinkInfo(pFromMarker->GetCorrectedPose(), pToScan->GetCorrectedPose(), rCovariance));
+      Eigen::Matrix<double, 6, 6> covariance = Eigen::Matrix<double, 6, 6>::Identity();
+      covariance(0, 0) = covariance(1, 1) = covariance(2, 2) = m_pMapper->m_pMarkerLinkCovariance->GetValue();
+
+      pMarkerEdge->SetLabel(new MarkerLinkInfo(pFromMarker->GetCorrectedPose(), pToScan->GetCorrectedPose(), covariance));
       if (m_pMapper->m_pScanOptimizer != NULL)
       {
         m_pMapper->m_pScanOptimizer->AddConstraint(pMarkerEdge);
@@ -2400,20 +2422,20 @@ namespace karto
     // Parameters related to the Markers
 
     m_pUseMarkers = new Parameter<kt_bool>(
-      "UseMarkers",
-      "When set to true, the mapper will use the markers.",
-      false, GetParameterManager());
+        "UseMarkers",
+        "When set to true, the mapper will use the markers.",
+        false, GetParameterManager());
 
     m_pMarkerLinkCovariance = new Parameter<kt_double>(
-      "MarkerLinkCovariance",
-      "The covariance along the x, y, z axes of the link between a marker and a scan.",
-      1.0, GetParameterManager());
+        "MarkerLinkCovariance",
+        "The covariance along the x, y, z axes of the link between a marker and a scan.",
+        1.0, GetParameterManager());
 
     m_pCorrectPosesAfterNewMarker = new Parameter<kt_bool>(
-      "CorrectPosesAfterNewMarker",
-      "Enable/disable the correction of poses (the optimization) after each new Marker "
-      "is created.",
-      true, GetParameterManager());
+        "CorrectPosesAfterNewMarker",
+        "Enable/disable the correction of poses (the optimization) after each new Marker "
+        "is created.",
+        true, GetParameterManager());
   }
   /* Adding in getters and setters here for easy parameter access */
 
@@ -2742,7 +2764,7 @@ namespace karto
   {
     m_pUseMarkers->SetValue((kt_bool)b);
   }
-  
+
   void Mapper::setParamMarkerLinkCovariance(double d)
   {
     m_pMarkerLinkCovariance->SetValue((kt_double)d);
@@ -2767,7 +2789,7 @@ namespace karto
 
       m_pMapperSensorManager = new MapperSensorManager(m_pScanBufferSize->GetValue(),
                                                        m_pScanBufferMaximumScanDistance->GetValue());
-                                                       
+
       m_pMarkerManager = new MarkerManager();
 
       m_pGraph = new MapperGraph(this, rangeThreshold);
@@ -2901,7 +2923,7 @@ namespace karto
           }
         }
 
-        // TEST TEST TEST!!
+        // NB: TEST TEST TEST!!
         // Serve per triggerare la Loop Closure dopo un certo numero di nodi aggiunti al grafo
         /* count = count + 1;
         std::cout << "\n\033[1;32m>>>>>>>>>>>  Count: " << count << "\033[0m" << std::endl;
@@ -2921,7 +2943,7 @@ namespace karto
     return false;
   }
 
-  kt_bool Mapper::ProcessAgainstNodesNearBy(LocalizedRangeScan* pScan, kt_bool addScanToLocalizationBuffer)
+  kt_bool Mapper::ProcessAgainstNodesNearBy(LocalizedRangeScan *pScan, kt_bool addScanToLocalizationBuffer)
   {
     if (pScan != NULL)
     {
@@ -2971,7 +2993,7 @@ namespace karto
       // add scan to buffer and assign id
       m_pMapperSensorManager->AddScan(pScan);
 
-      Vertex<LocalizedRangeScan>* scan_vertex = NULL;
+      Vertex<LocalizedRangeScan> *scan_vertex = NULL;
       if (m_pUseScanMatching->GetValue())
       {
         scan_vertex = m_pGraph->AddVertex(pScan);
@@ -3089,7 +3111,7 @@ namespace karto
     return true;
   }
 
-  void Mapper::AddScanToLocalizationBuffer(LocalizedRangeScan * pScan, Vertex <LocalizedRangeScan> * scan_vertex)
+  void Mapper::AddScanToLocalizationBuffer(LocalizedRangeScan *pScan, Vertex<LocalizedRangeScan> *scan_vertex)
   {
 
     // generate the info to store and later decay, outside of dataset
@@ -3122,7 +3144,7 @@ namespace karto
   {
     while (!m_LocalizationScanVertices.empty())
     {
-      LocalizationScanVertex& oldLSV = m_LocalizationScanVertices.front();
+      LocalizationScanVertex &oldLSV = m_LocalizationScanVertices.front();
       RemoveNodeFromGraph(oldLSV.vertex);
       oldLSV.vertex->RemoveObject();
       m_pMapperSensorManager->RemoveScan(oldLSV.scan);
@@ -3292,25 +3314,22 @@ namespace karto
     return ProcessAgainstNode(pScan, 0);
   }
 
-  kt_bool Mapper::ProcessMarker(LocalizedMarker *pMarker, LocalizedRangeScan *pScan, int &UniqueId)
+  kt_bool Mapper::ProcessMarker(LocalizedMarker *pMarker, LocalizedRangeScan *pScan)
   {
     if (pMarker != NULL)
     {
-
       // add scan to buffer and assign id (the id follows the enumeration of the unique ids of the scans)
-      UniqueId = m_pMapperSensorManager->GetNextScanId();
-      m_pMarkerManager->AddMarker(pMarker, UniqueId); 
+      kt_int32s UniqueId = m_pMapperSensorManager->GetNextScanId();
+      m_pMarkerManager->AddMarker(pMarker, UniqueId);
 
       if (m_pUseScanMatching->GetValue())
       {
         // add to marker graph
         m_pMarkerGraph->AddMarkerVertex(pMarker);
 
-        Eigen::Matrix<double, 6, 6> covariance = Eigen::Matrix<double, 6, 6>::Identity();
-        covariance(0,0) = covariance(1,1) = covariance(2,2) = m_pMarkerLinkCovariance->GetValue();
-        m_pMarkerGraph->LinkMarkerToScan(pMarker, pScan, covariance);
-        
-        if(m_pCorrectPosesAfterNewMarker->GetValue())
+        m_pMarkerGraph->LinkMarkerToScan(pMarker, pScan);
+
+        if (m_pCorrectPosesAfterNewMarker->GetValue())
         {
           CorrectPoses();
         }
@@ -3375,6 +3394,27 @@ namespace karto
     }
 
     return allScans;
+  }
+
+  /**
+   * Gets all the processed markers stored in a vector
+   * @return a vector of all the markers
+   */
+  const LocalizedMarkerVector Mapper::GetAllProcessedMarkers() const
+  {
+    LocalizedMarkerVector allMarkers;
+
+    if (m_pMarkerManager != NULL)
+    {
+      LocalizedMarkerMap &rMarkers = m_pMarkerManager->GetMarkers();
+      LocalizedMarkerMap::iterator it;
+      for (it = rMarkers.begin(); it != rMarkers.end(); ++it)
+      {
+        allMarkers.push_back(it->second);
+      }
+    }
+
+    return allMarkers;
   }
 
   /**
@@ -3464,7 +3504,7 @@ namespace karto
     m_pScanOptimizer = pScanOptimizer;
   }
 
-  ScanSolver *Mapper::getScanSolver()
+  ScanSolver *Mapper::GetScanSolver()
   {
     return m_pScanOptimizer;
   }

@@ -8,58 +8,43 @@ namespace tag_assistant
 
   /*****************************************************************************/
   ApriltagAssistant::ApriltagAssistant(
-      ros::NodeHandle &nh, tf2_ros::Buffer *tf, karto::Mapper *mapper, 
-      camera_utils::CameraAssistant *cam_ass)
-      : nh_(nh), tf_(tf), mapper_(mapper), cam_ass_(cam_ass)
+      ros::NodeHandle &nh, tf2_ros::Buffer *tf, karto::Mapper *mapper,
+      camera_utils::CameraAssistant *cam_ass, karto::Dataset *dataset)
+      : nh_(nh), tf_(tf), mapper_(mapper), cam_ass_(cam_ass), dataset_(dataset)
   /*****************************************************************************/
   {
     nh_.getParam("map_frame", map_frame_);
     nh_.getParam("odom_frame", odom_frame_);
     nh_.getParam("camera_frame", camera_frame_);
-    nh_.getParam("marker_link_covariance", m_cov_);
     tag_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("tag_visualization", 1);
     //link_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("link_visualization", 1);
     //tfB_ = std::make_unique<tf2_ros::TransformBroadcaster>();
-    solver_ = mapper_->getScanSolver();
+    solver_ = mapper_->GetScanSolver();
   }
 
   /*****************************************************************************/
-  bool ApriltagAssistant::processDetection(const karto::Vertex<karto::LocalizedRangeScan> *last_vertex,
-                                           const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array)
+  bool ApriltagAssistant::processDetection(const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array)
   /*****************************************************************************/
   {
     bool processed = false;
-    karto::LocalizedRangeScan *pScan = last_vertex->GetObject();
-    int scan_id = pScan->GetUniqueId();
 
-    for (detectionConstIter = detection_array->detections.begin(); detectionConstIter != detection_array->detections.end(); ++detectionConstIter)
+    karto::LocalizedRangeScan *pScan = mapper_->GetAllProcessedScans().back();
+
+    for (detConstIter = detection_array->detections.begin(); detConstIter != detection_array->detections.end(); ++detConstIter)
     {
-      tags_Iter = tags_.find(detectionConstIter->id[0]);
-      if (tags_Iter != tags_.end()) // il tag esiste nella struttura dati, quindi l'ho già visto e ho creato il LocalizedMarker
+      karto::LocalizedMarker *pMarker = mapper_->GetMarkerManager()->GetMarkerByStateId(detConstIter->id[0]);
+      if (pMarker) // il LocalizedMarker esiste già (e quindi anche il relativo MarkerVertex)
       {
-        if (tags_Iter->second.find(scan_id) == tags_Iter->second.end()) // il tag esiste ma non è associato allo scan
-        {
-          // Recupero il marker con lo UniqueId associato al tag_id di questo tag
-          int marker_unique_id = ids_[tags_Iter->first];
-          karto::LocalizedMarker *pMarker = mapper_->GetMarkerManager()->GetMarker(marker_unique_id);
-          
-          Eigen::Matrix<double, 6, 6> cov = Eigen::Matrix<double, 6, 6>::Identity();
-          cov(0,0) = cov(1,1) = cov(2,2) = m_cov_;
-          mapper_->GetMarkerGraph()->LinkMarkerToScan(pMarker, pScan, cov);
-          
-          tags_Iter->second.insert(scan_id); // aggiungo l'id dello scan alla struttura dati, in corrispondenza dell'id del tag
-          // mapper_->CorrectPoses(); // così sparo l'ottimizzazione ad OGNI nuovo MarkerEdge (un po' troppo...)
-          processed = true;
-        } // else: il tag è già associato allo scan -> non fare niente
+        mapper_->GetMarkerGraph()->LinkMarkerToScan(pMarker, pScan); // Se il MarkerEdge esiste già, non fa niente, altrimenti lo crea, aggiunge LinkInfo e aggiunge il constraint a Ceres
+
+        processed = true;
       }
-      else // il tag non esiste nella map (è la prima volta che lo vedo)
+      else // il LocalizedMarker non esiste (è la prima volta che lo vedo)
       {
-        if (!addLocalizedMarker(pScan, *detectionConstIter))
+        if (!addLocalizedMarker(pScan, *detConstIter))
         {
           processed = false;
-          return processed;
         }
-        tags_.insert(std::pair<int, std::set<int>>(detectionConstIter->id[0], {scan_id})); // inserisco l'id del nuovo tag con relativo ide dello scan nella struttura
         processed = true;
       }
     }
@@ -81,35 +66,20 @@ namespace tag_assistant
       return false;
     }
 
-    karto::LocalizedMarker *tag = createLocalizedMarker(detection.id[0], tag_pose);
-    int unique_id;
-    if (!mapper_->ProcessMarker(tag, pScan, unique_id))
+    karto::LocalizedMarker *marker = new karto::LocalizedMarker(
+        cam_ass_->getCamera()->GetName(), detection.id[0], tag_pose);
+    marker->SetCorrectedPose(tag_pose);
+
+    if (!mapper_->ProcessMarker(marker, pScan))
     {
       std::cout << "ProcessMarker FALSE!" << std::endl;
       return false;
     }
-    ids_.insert(std::pair<int, int>(detection.id[0], unique_id));
-
-    /* std::cout << "\nContenuto di ids_:\n tagID\t|  UniqueId" << std::endl;
-    std::map<int, int>::const_iterator ids_Iter = ids_.begin();
-    for (ids_Iter; ids_Iter != ids_.end(); ++ids_Iter)
-    {
-      std::cout << "   " << ids_Iter->first << "\t|    " << ids_Iter->second << std::endl;
-    } */
+    dataset_->Add(marker);
 
     return true;
   }
 
-  // Chiama il costruttore di karto::LocalizedMarker
-  /*****************************************************************************/
-  karto::LocalizedMarker *ApriltagAssistant::createLocalizedMarker(int tag_id, karto::Pose3 tag_pose)
-  /*****************************************************************************/
-  {
-    karto::LocalizedMarker *tag = new karto::LocalizedMarker(cam_ass_->getCamera()->GetName(), tag_id, tag_pose);
-    tag->SetCorrectedPose(tag_pose);
-    return tag;
-  }
-  
   // Ottiene la posizione del tag nel riferimento mondo (map_frame_), nel momento in cui il tag viene creato
   /*****************************************************************************/
   bool ApriltagAssistant::getTagPose(karto::Pose3 &tag_pose_karto,
@@ -201,8 +171,8 @@ namespace tag_assistant
     }
 
     tag_publisher_.publish(marray);
-    // publishLinks(); // FIXME: non funziona con la serializzazione!
-    
+    // publishLinks(); // FIXME: non funziona con la serializzazione -> da eliminare!
+
     return;
   }
 
@@ -230,11 +200,11 @@ namespace tag_assistant
       karto::Pose3 mPose_karto = (*edgesIter)->GetSource()->GetLocalizedMarker()->GetCorrectedPose();
       geometry_msgs::Pose mPose = poseKartoToGeometry(mPose_karto);
       Eigen::Isometry3d mPose_eigen = poseKartoToEigenIsometry(mPose_karto);
-      
+
       karto::MarkerLinkInfo *pMarkerLinkInfo = (karto::MarkerLinkInfo *)((*edgesIter)->GetLabel());
       karto::Pose3 linkPose_karto(pMarkerLinkInfo->GetPoseDifference());
       Eigen::Isometry3d linkPose_eigen = poseKartoToEigenIsometry(linkPose_karto);
-      
+
       // Applico la transform rappresentata dal link alla posizione del marker per ottenere la posizione dello scan!
       Eigen::Isometry3d scanPose_eigen = mPose_eigen * linkPose_eigen;
       geometry_msgs::Pose scanPose;

@@ -145,7 +145,7 @@ struct CeresPose3d
 
   /**
    * Constructs a CeresPose3d object from a karto::Pose2
-   * N.B.: Segue la stessa convenzione degli assi di karto::Quaternion -> YawPitchRoll | yzx
+   * NB: Segue la stessa convenzione degli assi di karto::Quaternion -> YawPitchRoll | yzx
    */
   CeresPose3d(const karto::Pose2& rPose) :
     p(rPose.GetX(), rPose.GetY(), 0.0),

@@ -571,7 +571,7 @@ namespace solver_plugins
   void CeresSolver::GetNodeOrientation(const int &unique_id, double &pose)
   /*****************************************************************************/
   {
-    // N.B. c'è scritto pose ma è yaw...
+    // NB: c'è scritto pose ma è yaw...
     boost::mutex::scoped_lock lock(nodes_mutex_);
     GraphIterator3d it = nodes3d_->find(unique_id);
     if (it != nodes3d_->end())
@@ -580,7 +580,7 @@ namespace solver_plugins
     }
   }
 
-  // N.B. ritorna solo il grafo degli scan node, NON ritorna i marker node!
+  // NB: ritorna solo il grafo degli scan node, NON ritorna i marker node!
   /*****************************************************************************/
   std::unordered_map<int, karto::Pose3> *CeresSolver::getGraph()
   /*****************************************************************************/
@@ -602,7 +602,7 @@ namespace solver_plugins
     return nodes_;
   }
 
-  // N.B. ritorna solo il grafo dei marker node, NON ritorna gli scan node!
+  // NB: ritorna solo il grafo dei marker node, NON ritorna gli scan node!
   /*****************************************************************************/
   std::unordered_map<int, karto::Pose3> *CeresSolver::getMarkers()
   /*****************************************************************************/

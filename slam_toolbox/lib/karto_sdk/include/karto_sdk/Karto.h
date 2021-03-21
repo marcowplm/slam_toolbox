@@ -6122,7 +6122,7 @@ namespace karto
    * Constructs a marker from the given camera with the given ID and position
    */
     LocalizedMarker(const Name &rSensorName, const kt_int32u &rID, const Pose3 &rPose)
-        : SensorData(rSensorName), m_ID(rID), m_OdometricPose(rPose)
+        : SensorData(rSensorName), m_ApriltagID(rID), m_OdometricPose(rPose)
     {
       assert(rSensorName.ToString() != "");
       std::cout << "\n\033[1;33mLocalizedMarker with ID " << rID << " created successfully!!\033[0m" << std::endl;
@@ -6187,9 +6187,9 @@ namespace karto
      * Gets the ID of the marker (derived from Apriltag)
      * @return tag ID
      */
-    inline const kt_int32u GetID() const
+    inline const kt_int32u GetApriltagID() const
     {
-      return m_ID;
+      return m_ApriltagID;
     }
 
   private:
@@ -6202,7 +6202,7 @@ namespace karto
     {
       ar &BOOST_SERIALIZATION_NVP(m_OdometricPose);
       ar &BOOST_SERIALIZATION_NVP(m_CorrectedPose);
-      ar &BOOST_SERIALIZATION_NVP(m_ID);
+      ar &BOOST_SERIALIZATION_NVP(m_ApriltagID);
       ar &BOOST_SERIALIZATION_BASE_OBJECT_NVP(SensorData);
     }
 
@@ -6224,7 +6224,7 @@ namespace karto
     /**
      * Unique ID of the marker, as defined in the configuration file of Apriltag
      */
-    kt_int32u m_ID;
+    kt_int32u m_ApriltagID;
 
   }; // LocalizedMarker
 

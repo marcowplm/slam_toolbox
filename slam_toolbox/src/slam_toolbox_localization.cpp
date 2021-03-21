@@ -148,10 +148,8 @@ namespace slam_toolbox
       return;
     }
 
-    VerticeMap mapper_vertices = smapper_->getMapper()->GetGraph()->GetVertices();
-    ScanMap scan_vertices = mapper_vertices.find(karto::Name("Custom Described Lidar"))->second;
-    tag_assistant_->processDetection(scan_vertices.rbegin()->second, detection_array);
-
+    tag_assistant_->processDetection(detection_array);
+    
     return;
   }
 

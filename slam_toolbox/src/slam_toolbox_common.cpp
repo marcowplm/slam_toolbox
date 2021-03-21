@@ -55,7 +55,7 @@ namespace slam_toolbox
       camera_assistant_ = std::make_unique<camera_utils::CameraAssistant>(
           nh_, tf_.get(), base_frame_, camera_frame_);
       tag_assistant_ = std::make_unique<tag_assistant::ApriltagAssistant>(
-          nh_, tf_.get(), smapper_->getMapper(), camera_assistant_.get());
+          nh_, tf_.get(), smapper_->getMapper(), camera_assistant_.get(), dataset_.get());
       is_camera_set_ = false;
     }
 

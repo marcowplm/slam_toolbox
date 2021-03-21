@@ -63,8 +63,8 @@ namespace tag_assistant
   };
 
   /**
-     * Converts a Eigen Quaternion in a karto Quaternion
-     */
+   * Converts a Eigen Quaternion in a karto Quaternion
+   */
   inline karto::Quaternion quaternionEigenToKarto(const Eigen::Quaterniond &quat_in)
   {
     karto::Quaternion quat_out;
@@ -113,23 +113,22 @@ namespace tag_assistant
   ////////////////////////////////////////////////////////////////////////////////////////
 
   /**
-     * Class ApriltagAssistant
-     */
+   * Class ApriltagAssistant
+   */
   class ApriltagAssistant
   {
   public:
     ApriltagAssistant(ros::NodeHandle &nh, 
                       tf2_ros::Buffer *tf, 
                       karto::Mapper *mapper, 
-                      camera_utils::CameraAssistant *cam_ass);
+                      camera_utils::CameraAssistant *cam_ass,
+                      karto::Dataset *dataset);
 
     void publishMarkerGraph();
     void publishLinks();
-    bool processDetection(const karto::Vertex<karto::LocalizedRangeScan> *last_vertex,
-                          const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array);
+    bool processDetection(const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array);
 
   private:
-    karto::LocalizedMarker *createLocalizedMarker(int tag_id, karto::Pose3 tag_pose);
     bool getTagPose(karto::Pose3 &karto_pose, const apriltag_ros::AprilTagDetection &detection);
     bool addLocalizedMarker(karto::LocalizedRangeScan *pScan,
                             const apriltag_ros::AprilTagDetection &detection);
@@ -144,18 +143,13 @@ namespace tag_assistant
     std::unique_ptr<tf2_ros::TransformBroadcaster> tfB_;
 
     karto::Mapper *mapper_;
+    karto::Dataset *dataset_;
     karto::ScanSolver *solver_;
     camera_utils::CameraAssistant *cam_ass_;
 
     std::string map_frame_, odom_frame_, camera_frame_;
-    double m_cov_;
 
-    std::map<int, std::set<int>> tags_; // Maps each tag id (int key) to many vertices id (set<int>)
-    std::map<int, std::set<int>>::iterator tags_Iter;
-
-    std::map<int, int> ids_; // Maps markers StateId (= tag id) against markers UniqueId
-
-    std::vector<apriltag_ros::AprilTagDetection>::const_iterator detectionConstIter;
+    std::vector<apriltag_ros::AprilTagDetection>::const_iterator detConstIter;
   };
 
 } // namespace tag_assistant

@@ -40,7 +40,7 @@ namespace toolbox_types
 struct PosedScan
 {
   PosedScan(sensor_msgs::LaserScan::ConstPtr scan_in, karto::Pose2 pose_in) :
-             scan(scan_in), pose(pose_in) 
+             scan(scan_in), pose(pose_in)
   {
   }
   sensor_msgs::LaserScan::ConstPtr scan;
@@ -115,19 +115,20 @@ struct PausedState
   boost::mutex pause_mutex_;
 };
 
-typedef std::map<karto::Name, std::map<int, karto::Vertex<karto::LocalizedRangeScan>*>> VerticeMap;
+typedef std::map<karto::Name, std::map<int, karto::Vertex<karto::LocalizedRangeScan>*>> VerticeMap; // NB: analoga a karto::VertexMap
 typedef std::vector<karto::Edge<karto::LocalizedRangeScan>*> EdgeVector;
 typedef std::map<int, karto::Vertex<karto::LocalizedRangeScan>*> ScanMap;
 typedef std::vector<karto::Vertex<karto::LocalizedRangeScan>*> ScanVector;
+
+typedef std::map<karto::Name, std::map<int, karto::MarkerVertex*>> MarkerVerticeMap; // NB: analoga a karto::MarkerVertexMap
+typedef std::vector<karto::MarkerEdge*> MarkerEdgeVector;
+typedef std::map<int, karto::MarkerVertex*> MarkerMap;
+typedef std::vector<karto::MarkerVertex*> MarkerVector;
+
 typedef slam_toolbox_msgs::DeserializePoseGraph::Request procType;
 
 typedef std::unordered_map<int, karto::Pose3>::iterator GraphIterator;
 typedef std::unordered_map<int, karto::Pose3>::const_iterator ConstGraphIterator;
-
-typedef std::map<karto::Name, std::map<int, karto::MarkerVertex*>> MarkerVerticeMap;
-typedef std::vector<karto::MarkerEdge*> MarkerEdgeVector;
-typedef std::map<int, karto::MarkerVertex*> MarkerMap;
-typedef std::vector<karto::MarkerVertex*> MarkerVector;
 
 }  // end namespace
 

@@ -41,7 +41,7 @@ namespace loop_closure_assistant
                                            &LoopClosureAssistant::manualLoopClosureCallback, this);
     scan_publisher_ = node.advertise<sensor_msgs::LaserScan>(
         "karto_scan_visualization", 10);
-    solver_ = mapper_->getScanSolver();
+    solver_ = mapper_->GetScanSolver();
     interactive_server_ =
         std::make_unique<interactive_markers::InteractiveMarkerServer>(
             "slam_toolbox", "", true);
