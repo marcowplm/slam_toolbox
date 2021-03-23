@@ -459,24 +459,6 @@ namespace karto
   }
 
   /**
-   * Gets the marker with the given stateId
-   * @param stateId
-   * @return marker
-   */
-  LocalizedMarker *MarkerManager::GetMarkerByStateId(kt_int32s stateId)
-  {
-    std::map<int, LocalizedMarker *>::iterator it = m_MarkersByStateId.find(stateId);
-    if (it != m_MarkersByStateId.end())
-    {
-      return it->second;
-    }
-    else
-    {
-      return nullptr;
-    }
-  }
-
-  /**
    * Deletes data from this buffer
    */
   void MarkerManager::Clear()
@@ -3415,6 +3397,17 @@ namespace karto
     }
 
     return allMarkers;
+  }
+
+  /**
+   * Returns a marker specified by its ApriltagID
+   * @param ApriltagID
+   * @return marker
+   */ 
+  LocalizedMarker *Mapper::GetMarkerById(kt_int32s ApriltagID)
+  {
+    LocalizedMarker *marker = m_pMarkerManager->GetMarkerByStateId(ApriltagID);
+    return marker;
   }
 
   /**

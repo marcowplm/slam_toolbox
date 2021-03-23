@@ -55,7 +55,7 @@ namespace slam_toolbox
       camera_assistant_ = std::make_unique<camera_utils::CameraAssistant>(
           nh_, tf_.get(), base_frame_, camera_frame_);
       tag_assistant_ = std::make_unique<tag_assistant::ApriltagAssistant>(
-          nh_, tf_.get(), smapper_->getMapper(), camera_assistant_.get(), dataset_.get());
+          nh_, tf_.get(), smapper_->getMapper());
       is_camera_set_ = false;
     }
 
@@ -584,6 +584,67 @@ namespace slam_toolbox
     }
 
     return range_scan;
+  }
+
+  /*****************************************************************************/
+  bool SlamToolbox::processDetection(
+      const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array,
+      karto::LocalizedRangeScan *pLastScan)
+  /*****************************************************************************/
+  {
+    bool processed = false;
+
+    std::vector<apriltag_ros::AprilTagDetection>::const_iterator detConstIter;
+    for (detConstIter = detection_array->detections.begin(); detConstIter != detection_array->detections.end(); ++detConstIter)
+    {
+      karto::LocalizedMarker *pMarker = smapper_->getMapper()->GetMarkerById(detConstIter->id[0]);
+
+      if (pMarker) // il LocalizedMarker esiste già (e quindi anche il relativo MarkerVertex)
+      {
+
+        smapper_->getMapper()->GetMarkerGraph()->LinkMarkerToScan(pMarker, pLastScan); // Se il MarkerEdge esiste già, non fa niente, altrimenti lo crea, aggiunge LinkInfo e aggiunge il constraint al solver
+
+        processed = true;
+      }
+      else // il LocalizedMarker non esiste (è la prima volta che lo vedo)
+      {
+        if (!addLocalizedMarker(pLastScan, *detConstIter))
+        {
+          processed = false;
+        }
+        processed = true;
+      }
+    }
+    return processed;
+  }
+
+  /** 
+   * Recupera la posizione del tag nel mondo, crea il Vertex associato al tag da aggiungere 
+   * e poi crea l'Edge tra il nuovo vertice e il vertice dello scan
+   */
+  /*****************************************************************************/
+  bool SlamToolbox::addLocalizedMarker(karto::LocalizedRangeScan *pScan,
+                                       const apriltag_ros::AprilTagDetection &detection)
+  /*****************************************************************************/
+  {
+    karto::Pose3 tag_pose; // è la posizione del tag nel mondo
+    if (!tag_assistant_->getTagPose(tag_pose, detection))
+    {
+      return false;
+    }
+
+    karto::LocalizedMarker *marker = new karto::LocalizedMarker(
+        camera_assistant_->getCamera()->GetName(), detection.id[0], tag_pose);
+    marker->SetCorrectedPose(tag_pose);
+
+    if (!smapper_->getMapper()->ProcessMarker(marker, pScan))
+    {
+      std::cout << "ProcessMarker FALSE!" << std::endl;
+      return false;
+    }
+    dataset_->Add(marker);
+
+    return true;
   }
 
   /*****************************************************************************/

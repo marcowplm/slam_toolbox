@@ -113,7 +113,8 @@ namespace slam_toolbox
       return;
     }
 
-    tag_assistant_->processDetection(detection_array);
+    karto::LocalizedRangeScan *pLastScan = smapper_->getMapper()->GetAllProcessedScans().back();
+    processDetection(detection_array, pLastScan);
 
     return;
   }

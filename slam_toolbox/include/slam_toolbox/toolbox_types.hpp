@@ -36,100 +36,99 @@
 namespace toolbox_types
 {
 
-// object containing a scan pointer and a position
-struct PosedScan
-{
-  PosedScan(sensor_msgs::LaserScan::ConstPtr scan_in, karto::Pose2 pose_in) :
-             scan(scan_in), pose(pose_in)
+  // object containing a scan pointer and a position
+  struct PosedScan
   {
-  }
-  sensor_msgs::LaserScan::ConstPtr scan;
-  karto::Pose2 pose;
-};
-
-// object containing a vertex pointer and an updated score
-struct ScoredVertex
-{
-  ScoredVertex(karto::Vertex<karto::LocalizedRangeScan>* vertex, double score)
-  : vertex_(vertex), score_(score)
-  {
-  }
-
-  double GetScore()
-  {
-    return score_;
-  }
-
-  karto::Vertex<karto::LocalizedRangeScan>* GetVertex()
-  {
-    return vertex_;
-  }
-
-  karto::Vertex<karto::LocalizedRangeScan>* vertex_;
-  double score_;
-};
-
-typedef std::vector<ScoredVertex> ScoredVertices;
-typedef std::vector<karto::Vertex<karto::LocalizedRangeScan>*> Vertices;
-
-// types of pause functionality available
-enum PausedApplication
-{
-  PROCESSING = 0,
-  VISUALIZING_GRAPH = 1,
-  NEW_MEASUREMENTS = 2
-};
-
-// types of sensor processing
-enum ProcessType
-{
-  PROCESS = 0,
-  PROCESS_FIRST_NODE = 1,
-  PROCESS_NEAR_REGION = 2,
-  PROCESS_LOCALIZATION = 3
-};
-
-// Pause state
-struct PausedState
-{
-  PausedState()
-  {
-    state_map_[NEW_MEASUREMENTS] = false;
-    state_map_[VISUALIZING_GRAPH] = false;
-    state_map_[PROCESSING] = false;
+    PosedScan(sensor_msgs::LaserScan::ConstPtr scan_in, karto::Pose2 pose_in) : scan(scan_in), pose(pose_in)
+    {
+    }
+    sensor_msgs::LaserScan::ConstPtr scan;
+    karto::Pose2 pose;
   };
 
-  void set(const PausedApplication& app, const bool& state)
+  // object containing a vertex pointer and an updated score
+  struct ScoredVertex
   {
-    boost::mutex::scoped_lock lock(pause_mutex_);
-    state_map_[app] = state;
+    ScoredVertex(karto::Vertex<karto::LocalizedRangeScan> *vertex, double score)
+        : vertex_(vertex), score_(score)
+    {
+    }
+
+    double GetScore()
+    {
+      return score_;
+    }
+
+    karto::Vertex<karto::LocalizedRangeScan> *GetVertex()
+    {
+      return vertex_;
+    }
+
+    karto::Vertex<karto::LocalizedRangeScan> *vertex_;
+    double score_;
   };
 
-  bool get(const PausedApplication& app)
+  typedef std::vector<ScoredVertex> ScoredVertices;
+  typedef std::vector<karto::Vertex<karto::LocalizedRangeScan> *> Vertices;
+
+  // types of pause functionality available
+  enum PausedApplication
   {
-    boost::mutex::scoped_lock lock(pause_mutex_);
-    return state_map_[app];
+    PROCESSING = 0,
+    VISUALIZING_GRAPH = 1,
+    NEW_MEASUREMENTS = 2
   };
 
-  std::map<PausedApplication, bool> state_map_;
-  boost::mutex pause_mutex_;
-};
+  // types of sensor processing
+  enum ProcessType
+  {
+    PROCESS = 0,
+    PROCESS_FIRST_NODE = 1,
+    PROCESS_NEAR_REGION = 2,
+    PROCESS_LOCALIZATION = 3
+  };
 
-typedef std::map<karto::Name, std::map<int, karto::Vertex<karto::LocalizedRangeScan>*>> VerticeMap; // NB: analoga a karto::VertexMap
-typedef std::vector<karto::Edge<karto::LocalizedRangeScan>*> EdgeVector;
-typedef std::map<int, karto::Vertex<karto::LocalizedRangeScan>*> ScanMap;
-typedef std::vector<karto::Vertex<karto::LocalizedRangeScan>*> ScanVector;
+  // Pause state
+  struct PausedState
+  {
+    PausedState()
+    {
+      state_map_[NEW_MEASUREMENTS] = false;
+      state_map_[VISUALIZING_GRAPH] = false;
+      state_map_[PROCESSING] = false;
+    };
 
-typedef std::map<karto::Name, std::map<int, karto::MarkerVertex*>> MarkerVerticeMap; // NB: analoga a karto::MarkerVertexMap
-typedef std::vector<karto::MarkerEdge*> MarkerEdgeVector;
-typedef std::map<int, karto::MarkerVertex*> MarkerMap;
-typedef std::vector<karto::MarkerVertex*> MarkerVector;
+    void set(const PausedApplication &app, const bool &state)
+    {
+      boost::mutex::scoped_lock lock(pause_mutex_);
+      state_map_[app] = state;
+    };
 
-typedef slam_toolbox_msgs::DeserializePoseGraph::Request procType;
+    bool get(const PausedApplication &app)
+    {
+      boost::mutex::scoped_lock lock(pause_mutex_);
+      return state_map_[app];
+    };
 
-typedef std::unordered_map<int, karto::Pose3>::iterator GraphIterator;
-typedef std::unordered_map<int, karto::Pose3>::const_iterator ConstGraphIterator;
+    std::map<PausedApplication, bool> state_map_;
+    boost::mutex pause_mutex_;
+  };
 
-}  // end namespace
+  typedef std::map<karto::Name, std::map<int, karto::Vertex<karto::LocalizedRangeScan> *>> VerticeMap; // NB: analoga a karto::VertexMap
+  typedef std::vector<karto::Edge<karto::LocalizedRangeScan> *> EdgeVector;
+  typedef std::map<int, karto::Vertex<karto::LocalizedRangeScan> *> ScanMap;
+  typedef std::vector<karto::Vertex<karto::LocalizedRangeScan> *> ScanVector;
+
+  typedef std::map<karto::Name, std::map<int, karto::MarkerVertex *>> MarkerVerticeMap; // NB: analoga a karto::MarkerVertexMap
+  typedef std::vector<karto::MarkerEdge *> MarkerEdgeVector;
+  typedef std::map<int, karto::MarkerVertex *> MarkerMap;
+  typedef std::vector<karto::MarkerVertex *> MarkerVector;
+
+  typedef slam_toolbox_msgs::DeserializePoseGraph::Request procType;
+
+  typedef std::unordered_map<int, karto::Pose3>::iterator GraphIterator;
+  typedef std::unordered_map<int, karto::Pose3>::const_iterator ConstGraphIterator;
+
+} // end namespace
 
 #endif //SLAM_TOOLBOX_TOOLBOX_TYPES_H_

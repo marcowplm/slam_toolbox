@@ -8,9 +8,8 @@ namespace tag_assistant
 
   /*****************************************************************************/
   ApriltagAssistant::ApriltagAssistant(
-      ros::NodeHandle &nh, tf2_ros::Buffer *tf, karto::Mapper *mapper,
-      camera_utils::CameraAssistant *cam_ass, karto::Dataset *dataset)
-      : nh_(nh), tf_(tf), mapper_(mapper), cam_ass_(cam_ass), dataset_(dataset)
+      ros::NodeHandle &nh, tf2_ros::Buffer *tf, karto::Mapper *mapper)
+      : nh_(nh), tf_(tf), mapper_(mapper)
   /*****************************************************************************/
   {
     nh_.getParam("map_frame", map_frame_);
@@ -22,64 +21,6 @@ namespace tag_assistant
     solver_ = mapper_->GetScanSolver();
   }
 
-  /*****************************************************************************/
-  bool ApriltagAssistant::processDetection(const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array)
-  /*****************************************************************************/
-  {
-    bool processed = false;
-
-    karto::LocalizedRangeScan *pScan = mapper_->GetAllProcessedScans().back();
-
-    for (detConstIter = detection_array->detections.begin(); detConstIter != detection_array->detections.end(); ++detConstIter)
-    {
-      karto::LocalizedMarker *pMarker = mapper_->GetMarkerManager()->GetMarkerByStateId(detConstIter->id[0]);
-      if (pMarker) // il LocalizedMarker esiste già (e quindi anche il relativo MarkerVertex)
-      {
-        mapper_->GetMarkerGraph()->LinkMarkerToScan(pMarker, pScan); // Se il MarkerEdge esiste già, non fa niente, altrimenti lo crea, aggiunge LinkInfo e aggiunge il constraint a Ceres
-
-        processed = true;
-      }
-      else // il LocalizedMarker non esiste (è la prima volta che lo vedo)
-      {
-        if (!addLocalizedMarker(pScan, *detConstIter))
-        {
-          processed = false;
-        }
-        processed = true;
-      }
-    }
-    return processed;
-  }
-
-  /** 
-   * Recupera la posizione del tag nel mondo, crea il Vertex associato al tag da aggiungere 
-   * e poi crea l'Edge tra il nuovo vertice e il vertice dello scan
-   */
-  /*****************************************************************************/
-  bool ApriltagAssistant::addLocalizedMarker(karto::LocalizedRangeScan *pScan,
-                                             const apriltag_ros::AprilTagDetection &detection)
-  /*****************************************************************************/
-  {
-    karto::Pose3 tag_pose; // è la posizione del tag nel mondo
-    if (!getTagPose(tag_pose, detection))
-    {
-      return false;
-    }
-
-    karto::LocalizedMarker *marker = new karto::LocalizedMarker(
-        cam_ass_->getCamera()->GetName(), detection.id[0], tag_pose);
-    marker->SetCorrectedPose(tag_pose);
-
-    if (!mapper_->ProcessMarker(marker, pScan))
-    {
-      std::cout << "ProcessMarker FALSE!" << std::endl;
-      return false;
-    }
-    dataset_->Add(marker);
-
-    return true;
-  }
-
   // Ottiene la posizione del tag nel riferimento mondo (map_frame_), nel momento in cui il tag viene creato
   /*****************************************************************************/
   bool ApriltagAssistant::getTagPose(karto::Pose3 &tag_pose_karto,
@@ -87,10 +28,10 @@ namespace tag_assistant
   /*****************************************************************************/
   {
     // camera_ident è un "contenitore" che tf_->transform usa per tirare fuori il suo source frame,
-    // camera_rgb_optical, che è in camera_ident.header.frame_id
+    // camera_rgb_optical, e il timestamp
     geometry_msgs::TransformStamped camera_ident;
     camera_ident.header.stamp = detection.pose.header.stamp;
-    camera_ident.header.frame_id = detection.pose.header.frame_id;
+    camera_ident.header.frame_id = camera_frame_;
     camera_ident.transform.rotation.w = 1.0;
 
     try
@@ -100,7 +41,8 @@ namespace tag_assistant
     }
     catch (tf2::TransformException e)
     {
-      // ROS_ERROR("Failed to compute pose, aborting continue mapping (%s)", e.what());
+      // TODO: capsci perchè alcuni tf non sono sincronizzati...
+      // ROS_ERROR("Failed to compute camera pose, skipping tag (%s)", e.what());
       return false;
     }
     geometry_msgs::Pose tag_pose_;

@@ -35,7 +35,6 @@ namespace solver_plugins
     first_node3d_ = nodes3d_->end();
 
     // formulate problem
-    // quaternion_local_parameterization_ = QuaternionAngleLocalParameterization::Create();
     quaternion_local_parameterization_ = new ceres::EigenQuaternionParameterization;
     subset_local_parameterization_ = new ceres::SubsetParameterization(3, {2});
 

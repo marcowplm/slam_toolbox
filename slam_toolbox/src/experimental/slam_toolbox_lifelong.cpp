@@ -102,21 +102,7 @@ namespace slam_toolbox
       const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array)
   /*****************************************************************************/
   {
-    // ensure the camera can be used
-    karto::Camera *camera = getCamera();
-    if (!camera)
-    {
-      ROS_WARN_THROTTLE(5., "LifelongSlamToolbox: Failed to create camera");
-      return;
-    }
-
-    if (detection_array->detections.size() == 0)
-    {
-      return;
-    }
-
-    tag_assistant_->processDetection(detection_array);
-    
+    ROS_WARN("tagCallback not yet implemented for Lifelong node!");
     return;
   }
 

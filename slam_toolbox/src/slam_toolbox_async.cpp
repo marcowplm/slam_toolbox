@@ -62,22 +62,8 @@ namespace slam_toolbox
   void AsynchronousSlamToolbox::tagCallback(
       const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array)
   /*****************************************************************************/
-  {
-    // ensure the camera can be used
-    karto::Camera *camera = getCamera();
-    if (!camera)
-    {
-      ROS_WARN_THROTTLE(5., "AsynchronousSlamToolbox: Failed to create camera");
-      return;
-    }
-
-    if (detection_array->detections.size() == 0)
-    {
-      return;
-    }
-    
-    tag_assistant_->processDetection(detection_array);
-
+  { 
+    ROS_WARN("tagCallback not yet implemented for Asynchronous node!");
     return;
   }
 

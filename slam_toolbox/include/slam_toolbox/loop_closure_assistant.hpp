@@ -38,42 +38,42 @@
 namespace loop_closure_assistant
 {
 
-using namespace ::toolbox_types;
+  using namespace ::toolbox_types;
 
-class LoopClosureAssistant
-{
-public:
-  LoopClosureAssistant(ros::NodeHandle& node, karto::Mapper* mapper, laser_utils::ScanHolder* scan_holder, PausedState& state, ProcessType& processor_type);
+  class LoopClosureAssistant
+  {
+  public:
+    LoopClosureAssistant(ros::NodeHandle &node, karto::Mapper *mapper, laser_utils::ScanHolder *scan_holder, PausedState &state, ProcessType &processor_type);
 
-  void clearMovedNodes();
-  void processInteractiveFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
-  void publishGraph();
-  void publishEdges();
+    void clearMovedNodes();
+    void processInteractiveFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback);
+    void publishGraph();
+    void publishEdges();
 
-private:
-  bool manualLoopClosureCallback(slam_toolbox_msgs::LoopClosure::Request& req, slam_toolbox_msgs::LoopClosure::Response& resp);
-  bool clearChangesCallback(slam_toolbox_msgs::Clear::Request& req, slam_toolbox_msgs::Clear::Response& resp);
-  bool interactiveModeCallback(slam_toolbox_msgs::ToggleInteractive::Request  &req, slam_toolbox_msgs::ToggleInteractive::Response &resp);
-  void moveNode(const int& id, const Eigen::Vector3d& pose);
-  void addMovedNodes(const int& id, Eigen::Vector3d vec);
+  private:
+    bool manualLoopClosureCallback(slam_toolbox_msgs::LoopClosure::Request &req, slam_toolbox_msgs::LoopClosure::Response &resp);
+    bool clearChangesCallback(slam_toolbox_msgs::Clear::Request &req, slam_toolbox_msgs::Clear::Response &resp);
+    bool interactiveModeCallback(slam_toolbox_msgs::ToggleInteractive::Request &req, slam_toolbox_msgs::ToggleInteractive::Response &resp);
+    void moveNode(const int &id, const Eigen::Vector3d &pose);
+    void addMovedNodes(const int &id, Eigen::Vector3d vec);
 
-  std::unique_ptr<tf2_ros::TransformBroadcaster> tfB_;
-  laser_utils::ScanHolder* scan_holder_;
-  ros::Publisher scan_publisher_, marker_publisher_, edges_publisher_;
-  ros::ServiceServer ssClear_manual_, ssLoopClosure_, ssInteractive_;
-  boost::mutex moved_nodes_mutex_;
-  std::map<int, Eigen::Vector3d> moved_nodes_;
-  karto::Mapper* mapper_;
-  karto::ScanSolver* solver_;
-  std::unique_ptr<interactive_markers::InteractiveMarkerServer> interactive_server_;
-  boost::mutex interactive_mutex_;
-  bool interactive_mode_, enable_interactive_mode_;
-  ros::NodeHandle& nh_;
-  std::string map_frame_;
-  PausedState& state_;
-  ProcessType& processor_type_;
-};
+    std::unique_ptr<tf2_ros::TransformBroadcaster> tfB_;
+    laser_utils::ScanHolder *scan_holder_;
+    ros::Publisher scan_publisher_, marker_publisher_, edges_publisher_;
+    ros::ServiceServer ssClear_manual_, ssLoopClosure_, ssInteractive_;
+    boost::mutex moved_nodes_mutex_;
+    std::map<int, Eigen::Vector3d> moved_nodes_;
+    karto::Mapper *mapper_;
+    karto::ScanSolver *solver_;
+    std::unique_ptr<interactive_markers::InteractiveMarkerServer> interactive_server_;
+    boost::mutex interactive_mutex_;
+    bool interactive_mode_, enable_interactive_mode_;
+    ros::NodeHandle &nh_;
+    std::string map_frame_;
+    PausedState &state_;
+    ProcessType &processor_type_;
+  };
 
-}  // end namespace
+} // end namespace
 
 #endif //SLAM_TOOLBOX_LOOP_CLOSURE_ASSISTANT_H_

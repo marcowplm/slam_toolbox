@@ -38,6 +38,7 @@
 #include "slam_toolbox/map_saver.hpp"
 #include "slam_toolbox/loop_closure_assistant.hpp"
 #include "slam_toolbox/tag_assistant.hpp"
+#include "apriltag_ros/AprilTagDetectionArray.h"
 
 #include <string>
 #include <map>
@@ -88,6 +89,8 @@ protected:
   virtual karto::LocalizedRangeScan* addScan(karto::LaserRangeFinder* laser, const sensor_msgs::LaserScan::ConstPtr& scan,
     karto::Pose2& karto_pose);
   karto::LocalizedRangeScan* addScan(karto::LaserRangeFinder* laser, PosedScan& scanWPose);
+  bool addLocalizedMarker(karto::LocalizedRangeScan *pScan,
+                          const apriltag_ros::AprilTagDetection &detection);
   bool updateMap();
   tf2::Stamped<tf2::Transform> setTransformFromPoses(const karto::Pose2& pose,
     const karto::Pose2& karto_pose, const ros::Time& t, const bool& update_reprocessing_transform);
@@ -96,6 +99,9 @@ protected:
     karto::Pose2& karto_pose);
   bool shouldStartWithPoseGraph(std::string& filename, geometry_msgs::Pose2D& pose, bool& start_at_dock);
   bool shouldProcessScan(const sensor_msgs::LaserScan::ConstPtr& scan, const karto::Pose2& pose);
+  bool processDetection(const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array,
+      karto::LocalizedRangeScan *pLastScan);
+
 
   // pausing bits
   bool isPaused(const PausedApplication& app);

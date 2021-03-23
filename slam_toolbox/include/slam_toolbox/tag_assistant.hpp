@@ -118,20 +118,11 @@ namespace tag_assistant
   class ApriltagAssistant
   {
   public:
-    ApriltagAssistant(ros::NodeHandle &nh, 
-                      tf2_ros::Buffer *tf, 
-                      karto::Mapper *mapper, 
-                      camera_utils::CameraAssistant *cam_ass,
-                      karto::Dataset *dataset);
-
+    ApriltagAssistant(ros::NodeHandle &nh, tf2_ros::Buffer *tf, karto::Mapper *mapper);
+    
+    bool getTagPose(karto::Pose3 &karto_pose, const apriltag_ros::AprilTagDetection &detection);
     void publishMarkerGraph();
     void publishLinks();
-    bool processDetection(const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array);
-
-  private:
-    bool getTagPose(karto::Pose3 &karto_pose, const apriltag_ros::AprilTagDetection &detection);
-    bool addLocalizedMarker(karto::LocalizedRangeScan *pScan,
-                            const apriltag_ros::AprilTagDetection &detection);
 
   private:
     geometry_msgs::TransformStamped camera_pose_;
@@ -143,13 +134,10 @@ namespace tag_assistant
     std::unique_ptr<tf2_ros::TransformBroadcaster> tfB_;
 
     karto::Mapper *mapper_;
-    karto::Dataset *dataset_;
     karto::ScanSolver *solver_;
-    camera_utils::CameraAssistant *cam_ass_;
 
     std::string map_frame_, odom_frame_, camera_frame_;
 
-    std::vector<apriltag_ros::AprilTagDetection>::const_iterator detConstIter;
   };
 
 } // namespace tag_assistant

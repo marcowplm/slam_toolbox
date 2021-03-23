@@ -2295,7 +2295,18 @@ namespace karto
      * @param stateId
      * @return marker
      */
-    LocalizedMarker *GetMarkerByStateId(kt_int32s stateId);
+    inline LocalizedMarker *GetMarkerByStateId(kt_int32s stateId)
+    {
+      std::map<int, LocalizedMarker *>::iterator it = m_MarkersByStateId.find(stateId);
+      if (it != m_MarkersByStateId.end())
+      {
+        return it->second;
+      }
+      else
+      {
+        return nullptr;
+      }
+    }
 
     /**
      * Deletes data from this buffer
@@ -2606,6 +2617,13 @@ namespace karto
      * return an empty list.
      */
     virtual const LocalizedMarkerVector GetAllProcessedMarkers() const;
+
+    /**
+     * Returns a marker specified by its ApriltagID
+     * @param ApriltagID
+     * @return marker
+     */ 
+    virtual LocalizedMarker *GetMarkerById(kt_int32s ApriltagID);
 
     /**
      * Add a listener to mapper
