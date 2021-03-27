@@ -277,7 +277,7 @@ void SMapper::configure(const ros::NodeHandle& nh)
   }
 
   // Setting parameters related to the Markers
-  double use_markers;
+  bool use_markers;
   if(nh.getParam("use_markers", use_markers))
   {
     mapper_->setParamUseMarkers(use_markers);

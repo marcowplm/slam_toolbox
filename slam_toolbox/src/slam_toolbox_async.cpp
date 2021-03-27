@@ -47,8 +47,8 @@ namespace slam_toolbox
 
     if (!laser)
     {
-      ROS_WARN_THROTTLE(5., "Failed to create laser device for"
-                            " %s; discarding scan",
+      ROS_WARN_THROTTLE(5., "AsynchronousSlamToolbox: Failed to create laser"
+                            " device for %s; discarding scan",
                         scan->header.frame_id.c_str());
       return;
     }

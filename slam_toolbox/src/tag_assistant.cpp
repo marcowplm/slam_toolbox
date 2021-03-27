@@ -41,7 +41,7 @@ namespace tag_assistant
     }
     catch (tf2::TransformException e)
     {
-      // TODO: capsci perchè alcuni tf non sono sincronizzati...
+      // TODO: capisci perchè alcuni tf non sono sincronizzati...
       // ROS_ERROR("Failed to compute camera pose, skipping tag (%s)", e.what());
       return false;
     }
@@ -69,6 +69,8 @@ namespace tag_assistant
   void ApriltagAssistant::publishMarkerGraph()
   /*****************************************************************************/
   {
+    std::cout << "\npublishMarkerGraph()" << std::endl;
+
     std::unordered_map<int, karto::Pose3> *graph = solver_->getGraph();
     std::unordered_map<int, karto::Pose3> *markers = solver_->getMarkers();
     std::map<int, std::list<int>> constraints = solver_->getConstraints();
@@ -77,6 +79,8 @@ namespace tag_assistant
     {
       return;
     }
+
+    ROS_DEBUG("MarkerGraph size: %i", (int)markers->size());
 
     visualization_msgs::MarkerArray marray;
     visualization_msgs::Marker m = vis_utils::toTagMarker(map_frame_, nh_.getNamespace());
@@ -91,7 +95,7 @@ namespace tag_assistant
       std::cout << m.pose << std::endl; */
 
       marray.markers.push_back(m);
-
+      std::cout << "\nMarker: " << it->first << "\t | Constraints: ";
       std::list<int>::const_iterator listit = constraints[it->first].begin();
       for (listit; listit != constraints[it->first].end(); ++listit)
       {
@@ -99,7 +103,7 @@ namespace tag_assistant
 
         geometry_msgs::Point p = m.pose.position; // Posizione del Marker
         e.points.push_back(p);
-
+        std::cout << *listit << ", ";
         p = poseKartoToGeometry(graph->find(*listit)->second).position; // Posizione dello Scan
         e.points.push_back(p);
 
@@ -114,6 +118,7 @@ namespace tag_assistant
 
     tag_publisher_.publish(marray);
     // publishLinks(); // FIXME: non funziona con la serializzazione -> da eliminare!
+    /* std::cout << "publishMarkerGraph() -> FINISH!" << std::endl; */
 
     return;
   }

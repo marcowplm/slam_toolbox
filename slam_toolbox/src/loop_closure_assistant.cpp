@@ -145,6 +145,7 @@ namespace loop_closure_assistant
     // visualization_msgs::Marker m = vis_utils::toMarker(map_frame_, "slam_toolbox", 0.1);
     visualization_msgs::Marker m = vis_utils::toTagMarker(map_frame_, "slam_toolbox");
     visualization_msgs::Marker e = vis_utils::toEdgeMarker(map_frame_, "slam_toolbox", 0.05);
+    
     for (ConstGraphIterator it = graph->begin(); it != graph->end(); ++it)
     {
       geometry_msgs::Pose mPose = tag_assistant::poseKartoToGeometry(it->second);
@@ -169,6 +170,7 @@ namespace loop_closure_assistant
         {
           continue;
         }
+
         std::list<int>::const_iterator listit = constraints[it->first].begin();
         for (listit; listit != constraints[it->first].end(); ++listit)
         {
@@ -190,7 +192,7 @@ namespace loop_closure_assistant
     // if disabled, clears out old markers
     interactive_server_->applyChanges();
     marker_publisher_.publish(marray);
-    // publishEdges(); // FIXME: non funziona con la serializzazione!
+    // publishEdges(); // FIXME: non funziona con la serializzazione -> da eliminare!
 
     return;
   }

@@ -216,7 +216,7 @@ namespace solver_plugins
     corrections_.reserve(nodes3d_->size());
     karto::Pose3 pose;
     ConstGraphIterator3d iter = nodes3d_->begin();
-    /* std::cout << "\nPrint 3D nodes after optimization: ---------------------------" << std::endl; */
+    /* std::cout << "\nPrint 3D nodes after optimization: ---------------------------\n"; */
     for (iter; iter != nodes3d_->end(); ++iter)
     {
       pose = (iter->second).ToKartoPose3();
@@ -224,7 +224,7 @@ namespace solver_plugins
       corrections_.push_back(std::make_pair(iter->first, pose));
       /* std::cout << "\nCorrected pose of node with ID: " << iter->first << std::endl << pose << std::endl; */
     }
-    std::cout << "\n\n\033[1;35m===============================================================\033[0m" << std::endl;
+    std::cout << "\n\033[1;35m===============================================================\033[0m\n";
     return;
   }
 
@@ -292,7 +292,7 @@ namespace solver_plugins
 
     boost::mutex::scoped_lock lock(nodes_mutex_);
     nodes3d_->insert(std::pair<int, CeresPose3d>(id, pose3d));
-    std::cout << "\n\n[CeresPose3d] AddNode SCAN:\t" << id << std::endl << pose3d << std::endl;
+    std::cout << "\n[Ceres] AddNode SCAN:\t" << id << /*std::endl << pose3d <<*/ std::endl;
 
     // TODO: questo pezzo serve solo per controllare la coerenza delle trasformazioni tra quat e RPY -> da eliminare
     /* double yaw, pitch, roll;    
@@ -328,7 +328,7 @@ namespace solver_plugins
 
     CeresPose3d pose3d(pMarkerVertex->GetLocalizedMarker()->GetCorrectedPose());
     const int id = pMarkerVertex->GetLocalizedMarker()->GetUniqueId();
-    std::cout << "\n\n[CeresPose3d] AddNode MARKER: " << id << std::endl << pose3d << std::endl;
+    std::cout << "\n[Ceres] AddNode MARKER: " << id << /*std::endl << pose3d <<*/ std::endl;
     
     // TODO: questo pezzo serve solo per controllare la coerenza delle trasformazioni tra quat e RPY -> da eliminare
     /* double yaw, pitch, roll;
@@ -517,6 +517,8 @@ namespace solver_plugins
     if (nodeit != nodes3d_->end())
     {
       nodes3d_->erase(nodeit);
+      // TODO: qui bisogna eliminare correttamente l'id del marker, se stiamo eliminando un marker!
+      // std::cout << ">> CeresSolver::RemoveNode, result from marker_ids_: " << marker_ids_.erase(id) << std::endl;
     }
     else
     {
@@ -528,6 +530,22 @@ namespace solver_plugins
   void CeresSolver::RemoveConstraint(kt_int32s sourceId, kt_int32s targetId)
   /*****************************************************************************/
   {
+    boost::mutex::scoped_lock l(constraints_mutex_);
+    std::map<int, std::list<int>>::iterator constraints_it = constraints_.find(sourceId);
+    if (constraints_it != constraints_.end())
+    {
+      constraints_it->second.remove(targetId);
+      if (constraints_it->second.empty())
+      {
+        constraints_.erase(sourceId);
+      }
+    }
+    else 
+    {
+      ROS_ERROR("RemoveConstraint: Failed to find constraint in list for %i %i",
+                (int)sourceId, (int)targetId);
+    }
+
     boost::mutex::scoped_lock lock(nodes_mutex_);
     std::unordered_map<std::size_t, ceres::ResidualBlockId>::iterator it_a =
         blocks_->find(GetHash(sourceId, targetId));
@@ -548,6 +566,8 @@ namespace solver_plugins
       ROS_ERROR("RemoveConstraint: Failed to find residual block for %i %i",
                 (int)sourceId, (int)targetId);
     }
+    std::cout << ">> CeresSolver::RemoveConstraint (" << (int)sourceId << " -> "
+              << (int)targetId << ")" << std::endl;
   }
 
   /*****************************************************************************/
@@ -627,14 +647,12 @@ namespace solver_plugins
   std::map<int, std::list<int>> CeresSolver::getConstraints()
   /*****************************************************************************/
   {
-    boost::mutex::scoped_lock lock(constraints_mutex_);
+    boost::mutex::scoped_lock l(constraints_mutex_);
 
-    return constraints_;
-
-    // Questo pezzo di codice serve solo a stampare il vettore di liste constraints_
-    /* if (constraints_.size() != 0)
+    // NB: Questo pezzo di codice serve solo a stampare il vettore di liste constraints_
+    if (constraints_.size() != 0)
     {
-      std::cout << "\n >>>>>>>>>>> Constraints:" << std::endl;
+      std::cout << "\n>>>>>>>>>>> Constraints:" << std::endl;
       std::map<int, std::list<int>>::const_iterator constrIter = constraints_.cbegin();
       for (constrIter; constrIter != constraints_.end(); ++constrIter)
       {
@@ -646,7 +664,9 @@ namespace solver_plugins
         }
         std::cout << std::endl;
       }
-    } */
+    }
+    
+    return constraints_;
   }
 
 } // namespace solver_plugins

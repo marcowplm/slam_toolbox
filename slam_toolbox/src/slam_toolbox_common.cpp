@@ -85,9 +85,13 @@ namespace slam_toolbox
     map_saver_.reset();
     pose_helper_.reset();
     laser_assistant_.reset();
-    camera_assistant_.reset();
     scan_holder_.reset();
-    tag_assistant_.reset();
+
+    if (use_markers_)
+    {
+      camera_assistant_.reset();
+      tag_assistant_.reset();
+    }
   }
 
   /*****************************************************************************/
@@ -587,43 +591,31 @@ namespace slam_toolbox
   }
 
   /*****************************************************************************/
-  bool SlamToolbox::processDetection(
+  void SlamToolbox::processDetection(
       const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array,
-      karto::LocalizedRangeScan *pLastScan)
+      karto::LocalizedRangeScan *last_scan)
   /*****************************************************************************/
   {
-    bool processed = false;
-
-    std::vector<apriltag_ros::AprilTagDetection>::const_iterator detConstIter;
-    for (detConstIter = detection_array->detections.begin(); detConstIter != detection_array->detections.end(); ++detConstIter)
+    std::vector<apriltag_ros::AprilTagDetection>::const_iterator detection;
+    for (detection = detection_array->detections.begin(); detection != detection_array->detections.end(); ++detection)
     {
-      karto::LocalizedMarker *pMarker = smapper_->getMapper()->GetMarkerById(detConstIter->id[0]);
+      karto::LocalizedMarker *marker = smapper_->getMapper()->GetMarkerById(detection->id[0]);
 
-      if (pMarker) // il LocalizedMarker esiste già (e quindi anche il relativo MarkerVertex)
+      if (marker) // il LocalizedMarker esiste già (e quindi anche il relativo MarkerVertex)
       {
-
-        smapper_->getMapper()->GetMarkerGraph()->LinkMarkerToScan(pMarker, pLastScan); // Se il MarkerEdge esiste già, non fa niente, altrimenti lo crea, aggiunge LinkInfo e aggiunge il constraint al solver
-
-        processed = true;
+        boost::mutex::scoped_lock lock(smapper_mutex_);
+        // Se il MarkerEdge esiste già, non fa niente, altrimenti lo crea, aggiunge LinkInfo e aggiunge il constraint al solver
+        smapper_->getMapper()->GetMarkerGraph()->LinkMarkerToScan(marker, last_scan);
       }
       else // il LocalizedMarker non esiste (è la prima volta che lo vedo)
       {
-        if (!addLocalizedMarker(pLastScan, *detConstIter))
-        {
-          processed = false;
-        }
-        processed = true;
+        addLocalizedMarker(last_scan, *detection);
       }
     }
-    return processed;
   }
 
-  /** 
-   * Recupera la posizione del tag nel mondo, crea il Vertex associato al tag da aggiungere 
-   * e poi crea l'Edge tra il nuovo vertice e il vertice dello scan
-   */
   /*****************************************************************************/
-  bool SlamToolbox::addLocalizedMarker(karto::LocalizedRangeScan *pScan,
+  bool SlamToolbox::addLocalizedMarker(karto::LocalizedRangeScan *scan,
                                        const apriltag_ros::AprilTagDetection &detection)
   /*****************************************************************************/
   {
@@ -637,12 +629,17 @@ namespace slam_toolbox
         camera_assistant_->getCamera()->GetName(), detection.id[0], tag_pose);
     marker->SetCorrectedPose(tag_pose);
 
-    if (!smapper_->getMapper()->ProcessMarker(marker, pScan))
+    boost::mutex::scoped_lock lock(smapper_mutex_);
+    if (!smapper_->getMapper()->ProcessMarker(marker, scan))
     {
       std::cout << "ProcessMarker FALSE!" << std::endl;
       return false;
     }
-    dataset_->Add(marker);
+
+    if (processor_type_ != PROCESS_LOCALIZATION)
+    {
+      dataset_->Add(marker);
+    }
 
     return true;
   }

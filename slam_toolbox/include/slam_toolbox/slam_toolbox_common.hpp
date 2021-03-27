@@ -99,7 +99,7 @@ protected:
     karto::Pose2& karto_pose);
   bool shouldStartWithPoseGraph(std::string& filename, geometry_msgs::Pose2D& pose, bool& start_at_dock);
   bool shouldProcessScan(const sensor_msgs::LaserScan::ConstPtr& scan, const karto::Pose2& pose);
-  bool processDetection(const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array,
+  void processDetection(const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array,
       karto::LocalizedRangeScan *pLastScan);
 
 

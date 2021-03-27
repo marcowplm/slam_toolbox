@@ -115,7 +115,7 @@ namespace slam_toolbox
 
     if (!laser)
     {
-      ROS_WARN_THROTTLE(5., "SynchronousSlamToolbox: Failed to create laser"
+      ROS_WARN_THROTTLE(5., "LocalizationSlamToolbox: Failed to create laser"
                             " device for %s; discarding scan",
                         scan->header.frame_id.c_str());
       return;
@@ -129,13 +129,27 @@ namespace slam_toolbox
     return;
   }
 
-  // FIXME: da implementare correttamente!
   /*****************************************************************************/
   void LocalizationSlamToolbox::tagCallback(
       const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array)
   /*****************************************************************************/
   {
-    ROS_WARN("tagCallback not yet implemented for Localization node!");
+    // ensure the camera can be used
+    karto::Camera *camera = getCamera();
+    if (!camera)
+    {
+      ROS_WARN_THROTTLE(5., "LocalizationSlamToolbox: Failed to create camera");
+      return;
+    }
+
+    if (detection_array->detections.size() == 0)
+    {
+      return;
+    }
+    
+    karto::LocalizedRangeScan *pLastScan = smapper_->getMapper()->GetAllProcessedScans().back();
+    processDetection(detection_array, pLastScan);
+
     return;
   }
 
