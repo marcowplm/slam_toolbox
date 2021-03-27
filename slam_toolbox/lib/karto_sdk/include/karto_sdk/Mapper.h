@@ -741,22 +741,28 @@ namespace karto
      * @param rName
      * @param pVertex
      */
+    // NB: i vertex in m_Vertices sono ordinati secondo lo StateId!
     inline void AddVertex(const Name &rName, Vertex<T> *pVertex)
     {
-      /*std::cout << "\nGraph<T>::AddVertex:\tName: " << rName.ToString() << "\tStateId: " << pVertex->GetObject()->GetStateId() << std::endl;*/
+      /*std::cout << "\nGraph<T>::AddVertex:\tName: " << rName.ToString() 
+                  << "\tStateId: " << pVertex->GetObject()->GetStateId() << std::endl;*/
       m_Vertices[rName].insert({pVertex->GetObject()->GetStateId(), pVertex});
     }
 
     /**
      * Removes a given vertex into the map using the given name
      * @param rName
-     * @param pVertex
+     * @param id
      */
+    // NB: l'id indicato è lo StateId, perchè m_Vertices è ordinato secondo StateId!
     inline void RemoveVertex(const Name &rName, const int &idx)
     {
       std::map<int, Vertex<LocalizedRangeScan> *>::iterator it = m_Vertices[rName].find(idx);
       if (it != m_Vertices[rName].end())
-      {
+      { //-
+        std::cout << "MapperGraph::RemoveVertex: |  UId: " 
+              << it->second->GetObject()->GetUniqueId() << ",  >SId<: "  
+              << it->second->GetObject()->GetStateId() << std::endl;
         it->second = NULL;
         m_Vertices[rName].erase(it);
       }
@@ -1118,7 +1124,7 @@ namespace karto
     }
 
     /**
-     * Gets edges adjacent to this vertex
+     * Gets edges adjacent to this marker vertex
      * @return adjacent edges
      */
     inline const std::vector<MarkerEdge *> &GetMarkerEdges() const
@@ -1127,7 +1133,7 @@ namespace karto
     }
 
     /**
-     * Removes an edge at a position
+     * Removes an edge at a given position from this marker vertex
      */
     inline void RemoveMarkerEdge(const int &idx)
     {
@@ -1137,7 +1143,7 @@ namespace karto
     }
 
     /**
-     * Gets score for vertex
+     * Gets score for marker vertex
      * @return score
      */
     inline const double GetScore() const
@@ -1146,7 +1152,7 @@ namespace karto
     }
 
     /**
-     * Sets score for vertex
+     * Sets score for marker vertex
      */
     inline void SetScore(const double score)
     {
@@ -1340,7 +1346,7 @@ namespace karto
      */
     inline const std::vector<MarkerEdge *> &GetMarkerEdges() const
     {
-      return m_MarkerEdges;
+      return m_MarkerGraphEdges;
     }
 
     /**
@@ -1349,7 +1355,17 @@ namespace karto
      */
     inline const MarkerVertexMap &GetMarkerVertices() const
     {
-      return m_MarkerVertices;
+      return m_MarkerGraphVertices;
+    }
+
+    /**
+     * Removes a marker edge from marker graph at a position
+     */
+    inline void RemoveMarkerEdge(const int &idx)
+    {
+      m_MarkerGraphEdges[idx] = NULL;
+      m_MarkerGraphEdges.erase(m_MarkerGraphEdges.begin() + idx);
+      return;
     }
 
     /**
@@ -1369,14 +1385,14 @@ namespace karto
     inline MarkerVertex *GetMarkerVertex(LocalizedMarker *pMarker)
     {
       Name rName = pMarker->GetSensorName();
-      std::map<int, MarkerVertex *>::iterator it = m_MarkerVertices[rName].find(pMarker->GetStateId());
-      if (it != m_MarkerVertices[rName].end())
+      std::map<int, MarkerVertex *>::iterator it = m_MarkerGraphVertices[rName].find(pMarker->GetStateId());
+      if (it != m_MarkerGraphVertices[rName].end())
       {
         return it->second;
       }
       else
       {
-        std::cout << "GetMarkerVertex: Failed to get vertex, idx " << pMarker->GetStateId() << " is not in m_MarkerVertices." << std::endl;
+        std::cout << "GetMarkerVertex: Failed to get vertex, idx " << pMarker->GetStateId() << " is not in m_MarkerGraphVertices." << std::endl;
         return nullptr;
       }
     }
@@ -1384,12 +1400,12 @@ namespace karto
     /**
      * Map of names to vector of marker vertices
      */
-    MarkerVertexMap m_MarkerVertices;
+    MarkerVertexMap m_MarkerGraphVertices;
 
     /**
      * Edges of this graph
      */
-    std::vector<MarkerEdge *> m_MarkerEdges;
+    std::vector<MarkerEdge *> m_MarkerGraphEdges;
 
     /**
      * Mapper of this graph
@@ -1403,10 +1419,10 @@ namespace karto
     template <class Archive>
     void serialize(Archive &ar, const unsigned int version)
     {
-      std::cout << "MarkerGraph <- m_MarkerEdges; ";
-      ar &BOOST_SERIALIZATION_NVP(m_MarkerEdges);
-      std::cout << "Graph <- m_MarkerVertices\n";
-      ar &BOOST_SERIALIZATION_NVP(m_MarkerVertices);
+      std::cout << "MarkerGraph <- m_MarkerGraphEdges; ";
+      ar &BOOST_SERIALIZATION_NVP(m_MarkerGraphEdges);
+      std::cout << "Graph <- m_MarkerGraphVertices\n";
+      ar &BOOST_SERIALIZATION_NVP(m_MarkerGraphVertices);
       std::cout << "MarkerGraph <- m_pMapper; ";
       ar &BOOST_SERIALIZATION_NVP(m_pMapper);
     }
@@ -2059,6 +2075,9 @@ namespace karto
      * @param scanIndex
      * @return localized range scan
      */
+    // NB: scanIndex è lo StateId dello Scan (coerentemente col fatto che 
+    // stiamo cercando uno scan all'interno di uno specifico device, 
+    // in cui gli scan sono ordinati secondo StateId)
     LocalizedRangeScan *GetScan(const Name &rSensorName, kt_int32s scanIndex);
 
     /**
@@ -2115,7 +2134,8 @@ namespace karto
       }
       else
       {
-        std::cout << "GetScan: id " << id << " does not exist in m_scans, cannot retrieve it." << std::endl;
+        std::cout << "MapperSensorManager::GetScan: uniqueId " << id 
+                  << " does not exist in m_scans, cannot retrieve it." << std::endl;
         return nullptr;
       }
     }
@@ -2228,7 +2248,7 @@ namespace karto
     kt_int32u m_RunningBufferMaximumSize;
     kt_double m_RunningBufferMaximumDistance;
 
-    kt_int32s m_NextScanId;
+    kt_int32s m_NextScanId; // NB: corrisponde a UniqueId
 
     std::map<int, LocalizedRangeScan *> m_Scans;
   }; // MapperSensorManager
@@ -2285,7 +2305,8 @@ namespace karto
       }
       else
       {
-        std::cout << "GetMarker: uniqueId " << uniqueId << " does not exist in m_Markers, cannot retrieve it." << std::endl;
+        std::cout << "GetMarker: uniqueId " << uniqueId 
+                  << " does not exist in m_Markers, cannot retrieve it." << std::endl;
         return nullptr;
       }
     }
@@ -2597,6 +2618,7 @@ namespace karto
     kt_bool ProcessAgainstNodesNearBy(LocalizedRangeScan *pScan, kt_bool addScanToLocalizationBuffer = false);
     kt_bool ProcessLocalization(LocalizedRangeScan *pScan);
     kt_bool RemoveNodeFromGraph(Vertex<LocalizedRangeScan> *);
+    kt_bool RemoveNodeFromMarkerGraph(Vertex<LocalizedRangeScan> *);
     void AddScanToLocalizationBuffer(LocalizedRangeScan *pScan, Vertex<LocalizedRangeScan> *scan_vertex);
     void ClearLocalizationBuffer();
 
