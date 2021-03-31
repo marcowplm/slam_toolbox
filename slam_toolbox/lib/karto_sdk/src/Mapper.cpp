@@ -1676,7 +1676,7 @@ namespace karto
     // only attach link information if the edge is new
     if (isNewEdge == true)
     {
-      pEdge->SetLabel(new LinkInfo(pFromScan->GetSensorPose(), rMean, rCovariance));
+      pEdge->SetLabel(new LinkInfo(pFromScan->GetCorrectedPose(), pToScan->GetCorrectedAt(rMean), rCovariance));
       if (m_pMapper->m_pScanOptimizer != NULL)
       {
         m_pMapper->m_pScanOptimizer->AddConstraint(pEdge);
@@ -2066,8 +2066,8 @@ namespace karto
           }
           continue;
         }
-        /* std::cout << "\nID scan: " << iter->first << std::endl
-                  << "Before:\t" << scan->GetCorrectedPose() << std::endl; */
+        scan->SetCorrectedPoseAndUpdate(iter->second);
+      }
 
         karto::Pose2 corrected_pose(iter->second);
         scan->SetSensorPose(corrected_pose);
