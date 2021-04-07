@@ -195,9 +195,9 @@ struct CeresPose3d
     if (euler(0) != 0 || euler(1) != 0)
     {
       std::cout << "\n\nGetEulerHeading: Pitch e/o Roll sono diversi da zero! "
-                << "Questo non dovrebbe succedere!!" << std::endl
-                << "Roll:  " << euler(0) << std::endl
-                << "Pitch: " << euler(1) << std::endl;
+                << "Questo non dovrebbe succedere!!" << "\n"
+                << "Roll:  " << euler(0) << "\n"
+                << "Pitch: " << euler(1) << "\n";
     }            
 
     return euler(2); 
@@ -219,7 +219,7 @@ struct CeresPose3d
    */
   friend inline std::ostream &operator<<(std::ostream &rStream, const CeresPose3d &rCeresPose3d)
   {
-    rStream << "Position:    " << rCeresPose3d.p.transpose() << std::endl 
+    rStream << "Position:    " << rCeresPose3d.p.transpose() << "\n" 
             << "Orientation: " << rCeresPose3d.q.coeffs().transpose();
     return rStream;
   }

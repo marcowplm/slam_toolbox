@@ -213,7 +213,6 @@ namespace loop_closure_assistant
     visualization_msgs::Marker e = vis_utils::toEdgeMarker(map_frame_, "slam_toolbox", 0.02);
 
     int count = 0;
-    //std::cout << std::endl;
     std::vector<karto::Edge<karto::LocalizedRangeScan>*>::const_iterator edgesIter = edges.cbegin();
     for (edgesIter; edgesIter != edges.end(); ++edgesIter)
     {

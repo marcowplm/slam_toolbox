@@ -193,9 +193,8 @@ namespace karto
         m_Scans.erase(it);
       }
       else
-      {//-
-        std::cout << "ScanManager::RemoveScan:"
-                     " Failed to find scan with StateId "
+      {
+        std::cout << "ScanManager::RemoveScan: Failed to find scan with StateId "
                   << pScan->GetStateId() << " in m_Scans" << std::endl;
       }
     }
@@ -339,13 +338,12 @@ namespace karto
   }
 
   /**
-     * Finds and replaces a scan from m_Scans with NULL
-     * @param pScan
-     */
+   * Finds and replaces a scan from m_Scans with NULL
+   * @param pScan
+   */
   void MapperSensorManager::RemoveScan(LocalizedRangeScan *pScan)
   {
     GetScanManager(pScan)->RemoveScan(pScan);
-    // FIXME: qui bisogna cercare per UniqueId, non StateId, come nell'originale!!! ERRORE DA SEGNALARE!
     LocalizedRangeScanMap::iterator it = m_Scans.find(pScan->GetUniqueId());
     if (it != m_Scans.end())
     {
@@ -354,8 +352,7 @@ namespace karto
     }
     else
     {
-      std::cout << "MapperSensorManager::RemoveScan:"
-                   " Failed to find scan with UniqueId "
+      std::cout << "MapperSensorManager::RemoveScan: Failed to find scan with UniqueId "
                 << pScan->GetUniqueId() << " in m_Scans" << std::endl;
     }
   }
@@ -443,7 +440,7 @@ namespace karto
     // assign state id to marker.  NB: StateId is equivalent to ApriltagID!!!!
     pMarker->SetStateId(pMarker->GetApriltagID());
 
-    // assign unique id to marker (continuando la numerazione univoca degli scan)
+    // assign unique id to marker (following the same unique numeration of the scans)
     pMarker->SetUniqueId(uniqueId);
 
     // add it to marker buffer
@@ -460,6 +457,37 @@ namespace karto
   LocalizedMarkerMap &MarkerManager::GetMarkers()
   {
     return m_Markers;
+  }
+
+  /**
+   * Finds and replaces a marker from m_Markers and m_MarkersByStateId with NULL
+   * @param pMarker
+   */
+  void MarkerManager::RemoveMarker(LocalizedMarker *pMarker)
+  {
+    LocalizedMarkerMap::iterator it_a = m_Markers.find(pMarker->GetUniqueId());
+    if (it_a != m_Markers.end())
+    {
+      it_a->second = NULL;
+      m_Markers.erase(it_a);
+    }
+    else
+    {
+      std::cout << "MarkerManager::RemoveMarker: Failed to find marker with UniqueId "
+                << pMarker->GetUniqueId() << " in m_Markers" << std::endl;
+    }
+
+    LocalizedMarkerMap::iterator it_b = m_MarkersByStateId.find(pMarker->GetStateId());
+    if (it_b != m_MarkersByStateId.end())
+    {
+      it_b->second = NULL;
+      m_MarkersByStateId.erase(it_b);
+    }
+    else
+    {
+      std::cout << "MarkerManager::RemoveMarker: Failed to find marker with StateId "
+                << pMarker->GetStateId() << " in m_MarkersByStateId" << std::endl;
+    }
   }
 
   /**
@@ -1595,7 +1623,7 @@ namespace karto
 
           pScan->SetSensorPose(bestPose);
           LinkChainToScan(candidateChain, pScan, bestPose, covariance);
-          std::cout << "\n\033[1;32mMapper: loop closed!\033[0m" << std::endl;
+          std::cout << "\n\e[1;32mMapper: loop closed!\e[0m\n";
           CorrectPoses();
 
           m_pMapper->FireEndLoopClosure("Loop closed!");
@@ -2053,7 +2081,7 @@ namespace karto
     {
       pSolver->Compute();
 
-      /* std::cout << "\nPrinting CorrectedPoses of Scans (Pose2D) after optimization:" << std::endl; */
+      /* std::cout << "\nPrinting CorrectedPoses of Scans (Pose2D) after optimization:\n"; */
       const_forEach(ScanSolver::IdPoseVector, &pSolver->GetCorrections())
       {
         LocalizedRangeScan *scan = m_pMapper->m_pMapperSensorManager->GetScan(iter->first);
@@ -2069,11 +2097,6 @@ namespace karto
         scan->SetCorrectedPoseAndUpdate(iter->second);
       }
 
-        karto::Pose2 corrected_pose(iter->second);
-        scan->SetSensorPose(corrected_pose);
-        /* std::cout << "After:\t" << scan->GetCorrectedPose() << std::endl; */
-      }
-      /* std::cout << "------------------------------------------------------" << std::endl; */
       pSolver->Clear();
     }
   }
@@ -2422,6 +2445,11 @@ namespace karto
         "Enable/disable the correction of poses (the optimization) after each new Marker "
         "is created.",
         true, GetParameterManager());
+
+    m_pShowInfo = new Parameter<kt_bool>(
+        "ShowInfo",
+        "Show additional information per test purposes.",
+        true, GetParameterManager());
   }
   /* Adding in getters and setters here for easy parameter access */
 
@@ -2595,6 +2623,11 @@ namespace karto
     return static_cast<bool>(m_pCorrectPosesAfterNewMarker->GetValue());
   }
 
+  bool Mapper::getParamShowInfo()
+  {
+    return static_cast<bool>(m_pShowInfo->GetValue());
+  }
+
   /* Setters for parameters */
   // General Parameters
   void Mapper::setParamUseScanMatching(bool b)
@@ -2761,6 +2794,11 @@ namespace karto
     m_pCorrectPosesAfterNewMarker->SetValue((kt_bool)b);
   }
 
+  void Mapper::setParamShowInfo(bool b)
+  {
+    m_pShowInfo->SetValue((kt_bool)b);
+  }
+
   void Mapper::Initialize(kt_double rangeThreshold)
   {
     if (m_Initialized == false)
@@ -2909,10 +2947,10 @@ namespace karto
           }
         }
 
-        // NB: TEST TEST TEST!!
+        //- NB: TEST TEST TEST!!
         // Serve per triggerare la Loop Closure dopo un certo numero di nodi aggiunti al grafo
         /* count = count + 1;
-        std::cout << "\n\033[1;32m>>>>>>>>>>>  Count: " << count << "\033[0m" << std::endl;
+        std::cout << "\n\e[1;32m>>>>>>>>>>>  Count: " << count << "\e[0m\n";
         if (count == 10)
         {
           CorrectPoses();
@@ -3155,9 +3193,10 @@ namespace karto
 
   kt_bool Mapper::RemoveNodeFromGraph(Vertex<LocalizedRangeScan> *vertex_to_remove)
   {
-    std::cout << "RemoveNodeFromGraph  |  UId: "
+    //-
+    std::cout << "\n\e[1mRemoveNodeFromGraph  |  UId: "
               << vertex_to_remove->GetObject()->GetUniqueId() << ",  SId: "
-              << vertex_to_remove->GetObject()->GetStateId() << std::endl;
+              << vertex_to_remove->GetObject()->GetStateId() << "\e[0m\n";
 
     // 1) delete edges in adjacent vertices, graph, and optimizer
     std::vector<Vertex<LocalizedRangeScan> *> adjVerts =
@@ -3216,7 +3255,6 @@ namespace karto
         vertexGraphIt = graphVertices.find(vertex_to_remove->GetObject()->GetStateId());
     if (vertexGraphIt != graphVertices.end())
     {
-      std::cout << "\n\n==============\n"; //-
       m_pGraph->RemoveVertex(vertex_to_remove->GetObject()->GetSensorName(),
                              vertexGraphIt->second->GetObject()->GetStateId());
     }
@@ -3230,51 +3268,105 @@ namespace karto
 
   kt_bool Mapper::RemoveNodeFromMarkerGraph(Vertex<LocalizedRangeScan> *vertex_to_remove)
   {
-    std::cout << "  RemoveNodeFromMarkerGraph  |  UId: "
-              << vertex_to_remove->GetObject()->GetUniqueId() << ",  SId: "
-              << vertex_to_remove->GetObject()->GetStateId() << std::endl;
     // NB: prendo tutti i marker edge del grafo e cerco quelli che hanno come target il vertex da rimuovere
     std::vector<MarkerEdge *> mgraph_edges = m_pMarkerGraph->GetMarkerEdges();
     bool found = false;
-    for (int i = 0; i != mgraph_edges.size(); i++)
+    int co = 0; //- da eliminare
+    // NB: correction serve a compensare il fatto che, quando si elimina più di un MarkerEdge
+    // associato allo stesso vertex, la posizione del MarkerEdge in questo loop non corrsiponde
+    // più alla posizione all'interno di MarkerGraph
+    int correction = 0;
+    // std::cout << "\n  RemoveNodeFromMarkerGraph: printing mgraph_edges:\n";
+    std::vector<MarkerEdge *>::iterator medgeGraphIt = mgraph_edges.begin();
+    for (medgeGraphIt; medgeGraphIt != mgraph_edges.end(); ++medgeGraphIt)
     {
-      if (mgraph_edges[i]->GetTarget() == vertex_to_remove)
+      //-
+      /* std::cout << "  " << "i " << co
+                << " \t| " << (*medgeGraphIt)->GetSource()->GetLocalizedMarker()->GetUniqueId()
+                << " -> "  << (*medgeGraphIt)->GetTarget()->GetObject()->GetUniqueId()
+                << "\n"; */
+      if ((*medgeGraphIt)->GetTarget() == vertex_to_remove)
       {
-        // NB: per ogni edge recupero il source marker
-        MarkerVertex *marker_vertex = mgraph_edges[i]->GetSource();
-        std::cout << "  RemoveNodeFromMarkerGraph -> marker_vertex UId "
-                  << marker_vertex->GetLocalizedMarker()->GetUniqueId() << std::endl;
-        // NB: recupero la lista dei marker edges di quel marker vertex e cerco
-        // l'edge che ha come target il vertex da rimuovere
-        std::vector<MarkerEdge *> marker_edges = marker_vertex->GetMarkerEdges();
+        // NB: per ogni marker_edge che ha come target il vertex da rimuovere,
+        // recupero il marker vertex collegato e la lista dei marker_edges di quel vertex.
+        // Tra quei marker_edges, prendo quello che ha come target il vertex da rimuovere
+        std::vector<MarkerEdge *> marker_edges = (*medgeGraphIt)->GetSource()->GetMarkerEdges();
         for (int j = 0; j != marker_edges.size(); j++)
         {
+          //-
+          /* std::cout << "   " << "j " << j
+                    << "\t| " << marker_edges[j]->GetSource()->GetLocalizedMarker()->GetUniqueId()
+                    << " -> " << marker_edges[j]->GetTarget()->GetObject()->GetUniqueId()
+                    << "\n"; */
           if (marker_edges[j]->GetTarget() == vertex_to_remove)
           {
-            std::cout << "  RemoveNodeFromMarkerGraph -> marker_edge da eliminare: ("
-                      << marker_edges[j]->GetSource()->GetLocalizedMarker()->GetUniqueId()
-                      << " - " << marker_edges[j]->GetTarget()->GetObject()->GetUniqueId()
-                      << ")" << std::endl;
             // NB: quando lo trovo, elimino l'edge dal marker vertex e dal solver
-            marker_vertex->RemoveMarkerEdge(j);
+            (*medgeGraphIt)->GetSource()->RemoveMarkerEdge(j);
             m_pScanOptimizer->RemoveConstraint(
                 marker_edges[j]->GetSource()->GetLocalizedMarker()->GetUniqueId(),
                 marker_edges[j]->GetTarget()->GetObject()->GetUniqueId());
             break;
           }
         }
+
         // NB: elimino il marker edge anche dalla lista degli edge del marker graph
-        m_pMarkerGraph->RemoveMarkerEdge(i);
-        // NB: elimino anche l'oggetto MarkerGraph
-        delete mgraph_edges[i];
-        mgraph_edges[i] = NULL;
+        int posMarkerEdge = medgeGraphIt - correction - mgraph_edges.begin();
+        m_pMarkerGraph->RemoveMarkerEdge(posMarkerEdge);
+
+        // NB: se la lista dei MarkerEdge associati al Marker è vuota, significa che ho appena
+        // cancellato l'ultimo edge e inoltre il Marker è stato creato in modalità Localization,
+        // quindi devo eliminarlo dall'optimizer e dal MarkerGraph
+        if ((*medgeGraphIt)->GetSource()->GetMarkerEdges().size() == 0)
+        {
+          MarkerVertex *mvertex_to_remove = (*medgeGraphIt)->GetSource();
+          LocalizedMarker *marker_to_remove = mvertex_to_remove->GetLocalizedMarker();
+          
+          // Elimino il nodo dal optimizer
+          m_pScanOptimizer->RemoveNode(marker_to_remove->GetUniqueId());
+
+          // Cerco il vertex nella lista dei vertici del MarkerGraph
+          std::map<Name, std::map<int, MarkerVertex *>> mvertexMap = m_pMarkerGraph->GetMarkerVertices();
+          std::map<int, MarkerVertex *> mgraphVertices =
+              mvertexMap[marker_to_remove->GetSensorName()];
+          std::map<int, MarkerVertex *>::iterator mvertexGraphIt =
+              mgraphVertices.find(marker_to_remove->GetStateId());
+          if (mvertexGraphIt != mgraphVertices.end())
+          {
+            // Elimino il vertice dalla lista dei vertici del MarkerGraph
+            m_pMarkerGraph->RemoveMarkerVertex(
+                marker_to_remove->GetSensorName(),
+                mvertexGraphIt->second->GetLocalizedMarker()->GetStateId());
+
+            // Elimino il marker dalla lista dei marker di MarkerManager
+            m_pMarkerManager->RemoveMarker(marker_to_remove);
+            if (marker_to_remove)
+            {
+              // Elimino il marker dal Vertex
+              mvertex_to_remove->RemoveLocalizedMarker();
+              // Elimino l'oggetto LocalizedMarker
+              delete marker_to_remove;
+              marker_to_remove = NULL;
+            }
+          }
+          else
+          {
+            std::cout << "MarkerVertex not found in graph to remove!" << std::endl;
+            return false;
+          }
+        }
+        
+        // NB: elimino anche l'oggetto MarkerEdge
+        delete *medgeGraphIt;
+        *medgeGraphIt = NULL;
         found = true;
+        correction++;
       }
+      co++;
     }
     if (!found)
     {
       std::cout << "RemoveNodeFromMarkerGraph: "
-        "Failed to find any marker edge with a matching vertex!" << std::endl;
+                   "Failed to find any marker edge with a matching vertex!" << std::endl;
       return false;
     }
     return true;
@@ -3365,7 +3457,7 @@ namespace karto
   {
     if (pMarker != NULL)
     {
-      // add scan to buffer and assign id (the id follows the enumeration of the unique ids of the scans)
+      // add scan to buffer and assign id (the id follows the unique ids of the scans)
       kt_int32s UniqueId = m_pMapperSensorManager->GetNextScanId();
       m_pMarkerManager->AddMarker(pMarker, UniqueId);
 

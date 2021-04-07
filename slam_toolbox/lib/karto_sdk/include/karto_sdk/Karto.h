@@ -6146,7 +6146,7 @@ namespace karto
         : SensorData(rSensorName), m_ApriltagID(rID), m_OdometricPose(rPose)
     {
       assert(rSensorName.ToString() != "");
-      std::cout << "\n\033[1;33mLocalizedMarker with ID " << rID << " created successfully!!\033[0m" << std::endl;
+      std::cout << "\n\e[1;33mLocalizedMarker with ID " << rID << " created successfully!!\e[0m\n";
     }
 
     LocalizedMarker()

@@ -64,7 +64,7 @@ namespace solver_plugins
     ceres::Problem *problem_;
     ceres::LocalParameterization *quaternion_local_parameterization_;
     ceres::LocalParameterization *subset_local_parameterization_;
-    bool was_constant_set_, debug_logging_;
+    bool was_constant_set_, debug_logging_, show_info_;
 
     // graph
     std::unordered_map<int, karto::Pose3> *nodes_;

@@ -744,8 +744,6 @@ namespace karto
     // NB: i vertex in m_Vertices sono ordinati secondo lo StateId!
     inline void AddVertex(const Name &rName, Vertex<T> *pVertex)
     {
-      /*std::cout << "\nGraph<T>::AddVertex:\tName: " << rName.ToString() 
-                  << "\tStateId: " << pVertex->GetObject()->GetStateId() << std::endl;*/
       m_Vertices[rName].insert({pVertex->GetObject()->GetStateId(), pVertex});
     }
 
@@ -759,17 +757,15 @@ namespace karto
     {
       std::map<int, Vertex<LocalizedRangeScan> *>::iterator it = m_Vertices[rName].find(idx);
       if (it != m_Vertices[rName].end())
-      { //-
-        std::cout << "MapperGraph::RemoveVertex: |  UId: " 
-              << it->second->GetObject()->GetUniqueId() << ",  >SId<: "  
-              << it->second->GetObject()->GetStateId() << std::endl;
+      {
         it->second = NULL;
         m_Vertices[rName].erase(it);
       }
       else
       {
         std::cout << "RemoveVertex: Failed to remove vertex " << idx
-                  << " because it doesnt exist in m_Vertices." << std::endl;
+                  << " because it doesn't exist in m_Vertices["
+                  << rName << "]." << std::endl;
       }
     }
 
@@ -983,7 +979,8 @@ namespace karto
       }
       else
       {
-        std::cout << "GetVertex: Failed to get vertex, idx " << pScan->GetStateId() << " is not in m_Vertices." << std::endl;
+        std::cout << "GetVertex: Failed to get vertex, idx " << pScan->GetStateId() 
+                  << " is not in m_Vertices." << std::endl;
         return nullptr;
       }
     }
@@ -1369,12 +1366,58 @@ namespace karto
     }
 
     /**
+     * Removes a given marker vertex into the map using the given name and StateId
+     * @param rName
+     * @param id
+     */
+    // NB: l'id indicato è lo StateId, perchè m_MarkerGraphVertices è ordinato secondo StateId!
+    inline void RemoveMarkerVertex(const Name &rName, const int &idx)
+    {
+      std::map<int, MarkerVertex *>::iterator it = m_MarkerGraphVertices[rName].find(idx);
+      if (it != m_MarkerGraphVertices[rName].end())
+      {
+        it->second = NULL;
+        m_MarkerGraphVertices[rName].erase(it);
+      }
+      else
+      {
+        std::cout << "RemoveMarkerVertex: Failed to remove vertex " << idx
+                  << " because it doesn't exist in m_MarkerGraphVertices["
+                  << rName << "]." << std::endl;
+      }
+    }
+
+    /**
      * Adds an edge between the marker and the scan and labels the edge with the given covariance
      * @param pFromMarker
      * @param pToScan
      */
     void LinkMarkerToScan(LocalizedMarker *pFromMarker,
                           LocalizedRangeScan *pToScan);
+
+  /**
+   * Deletes the graph data
+   */
+  void Clear()
+  {
+    forEachAs(typename MarkerVertexMap, &m_MarkerGraphVertices, indexIter)
+    {
+      // delete each vertex
+      typename std::map<int, MarkerVertex *>::iterator iter;
+      for (iter = indexIter->second.begin(); iter != indexIter->second.end(); ++iter)
+      {
+        delete iter->second;
+        iter->second = nullptr;
+      }
+    }
+    m_MarkerGraphVertices.clear();
+    forEach(typename std::vector<MarkerEdge *>, &m_MarkerGraphEdges)
+    {
+      delete *iter;
+      *iter = nullptr;
+    }
+    m_MarkerGraphEdges.clear();
+  }
 
   private:
     /**
@@ -1392,7 +1435,8 @@ namespace karto
       }
       else
       {
-        std::cout << "GetMarkerVertex: Failed to get vertex, idx " << pMarker->GetStateId() << " is not in m_MarkerGraphVertices." << std::endl;
+        std::cout << "GetMarkerVertex: Failed to get vertex, idx " 
+                  << pMarker->GetStateId() << " is not in m_MarkerGraphVertices.\n";
         return nullptr;
       }
     }
@@ -2313,7 +2357,7 @@ namespace karto
 
     /**
      * Gets the marker with the given stateId
-     * @param stateId
+     * @param stateId (corresponds to the ApriltagID)
      * @return marker
      */
     inline LocalizedMarker *GetMarkerByStateId(kt_int32s stateId)
@@ -2328,6 +2372,12 @@ namespace karto
         return nullptr;
       }
     }
+
+    /**
+     * Finds and replaces a marker from m_Markers and m_MarkersByStateId with NULL
+     * @param pMarker
+     */
+    void RemoveMarker(LocalizedMarker *pMarker);
 
     /**
      * Deletes data from this buffer
@@ -3021,7 +3071,13 @@ namespace karto
      */
     Parameter<kt_bool> *m_pCorrectPosesAfterNewMarker;
 
-    int count = 0;
+    /** 
+     * Show additional information per test purposes
+     */
+    // TODO: da eliminare!
+    Parameter<kt_bool> *m_pShowInfo;
+
+    int count = 0; //-
 
     friend class boost::serialization::access;
     template <class Archive>
@@ -3122,6 +3178,7 @@ namespace karto
     bool getParamUseMarkers();
     double getParamMarkerLinkCovariance();
     bool getParamCorrectPosesAfterNewMarker();
+    bool getParamShowInfo();
 
     /* Setters */
     // General Parameters
@@ -3165,6 +3222,7 @@ namespace karto
     void setParamUseMarkers(bool b);
     void setParamMarkerLinkCovariance(double d);
     void setParamCorrectPosesAfterNewMarker(bool b);
+    void setParamShowInfo(bool b);
   };
   BOOST_SERIALIZATION_ASSUME_ABSTRACT(Mapper)
 } // namespace karto

@@ -295,6 +295,12 @@ void SMapper::configure(const ros::NodeHandle& nh)
     mapper_->setParamCorrectPosesAfterNewMarker(correct_poses_after_new_marker);
   }
 
+  bool show_info;
+  if(nh.getParam("show_info", show_info))
+  {
+    mapper_->setParamShowInfo(show_info);
+  }
+
   return;
 }
 

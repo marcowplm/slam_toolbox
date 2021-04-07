@@ -30,6 +30,7 @@ namespace solver_plugins
     nh.getParam("ceres_loss_function", loss_fn);
     nh.getParam("mode", mode);
     nh.getParam("debug_logging", debug_logging_);
+    nh.getParam("show_info", show_info_);
 
     corrections_.clear();
     first_node3d_ = nodes3d_->end();
@@ -172,7 +173,7 @@ namespace solver_plugins
   /*****************************************************************************/
   {
     boost::mutex::scoped_lock lock(nodes_mutex_);
-    std::cout << "\n\033[1;35mCOMPUTE!  =====================================================\033[0m\n";
+    std::cout << "\n\e[1;35mCOMPUTE!  =================================================\e[0m\n";
     if (nodes3d_->size() == 0)
     {
       ROS_ERROR("CeresSolver: Ceres was called when there are no nodes."
@@ -222,9 +223,9 @@ namespace solver_plugins
       pose = (iter->second).ToKartoPose3();
 
       corrections_.push_back(std::make_pair(iter->first, pose));
-      /* std::cout << "\nCorrected pose of node with ID: " << iter->first << std::endl << pose << std::endl; */
+      /* std::cout << "\nCorrected pose of node with ID: " << iter->first << "\n" << pose << "\n"; */
     }
-    std::cout << "\n\033[1;35m===============================================================\033[0m\n";
+    std::cout << "\n\e[1;35m===========================================================\e[0m\n";
     return;
   }
 
@@ -289,30 +290,30 @@ namespace solver_plugins
 
     CeresPose3d pose3d(pVertex->GetObject()->GetCorrectedPose());
     const int id = pVertex->GetObject()->GetUniqueId();
-
     boost::mutex::scoped_lock lock(nodes_mutex_);
     nodes3d_->insert(std::pair<int, CeresPose3d>(id, pose3d));
-    std::cout << "\n[Ceres] AddNode SCAN:\t" << id << /*std::endl << pose3d <<*/ std::endl;
+    std::cout << "\n[Ceres] AddNode SCAN: " << id
+              << /*"\n" << pose3d <<*/ "\n";
 
     // TODO: questo pezzo serve solo per controllare la coerenza delle trasformazioni tra quat e RPY -> da eliminare
     /* double yaw, pitch, roll;    
     karto::Pose3 pose_karto(pVertex->GetObject()->GetCorrectedPose());
-    std::cout << "\n[karto::Pose3] AddNode SCAN:\t" << id << std::endl << pose_karto << std::endl;
+    std::cout << "\n[karto::Pose3] AddNode SCAN:\t" << id << "\n" << pose_karto << "\n";
     
     pose3d.ToEulerAngles(yaw, pitch, roll);
     Eigen::Vector3d vect(yaw, pitch, roll);
-    std::cout << "\n\n[CeresPose3d]  YPR: " << vect.transpose() << std::endl;
+    std::cout << "\n\n[CeresPose3d]  YPR: " << vect.transpose() << "\n";
     
     pose_karto.GetOrientation().ToEulerAngles(yaw, pitch, roll);
     Eigen::Vector3d vect2(yaw, pitch, roll);
-    std::cout << "[karto::Pose3] YPR: " << vect2.transpose() << std::endl;
-    std::cout << "[Original Pose2] Y: " << pVertex->GetObject()->GetCorrectedPose().GetHeading() << std::endl;
+    std::cout << "[karto::Pose3] YPR: " << vect2.transpose() << "\n";
+    std::cout << "[Original Pose2] Y: " << pVertex->GetObject()->GetCorrectedPose().GetHeading() << "\n";
  */
     if (nodes3d_->size() == 1)
     {
       first_node3d_ = nodes3d_->find(id);
-      /* std::cout << "\nSet first_node3d_->position\t" << first_node3d_->second.p.transpose() << std::endl;
-    std::cout << "Set first_node3d_->orientation\t" << first_node3d_->second.q.coeffs().transpose() << std::endl; */
+      /* std::cout << "\nSet first_node3d_->position\t" << first_node3d_->second.p.transpose() << "\n";
+    std::cout << "Set first_node3d_->orientation\t" << first_node3d_->second.q.coeffs().transpose() << "\n"; */
     }
   }
 
@@ -328,21 +329,21 @@ namespace solver_plugins
 
     CeresPose3d pose3d(pMarkerVertex->GetLocalizedMarker()->GetCorrectedPose());
     const int id = pMarkerVertex->GetLocalizedMarker()->GetUniqueId();
-    std::cout << "\n[Ceres] AddNode MARKER: " << id << /*std::endl << pose3d <<*/ std::endl;
-    
+    std::cout << "\n[Ceres] AddNode MARKER: " << id << /*"\n" << pose3d <<*/ "\n";
+
     // TODO: questo pezzo serve solo per controllare la coerenza delle trasformazioni tra quat e RPY -> da eliminare
     /* double yaw, pitch, roll;
-    std::cout << "\n\n[CeresPose3d] AddNode MARKER:\t" << id << std::endl << pose3d << std::endl;
+    std::cout << "\n\n[CeresPose3d] AddNode MARKER:\t" << id << "\n" << pose3d << "\n";
     karto::Pose3 pose_karto = pMarkerVertex->GetLocalizedMarker()->GetCorrectedPose();
-    std::cout << "\n[karto::Pose3] AddNode MARKER:\t" << id << std::endl << pose_karto << std::endl;
+    std::cout << "\n[karto::Pose3] AddNode MARKER:\t" << id << "\n" << pose_karto << "\n";
 
     pose3d.ToEulerAngles(yaw, pitch, roll);
     Eigen::Vector3d vect(yaw, pitch, roll);
-    std::cout << "\n\n[CeresPose3d]  YPR: " << vect.transpose() << std::endl;
+    std::cout << "\n\n[CeresPose3d]  YPR: " << vect.transpose() << "\n";
     
     pose_karto.GetOrientation().ToEulerAngles(yaw, pitch, roll);
     Eigen::Vector3d vect2(yaw, pitch, roll);
-    std::cout << "[karto::Pose3] YPR: " << vect2.transpose() << std::endl; */
+    std::cout << "[karto::Pose3] YPR: " << vect2.transpose() << "\n"; */
 
     boost::mutex::scoped_lock lock(nodes_mutex_);
     nodes3d_->insert(std::pair<int, CeresPose3d>(id, pose3d));
@@ -353,7 +354,7 @@ namespace solver_plugins
   void CeresSolver::AddConstraint(karto::Edge<karto::LocalizedRangeScan> *pEdge)
   /*****************************************************************************/
   {
-    /* std::cout << "\nAddConstraint(LocalizedRangeScan)------------------------------------------\n"; */
+    /* std::cout << "\n[Ceres] AddConstraint SCAN ---------------------------------------\n"; */
     // get IDs in graph for this edge
     boost::mutex::scoped_lock lock(nodes_mutex_);
 
@@ -367,13 +368,13 @@ namespace solver_plugins
     const int node2 = pEdge->GetTarget()->GetObject()->GetUniqueId();
     GraphIterator3d node2it = nodes3d_->find(node2);
 
-  // TODO: solo per test  -> da eliminare
-  /* std::cout << "\nNode1 ID: " << (int)node1it->first << std::endl;
-  std::cout << "Position   \t" << node1it->second.p.transpose() <<std::endl;
-  std::cout << "Orientation\t" << node1it->second.q.coeffs().transpose() << std::endl;
-  std::cout << "\nNode2 ID: " << (int)node2it->first << std::endl;
-  std::cout << "Position   \t" << node2it->second.p.transpose() << std::endl;
-  std::cout << "Orientation\t" << node2it->second.q.coeffs().transpose() << std::endl; */
+    // TODO: solo per test  -> da eliminare
+    /* std::cout << "\nNode1 ID: " << (int)node1it->first << "\n";
+  std::cout << "Position   \t" << node1it->second.p.transpose() << "\n";
+  std::cout << "Orientation\t" << node1it->second.q.coeffs().transpose() << "\n";
+  std::cout << "\nNode2 ID: " << (int)node2it->first << "\n";
+  std::cout << "Position   \t" << node2it->second.p.transpose() << "\n";
+  std::cout << "Orientation\t" << node2it->second.q.coeffs().transpose() << "\n"; */
 
     if (node1it == nodes3d_->end() ||
         node2it == nodes3d_->end() ||
@@ -401,12 +402,12 @@ namespace solver_plugins
 
     // TODO: solo per test  -> da eliminare
     /* std::cout << "\n\ncovariance_matrix 2D (x, y, heading)\n"
-              << pLinkInfo->GetCovariance() << std::endl;
+              << pLinkInfo->GetCovariance() << "\n";
     std::cout << "\nsqrt_information (square root of precision matrix) (x, y, z, roll, pitch, yaw)\n"
-              << sqrt_information << std::endl;
+              << sqrt_information << "\n";
     std::cout << "\n\npose3d for cost function (t_ab_measured = diff btw node1 and node2):\n"
-              << "Position:\t\t" << pose3d.p.transpose() << std::endl
-              << "Orientation:\t" << pose3d.q.coeffs().transpose() << std::endl; */
+              << "Position:\t\t" << pose3d.p.transpose() << "\n"
+              << "Orientation:\t" << pose3d.q.coeffs().transpose() << "\n"; */
 
     // populate residual and parameterization for heading normalization
     ceres::CostFunction *cost_function = PoseGraph3dErrorTerm::Create(pose3d, sqrt_information);
@@ -428,7 +429,7 @@ namespace solver_plugins
         GetHash(node1, node2), block));
 
     constraints_[node1].push_back(node2);
-    /* std::cout << "----------------------------------------------------------------------------------\n" << std::endl; */
+    /* std::cout << "--------------------------------------------------------------------------\n";*/
 
     return;
   }
@@ -437,7 +438,7 @@ namespace solver_plugins
   void CeresSolver::AddConstraint(karto::MarkerEdge *pMarkerEdge)
   /*****************************************************************************/
   {
-    /* std::cout << "\nAddConstraint(LocalizedMarker)---------------------------------------------\n"; */
+    /* std::cout << "\n[Ceres] AddConstraint MARKER ------------------------------------------\n"; */
     // get IDs in graph for this edge
     boost::mutex::scoped_lock lock(nodes_mutex_);
 
@@ -452,12 +453,12 @@ namespace solver_plugins
     GraphIterator3d node2it = nodes3d_->find(node2);
 
     // TODO: solo per test  -> da eliminare
-    /* std::cout << "\nNode1 ID: " << (int)node1it->first << std::endl
-            << "Position   \t" << node1it->second.p.transpose() << std::endl
-            << "Orientation\t" << node1it->second.q.coeffs().transpose() << std::endl
-            << "\nNode2 ID: " << (int)node2it->first << std::endl
-            << "Position   \t" << node2it->second.p.transpose() << std::endl
-            << "Orientation\t" << node2it->second.q.coeffs().transpose() << std::endl; */
+    /* std::cout << "\nNode1 ID: " << (int)node1it->first << "\n"
+            << "Position   \t" << node1it->second.p.transpose() << "\n"
+            << "Orientation\t" << node1it->second.q.coeffs().transpose() << "\n"
+            << "\nNode2 ID: " << (int)node2it->first << "\n"
+            << "Position   \t" << node2it->second.p.transpose() << "\n"
+            << "Orientation\t" << node2it->second.q.coeffs().transpose() << "\n"; */
 
     if (node1it == nodes3d_->end() ||
         node2it == nodes3d_->end() ||
@@ -476,12 +477,12 @@ namespace solver_plugins
 
     // TODO: solo per test  -> da eliminare
     /* std::cout << "\n\ncovariance_matrix 3D (x, y, z, roll, pitch, yaw)\n"
-              << pMarkerLinkInfo->GetCovariance() << std::endl;
+              << pMarkerLinkInfo->GetCovariance() << "\n";
     std::cout << "\nsqrt_information (square root of precision matrix) (x, y, z, roll, pitch, yaw)\n"
-              << sqrt_information << std::endl;
+              << sqrt_information << "\n";
     std::cout << "\n\npose3d for cost function (t_ab_measured = diff btw node1 and node2):\n"
-              << "Position:\t\t" << pose3d.p.transpose() << std::endl
-              << "Orientation:\t" << pose3d.q.coeffs().transpose() << std::endl; */
+              << "Position:\t\t" << pose3d.p.transpose() << "\n"
+              << "Orientation:\t" << pose3d.q.coeffs().transpose() << "\n"; */
 
     // populate residual and parameterization for heading normalization
     ceres::CostFunction *cost_function = PoseGraph3dErrorTerm::Create(pose3d, sqrt_information);
@@ -503,7 +504,7 @@ namespace solver_plugins
 
     constraints_[node1].push_back(node2);
 
-    /* std::cout << "----------------------------------------------------------------------------------\n" << std::endl; */
+    /* std::cout << "--------------------------------------------------------------------------\n"; */
 
     return;
   }
@@ -516,9 +517,15 @@ namespace solver_plugins
     GraphIterator3d nodeit = nodes3d_->find(id);
     if (nodeit != nodes3d_->end())
     {
+      // if removing a marker node, clean the set of ids
+      if (marker_ids_.find(id) != marker_ids_.end())
+      {
+        marker_ids_.erase(id);
+        //-
+        std::cout << "\n>> CeresSolver::RemoveNode, node with id: "
+                  << id << " removed from marker_ids_\n";
+      }
       nodes3d_->erase(nodeit);
-      // TODO: qui bisogna eliminare correttamente l'id del marker, se stiamo eliminando un marker!
-      // std::cout << ">> CeresSolver::RemoveNode, result from marker_ids_: " << marker_ids_.erase(id) << std::endl;
     }
     else
     {
@@ -530,6 +537,7 @@ namespace solver_plugins
   void CeresSolver::RemoveConstraint(kt_int32s sourceId, kt_int32s targetId)
   /*****************************************************************************/
   {
+    // Remove constraint from list of constraints
     boost::mutex::scoped_lock l(constraints_mutex_);
     std::map<int, std::list<int>>::iterator constraints_it = constraints_.find(sourceId);
     if (constraints_it != constraints_.end())
@@ -540,12 +548,13 @@ namespace solver_plugins
         constraints_.erase(sourceId);
       }
     }
-    else 
+    else
     {
       ROS_ERROR("RemoveConstraint: Failed to find constraint in list for %i %i",
                 (int)sourceId, (int)targetId);
     }
 
+    // Remove constraint from the problem
     boost::mutex::scoped_lock lock(nodes_mutex_);
     std::unordered_map<std::size_t, ceres::ResidualBlockId>::iterator it_a =
         blocks_->find(GetHash(sourceId, targetId));
@@ -566,8 +575,9 @@ namespace solver_plugins
       ROS_ERROR("RemoveConstraint: Failed to find residual block for %i %i",
                 (int)sourceId, (int)targetId);
     }
-    std::cout << ">> CeresSolver::RemoveConstraint (" << (int)sourceId << " -> "
-              << (int)targetId << ")" << std::endl;
+    //-
+    std::cout << "\n>> CeresSolver::RemoveConstraint (" << (int)sourceId << " -> "
+              << (int)targetId << ")\n";
   }
 
   /*****************************************************************************/
@@ -650,22 +660,21 @@ namespace solver_plugins
     boost::mutex::scoped_lock l(constraints_mutex_);
 
     // NB: Questo pezzo di codice serve solo a stampare il vettore di liste constraints_
-    if (constraints_.size() != 0)
+    if (show_info_ && (constraints_.size() != 0))
     {
-      std::cout << "\n>>>>>>>>>>> Constraints:" << std::endl;
-      std::map<int, std::list<int>>::const_iterator constrIter = constraints_.cbegin();
-      for (constrIter; constrIter != constraints_.end(); ++constrIter)
-      {
-        std::cout << "Constraints of node: " << constrIter->first << " -> ";
-        std::list<int>::const_iterator listIter = constrIter->second.cbegin();
-        for(listIter; listIter != constrIter->second.end(); ++listIter)
+        std::cout << "\n>>>>>>>>>>> Constraints:\n";
+        std::map<int, std::list<int>>::const_iterator constrIter = constraints_.cbegin();
+        for (constrIter; constrIter != constraints_.end(); ++constrIter)
         {
-          std::cout << *listIter << ",  ";
+          std::cout << "Constraints of node: " << constrIter->first << " -> ";
+          std::list<int>::const_iterator listIter = constrIter->second.cbegin();
+          for (listIter; listIter != constrIter->second.end(); ++listIter)
+          {
+            std::cout << *listIter << ", ";
+          }
+          std::cout << "\n";
         }
-        std::cout << std::endl;
-      }
     }
-    
     return constraints_;
   }
 

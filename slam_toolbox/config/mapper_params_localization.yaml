@@ -35,7 +35,7 @@ use_scan_matching: true
 use_scan_barycenter: true
 minimum_travel_distance: 0.5
 minimum_travel_heading: 0.5
-scan_buffer_size: 3
+scan_buffer_size: 10 #di default è 3, ma causa errore in boost::mutex! 
 scan_buffer_maximum_scan_distance: 10
 link_match_minimum_response_fine: 0.1  
 link_scan_maximum_distance: 1.5
@@ -68,6 +68,7 @@ minimum_distance_penalty: 0.5
 use_response_expansion: true
 
 # Parameters related to the Markers
-use_markers: false
+use_markers: true
 marker_link_covariance: 0.1
 correct_poses_after_new_marker: true
+show_info: false

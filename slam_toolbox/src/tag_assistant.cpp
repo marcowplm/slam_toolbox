@@ -50,16 +50,16 @@ namespace tag_assistant
     tf2::doTransform(detection.pose.pose.pose, tag_pose_, camera_pose_);
     tag_pose_karto = poseGeometryToKarto(tag_pose_);
 
-    /* Questo pezzo pubblica la tf di tag_pose rispetto a map_frame
-        geometry_msgs::TransformStamped tag_pose_stamped_;
-        tag_pose_stamped_.transform.rotation = tag_pose_.orientation;
-        tag_pose_stamped_.transform.translation.x = tag_pose_.position.x;
-        tag_pose_stamped_.transform.translation.y = tag_pose_.position.y;
-        tag_pose_stamped_.transform.translation.z = tag_pose_.position.z;
-        tag_pose_stamped_.header.frame_id = map_frame_;
-        tag_pose_stamped_.header.stamp = camera_ident.header.stamp;
-        tag_pose_stamped_.child_frame_id = "TAG" + std::to_string(detection.id[0]);
-        tfB_->sendTransform(tag_pose_stamped_); */
+    //- Questo pezzo pubblica la tf di tag_pose rispetto a map_frame
+    /* geometry_msgs::TransformStamped tag_pose_stamped_;
+       tag_pose_stamped_.transform.rotation = tag_pose_.orientation;
+       tag_pose_stamped_.transform.translation.x = tag_pose_.position.x;
+       tag_pose_stamped_.transform.translation.y = tag_pose_.position.y;
+       tag_pose_stamped_.transform.translation.z = tag_pose_.position.z;
+       tag_pose_stamped_.header.frame_id = map_frame_;
+       tag_pose_stamped_.header.stamp = camera_ident.header.stamp;
+       tag_pose_stamped_.child_frame_id = "TAG" + std::to_string(detection.id[0]);
+       tfB_->sendTransform(tag_pose_stamped_); */
 
     return true;
   }
@@ -69,8 +69,6 @@ namespace tag_assistant
   void ApriltagAssistant::publishMarkerGraph()
   /*****************************************************************************/
   {
-    std::cout << "\npublishMarkerGraph()" << std::endl;
-
     std::unordered_map<int, karto::Pose3> *graph = solver_->getGraph();
     std::unordered_map<int, karto::Pose3> *markers = solver_->getMarkers();
     std::map<int, std::list<int>> constraints = solver_->getConstraints();
@@ -84,18 +82,19 @@ namespace tag_assistant
 
     visualization_msgs::MarkerArray marray;
     visualization_msgs::Marker m = vis_utils::toTagMarker(map_frame_, nh_.getNamespace());
-    visualization_msgs::Marker e = vis_utils::toEdgeMarker(map_frame_, nh_.getNamespace(), 0.02);
+    visualization_msgs::Marker e = vis_utils::toEdgeMarker(map_frame_, nh_.getNamespace(), 0.01);
 
     for (ConstGraphIterator it = markers->begin(); it != markers->end(); ++it)
     {
       geometry_msgs::Pose mPose = poseKartoToGeometry(it->second);
       m.id = it->first + 1;
       m.pose = mPose;
+      //-
       /* std::cout << "Marker pose: " << m.id << "\tYaw: " << tf::getYaw(mPose.orientation) << std::endl;
       std::cout << m.pose << std::endl; */
 
       marray.markers.push_back(m);
-      std::cout << "\nMarker: " << it->first << "\t | Constraints: ";
+      std::cout << "\nMarker: " << it->first << "\t| Constraints: ";
       std::list<int>::const_iterator listit = constraints[it->first].begin();
       for (listit; listit != constraints[it->first].end(); ++listit)
       {
@@ -115,10 +114,10 @@ namespace tag_assistant
         marray.markers.push_back(e);
       }
     }
+    std::cout << "\n";
 
     tag_publisher_.publish(marray);
     // publishLinks(); // FIXME: non funziona con la serializzazione -> da eliminare!
-    /* std::cout << "publishMarkerGraph() -> FINISH!" << std::endl; */
 
     return;
   }
@@ -139,7 +138,7 @@ namespace tag_assistant
     visualization_msgs::Marker e = vis_utils::toEdgeMarker(map_frame_, nh_.getNamespace(), 0.02);
 
     int count = 0;
-    //std::cout << std::endl;
+
     std::vector<karto::MarkerEdge *>::const_iterator edgesIter = marker_edges.cbegin();
     for (edgesIter; edgesIter != marker_edges.end(); ++edgesIter)
     {
