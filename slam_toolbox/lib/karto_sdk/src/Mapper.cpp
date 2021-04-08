@@ -445,9 +445,6 @@ namespace karto
 
     // add it to marker buffer
     m_Markers.insert({pMarker->GetUniqueId(), pMarker});
-
-    // add it to marker buffer ordered by StateId (for processing detections)
-    m_MarkersByStateId.insert({pMarker->GetStateId(), pMarker});
   }
 
   /**
@@ -460,33 +457,21 @@ namespace karto
   }
 
   /**
-   * Finds and replaces a marker from m_Markers and m_MarkersByStateId with NULL
+   * Finds and replaces a marker from m_Markers with NULL
    * @param pMarker
    */
   void MarkerManager::RemoveMarker(LocalizedMarker *pMarker)
   {
-    LocalizedMarkerMap::iterator it_a = m_Markers.find(pMarker->GetUniqueId());
-    if (it_a != m_Markers.end())
+    LocalizedMarkerMap::iterator it = m_Markers.find(pMarker->GetUniqueId());
+    if (it != m_Markers.end())
     {
-      it_a->second = NULL;
-      m_Markers.erase(it_a);
+      it->second = NULL;
+      m_Markers.erase(it);
     }
     else
     {
       std::cout << "MarkerManager::RemoveMarker: Failed to find marker with UniqueId "
                 << pMarker->GetUniqueId() << " in m_Markers" << std::endl;
-    }
-
-    LocalizedMarkerMap::iterator it_b = m_MarkersByStateId.find(pMarker->GetStateId());
-    if (it_b != m_MarkersByStateId.end())
-    {
-      it_b->second = NULL;
-      m_MarkersByStateId.erase(it_b);
-    }
-    else
-    {
-      std::cout << "MarkerManager::RemoveMarker: Failed to find marker with StateId "
-                << pMarker->GetStateId() << " in m_MarkersByStateId" << std::endl;
     }
   }
 

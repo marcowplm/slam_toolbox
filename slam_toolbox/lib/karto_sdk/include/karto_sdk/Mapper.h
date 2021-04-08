@@ -2362,19 +2362,21 @@ namespace karto
      */
     inline LocalizedMarker *GetMarkerByStateId(kt_int32s stateId)
     {
-      std::map<int, LocalizedMarker *>::iterator it = m_MarkersByStateId.find(stateId);
-      if (it != m_MarkersByStateId.end())
+      std::map<int, LocalizedMarker *>::const_iterator it = m_Markers.cbegin();
+      for (it; it != m_Markers.cend(); ++it)
       {
-        return it->second;
+        if (it->second->GetStateId() == stateId)
+        {
+          return it->second;
+        }
       }
-      else
-      {
-        return nullptr;
-      }
+      std::cout << "GetMarkerByStateId: stateId " << stateId 
+                << " does not exist in m_Markers, cannot retrieve it." << std::endl;
+      return nullptr;
     }
 
     /**
-     * Finds and replaces a marker from m_Markers and m_MarkersByStateId with NULL
+     * Finds and replaces a marker from m_Markers with NULL
      * @param pMarker
      */
     void RemoveMarker(LocalizedMarker *pMarker);
@@ -2394,19 +2396,12 @@ namespace karto
     {
       std::cout << "MarkerManager <- m_Markers\n";
       ar &BOOST_SERIALIZATION_NVP(m_Markers);
-      std::cout << "MarkerManager <- m_MarkersByStateId\n";
-      ar &BOOST_SERIALIZATION_NVP(m_MarkersByStateId);
     }
 
     /**
      * Struct that hold LocalizedMarkers based on their UniqueId
      */
     LocalizedMarkerMap m_Markers;
-
-    /**
-     * Struct that hold LocalizedMarkers based on their StateId (= Apriltag ID)
-     */
-    LocalizedMarkerMap m_MarkersByStateId;
 
   }; // MarkerManager
 
