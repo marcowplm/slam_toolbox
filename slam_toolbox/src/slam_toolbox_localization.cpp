@@ -245,7 +245,8 @@ namespace slam_toolbox
 
     first_measurement_ = true;
 
-    smapper_->clearLocalizationBuffer();
+  boost::mutex::scoped_lock lock(smapper_mutex_);
+  smapper_->clearLocalizationBuffer();
 
     ROS_INFO("LocalizePoseCallback: Localizing to: (%0.2f %0.2f), theta=%0.2f",
              msg->pose.pose.position.x, msg->pose.pose.position.y,
