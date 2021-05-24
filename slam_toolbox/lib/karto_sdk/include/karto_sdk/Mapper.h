@@ -292,13 +292,13 @@ namespace karto
       m_Pose1 = rPose1;
       m_Pose2 = rPose2;
 
-      // transform second pose into the coordinate system of the first pose
       Eigen::Isometry3d transform = poseToIsometry(rPose1).inverse() * poseToIsometry(rPose2);
       m_PoseDifference = isometryToPose(transform);
-
+      // Covarianza = (dist * coefficiente)^2
       double dist = transform.translation().norm();
       m_Covariance = rCovariance;
-      m_Covariance.topLeftCorner(3, 3) *= math::Square(dist);
+      m_Covariance.topLeftCorner(3, 3) *= dist;
+      m_Covariance.array().square();
     }
 
     /**

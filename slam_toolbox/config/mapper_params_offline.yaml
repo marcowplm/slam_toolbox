@@ -10,8 +10,11 @@ ceres_loss_function: None
 odom_frame: odom
 map_frame: map
 base_frame: base_link
+camera_frame: camera_link
 scan_topic: /scan
+tag_topic: /tag_detections
 mode: mapping #localization
+
 debug_logging: false
 throttle_scans: 1
 transform_publish_period: 0.02 #if 0 never publishes odometry
@@ -60,3 +63,9 @@ coarse_angle_resolution: 0.0349
 minimum_angle_penalty: 0.9
 minimum_distance_penalty: 0.5
 use_response_expansion: true
+
+# Parameters related to the Markers
+use_markers: true
+marker_link_covariance: 1
+correct_poses_after_new_marker: true
+show_info: false

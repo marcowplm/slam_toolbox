@@ -1,5 +1,19 @@
 <launch>
 
+  <arg name="camera" value="/camera"/>      <!-- <arg name="camera" value="/camera/rgb"/> per Turtlebot3 -->
+  <arg name="apriltag_ns" value="apriltag_ros_continuous_node"/>
+
+  <param name="~image_transport" value="compressed"/>   <!-- indica ad Apriltag di usare il flusso immagine compresso -->
+
+  <include file="$(find apriltag_ros)/launch/continuous_detection.launch">
+    <arg name="camera_name" value="$(arg camera)"/>
+    <arg name="image_topic" value="image_raw"/>       <!-- <arg name="image_topic" value="image/rgb/image_raw"/> per Turtlebot3 -->       
+    <arg name="camera_frame" value="camera_link"/>    <!-- <arg name="camera_frame" value="camera_rgb_optical_frame"/> per Turtlebot3 -->
+  </include>
+
+  <rosparam command="load" file="$(find my_sim)/config/tags.yaml" ns="$(arg apriltag_ns)"/> 
+  <rosparam command="load" file="$(find my_sim)/config/settings.yaml" ns="$(arg apriltag_ns)"/>
+
   <node pkg="slam_toolbox" type="sync_slam_toolbox_node" name="slam_toolbox" output="screen">
     <rosparam command="load" file="$(find slam_toolbox)/config/mapper_params_offline.yaml" />
   </node>

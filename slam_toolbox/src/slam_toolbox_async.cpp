@@ -57,13 +57,27 @@ namespace slam_toolbox
     return;
   }
 
-  // FIXME: da implementare correttamente!
   /*****************************************************************************/
   void AsynchronousSlamToolbox::tagCallback(
       const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array)
   /*****************************************************************************/
   { 
-    ROS_WARN("tagCallback not yet implemented for Asynchronous node!");
+    // ensure the camera can be used
+    karto::Camera *camera = getCamera();
+    if (!camera)
+    {
+      ROS_WARN_THROTTLE(5., "AsynchronousSlamToolbox: Failed to create camera");
+      return;
+    }
+
+    if (detection_array->detections.size() == 0)
+    {
+      return;
+    }
+
+    karto::LocalizedRangeScan *pLastScan = smapper_->getMapper()->GetAllProcessedScans().back();
+    processDetection(detection_array, pLastScan);
+
     return;
   }
 

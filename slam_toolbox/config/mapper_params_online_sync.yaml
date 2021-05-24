@@ -9,8 +9,8 @@ ceres_loss_function: None
 # ROS Parameters
 odom_frame: odom
 map_frame: map
-base_frame: base_footprint
-camera_frame: camera_rgb_optical_frame
+base_frame: base_link
+camera_frame: camera_link
 scan_topic: /scan
 tag_topic: /tag_detections
 mode: mapping #localization
@@ -73,6 +73,6 @@ use_response_expansion: true
 
 # Parameters related to the Markers
 use_markers: true
-marker_link_covariance: 0.1
-correct_poses_after_new_marker: true
-show_info: true
+marker_link_covariance: 1
+correct_poses_after_new_marker: false
+show_info: false

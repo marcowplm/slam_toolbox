@@ -94,7 +94,8 @@ namespace tag_assistant
       std::cout << m.pose << std::endl; */
 
       marray.markers.push_back(m);
-      std::cout << "\nMarker: " << it->first << "\t| Constraints: ";
+      //-
+      /* std::cout << "\nMarker: " << it->first << "\t| Constraints: "; */
       std::list<int>::const_iterator listit = constraints[it->first].begin();
       for (listit; listit != constraints[it->first].end(); ++listit)
       {
@@ -102,7 +103,7 @@ namespace tag_assistant
 
         geometry_msgs::Point p = m.pose.position; // Posizione del Marker
         e.points.push_back(p);
-        std::cout << *listit << ", ";
+        /* std::cout << *listit << ", "; */
         p = poseKartoToGeometry(graph->find(*listit)->second).position; // Posizione dello Scan
         e.points.push_back(p);
 
@@ -114,7 +115,7 @@ namespace tag_assistant
         marray.markers.push_back(e);
       }
     }
-    std::cout << "\n";
+    /* std::cout << "\n"; */
 
     tag_publisher_.publish(marray);
     // publishLinks(); // FIXME: non funziona con la serializzazione -> da eliminare!

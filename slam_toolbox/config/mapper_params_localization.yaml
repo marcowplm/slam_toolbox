@@ -9,15 +9,15 @@ ceres_loss_function: None
 # ROS Parameters
 odom_frame: odom
 map_frame: map
-base_frame: base_footprint
-camera_frame: camera_rgb_optical_frame
+base_frame: base_link
+camera_frame: camera_link
 scan_topic: /scan
 tag_topic: /tag_detections
 mode: localization #mapping
 
 # if you'd like to start localizing on bringup in a map and pose
-#map_file_name: test_steve
-#map_start_pose: [5.0, 1.0, 0.0]
+map_file_name: mag-21.1-offline-tag0.001
+map_start_pose: [0.0, 0.0, 0.0]
 
 debug_logging: false
 throttle_scans: 1
