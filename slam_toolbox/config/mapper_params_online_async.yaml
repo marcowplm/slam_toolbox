@@ -75,4 +75,5 @@ use_response_expansion: true
 use_markers: true
 marker_link_covariance: 0.01
 correct_poses_after_new_marker: true
-show_info: false
+max_marker_detection_distance: 10.0
+show_info: false # //- solo per test

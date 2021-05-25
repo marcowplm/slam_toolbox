@@ -136,6 +136,7 @@ namespace slam_toolbox
     private_nh.param("camera_frame", camera_frame_, std::string("camera_rgb_optical_frame"));
     private_nh.param("tag_topic", tag_topic_, std::string("/tag_detections"));
     private_nh.param("use_markers", use_markers_, false);
+    private_nh.param("max_marker_detection_distance", max_marker_detection_distance_, 20.0);
 
     double tmp_val;
     private_nh.param("transform_timeout", tmp_val, 0.2);
@@ -600,18 +601,21 @@ namespace slam_toolbox
     std::vector<apriltag_ros::AprilTagDetection>::const_iterator detection;
     for (detection = detection_array->detections.begin(); detection != detection_array->detections.end(); ++detection)
     {
-      // FIXME: da eliminare! Serve solo per testare al volo l'accuratezza della tag detection
-     /*  Eigen::Isometry3d trans;
-      tf::poseMsgToEigen(detection->pose.pose.pose, trans);
-      double dist = trans.translation().norm();
-      std::cout << "\t\t> Distance:  " << dist << std::endl; */
+      Eigen::Isometry3d dist_transform;
+      tf::poseMsgToEigen(detection->pose.pose.pose, dist_transform);
+      double dist = dist_transform.translation().norm();
+      //- /* std::cout << "\t\t> Distance:  " << dist << std::endl; */
+      if (dist > max_marker_detection_distance_)
+      {
+        continue;
+      }
 
       karto::LocalizedMarker *marker = smapper_->getMapper()->GetMarkerById(detection->id[0]);
 
       karto::Pose3 tag_pose; // è la posizione del tag nel mondo
       if (!tag_assistant_->getTagPose(tag_pose, *detection))
       {
-        return;
+        continue;
       }
 
       if (marker) // il LocalizedMarker esiste già (e quindi anche il relativo MarkerVertex)
@@ -635,7 +639,6 @@ namespace slam_toolbox
   {
     karto::LocalizedMarker *marker = new karto::LocalizedMarker(
         camera_assistant_->getCamera()->GetName(), detection.id[0], tag_pose);
-    marker->SetCorrectedPose(tag_pose);
 
     boost::mutex::scoped_lock lock(smapper_mutex_);
     if (!smapper_->getMapper()->ProcessMarker(marker, scan))

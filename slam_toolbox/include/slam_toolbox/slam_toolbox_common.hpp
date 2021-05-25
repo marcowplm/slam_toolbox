@@ -127,7 +127,7 @@ protected:
   ros::Duration transform_timeout_, tf_buffer_dur_, minimum_time_interval_;
   int throttle_scans_;
 
-  double resolution_;
+  double resolution_, max_marker_detection_distance_;
   bool first_measurement_, enable_interactive_mode_, use_markers_, is_camera_set_;
 
   // Book keeping

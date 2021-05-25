@@ -144,7 +144,7 @@ namespace tag_assistant
     for (edgesIter; edgesIter != marker_edges.end(); ++edgesIter)
     {
       count++;
-      karto::Pose3 mPose_karto = (*edgesIter)->GetSource()->GetLocalizedMarker()->GetCorrectedPose();
+      karto::Pose3 mPose_karto = (*edgesIter)->GetSource()->GetLocalizedMarker()->GetMarkerPose();
       geometry_msgs::Pose mPose = poseKartoToGeometry(mPose_karto);
       Eigen::Isometry3d mPose_eigen = poseKartoToEigenIsometry(mPose_karto);
 

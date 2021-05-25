@@ -301,6 +301,12 @@ void SMapper::configure(const ros::NodeHandle& nh)
     mapper_->setParamShowInfo(show_info);
   }
 
+  double max_marker_detection_distance;
+  if(nh.getParam("max_marker_detection_distance", max_marker_detection_distance))
+  {
+    mapper_->setParamMaxMarkerDetectionDistance(max_marker_detection_distance);
+  }
+
   return;
 }
 

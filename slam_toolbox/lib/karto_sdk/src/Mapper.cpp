@@ -2114,7 +2114,7 @@ namespace karto
           LocalizedMarker *marker = m_pMapper->m_pMarkerManager->GetMarker(iter->first);
           if (marker != NULL)
           {
-            marker->SetCorrectedPose(iter->second);
+            marker->SetMarkerPose(iter->second);
           }
           continue;
         }
@@ -2502,6 +2502,12 @@ namespace karto
         "ShowInfo",
         "Show additional information per test purposes.",
         true, GetParameterManager());
+
+    m_pMaxMarkerDetectionDistance = new Parameter<kt_double>(
+        "MaxMarkerDetectionDistance",
+        "The maximum distance allowed for a marker detection, in meters. "
+        "Markers detections with an higher distance will not be processed.",
+        20.0, GetParameterManager());
   }
   /* Adding in getters and setters here for easy parameter access */
 
@@ -2680,6 +2686,11 @@ namespace karto
     return static_cast<bool>(m_pShowInfo->GetValue());
   }
 
+  double Mapper::getParamMaxMarkerDetectionDistance()
+  {
+    return static_cast<double>(m_pMaxMarkerDetectionDistance->GetValue());
+  }
+
   /* Setters for parameters */
   // General Parameters
   void Mapper::setParamUseScanMatching(bool b)
@@ -2849,6 +2860,11 @@ namespace karto
   void Mapper::setParamShowInfo(bool b)
   {
     m_pShowInfo->SetValue((kt_bool)b);
+  }
+
+  void Mapper::setParamMaxMarkerDetectionDistance(double d)
+  {
+    m_pMaxMarkerDetectionDistance->SetValue((kt_double)d);
   }
 
   void Mapper::Initialize(kt_double rangeThreshold)
@@ -3536,7 +3552,7 @@ namespace karto
         // add to marker graph
         m_pMarkerGraph->AddMarkerVertex(pMarker);
 
-        m_pMarkerGraph->LinkMarkerToScan(pMarker, pScan, pMarker->GetCorrectedPose());
+        m_pMarkerGraph->LinkMarkerToScan(pMarker, pScan, pMarker->GetMarkerPose());
 
         if (m_pCorrectPosesAfterNewMarker->GetValue())
         {

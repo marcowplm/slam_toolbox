@@ -6143,7 +6143,7 @@ namespace karto
    * Constructs a marker from the given camera with the given ID and position
    */
     LocalizedMarker(const Name &rSensorName, const kt_int32u &rID, const Pose3 &rPose)
-        : SensorData(rSensorName), m_ApriltagID(rID), m_OdometricPose(rPose)
+        : SensorData(rSensorName), m_ApriltagID(rID), m_MarkerPose(rPose)
     {
       assert(rSensorName.ToString() != "");
       std::cout << "\n\e[1;33mLocalizedMarker with ID " << rID << " created successfully!!\e[0m\n";
@@ -6165,43 +6165,21 @@ namespace karto
 
   public:
     /**
-     * Gets the odometric pose of this marker
-     * @return odometric pose of this marker
+     * Gets the pose of this marker
+     * @return pose of this marker
      */
-    inline const Pose3 &GetOdometricPose() const
+    inline const Pose3 &GetMarkerPose() const
     {
-      return m_OdometricPose;
+      return m_MarkerPose;
     }
 
     /**
-     * Sets the odometric pose of this marker
+     * Sets the pose of this marker
      * @param rPose
      */
-    inline void SetOdometricPose(const Pose3 &rPose)
+    inline void SetMarkerPose(const Pose3 &rPose)
     {
-      m_OdometricPose = rPose;
-    }
-
-    /**
-     * Gets the (possibly corrected) pose of this marker. The corrected robot pose of the scan
-     * is usually set by an external module such as a localization or mapping module when it is determined
-     * that the original pose was incorrect.  The external module will set the correct pose based on
-     * additional sensor data and any context information it has.  If the pose has not been corrected,
-     * a call to this method returns the same pose as GetOdometricPose().
-     * @return corrected pose
-     */
-    inline const Pose3 &GetCorrectedPose() const
-    {
-      return m_CorrectedPose;
-    }
-
-    /**
-     * Moves the marker position to the given location.
-     * @param rPose new pose of this marker
-     */
-    inline void SetCorrectedPose(const Pose3 &rPose)
-    {
-      m_CorrectedPose = rPose;
+      m_MarkerPose = rPose;
     }
 
     /**
@@ -6221,8 +6199,7 @@ namespace karto
     template <class Archive>
     void serialize(Archive &ar, const unsigned int version)
     {
-      ar &BOOST_SERIALIZATION_NVP(m_OdometricPose);
-      ar &BOOST_SERIALIZATION_NVP(m_CorrectedPose);
+      ar &BOOST_SERIALIZATION_NVP(m_MarkerPose);
       ar &BOOST_SERIALIZATION_NVP(m_ApriltagID);
       ar &BOOST_SERIALIZATION_BASE_OBJECT_NVP(SensorData);
     }
@@ -6233,14 +6210,9 @@ namespace karto
 
   private:
     /**
-     * Odometric pose of marker
+     * Pose of marker
      */
-    Pose3 m_OdometricPose;
-
-    /**
-     * Corrected pose of marker calculated by mapper (or localizer)
-     */
-    Pose3 m_CorrectedPose;
+    Pose3 m_MarkerPose;
 
     /**
      * Unique ID of the marker, as defined in the configuration file of Apriltag

@@ -327,14 +327,14 @@ namespace solver_plugins
       return;
     }
 
-    CeresPose3d pose3d(pMarkerVertex->GetLocalizedMarker()->GetCorrectedPose());
+    CeresPose3d pose3d(pMarkerVertex->GetLocalizedMarker()->GetMarkerPose());
     const int id = pMarkerVertex->GetLocalizedMarker()->GetUniqueId();
     std::cout << "\n[Ceres] AddNode MARKER: " << id << /*"\n" << pose3d <<*/ "\n";
 
     // TODO: questo pezzo serve solo per controllare la coerenza delle trasformazioni tra quat e RPY -> da eliminare
     /* double yaw, pitch, roll;
     std::cout << "\n\n[CeresPose3d] AddNode MARKER:\t" << id << "\n" << pose3d << "\n";
-    karto::Pose3 pose_karto = pMarkerVertex->GetLocalizedMarker()->GetCorrectedPose();
+    karto::Pose3 pose_karto = pMarkerVertex->GetLocalizedMarker()->GetMarkerPose();
     std::cout << "\n[karto::Pose3] AddNode MARKER:\t" << id << "\n" << pose_karto << "\n";
 
     pose3d.ToEulerAngles(yaw, pitch, roll);

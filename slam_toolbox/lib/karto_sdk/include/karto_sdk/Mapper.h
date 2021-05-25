@@ -2594,6 +2594,11 @@ namespace karto
    * 
    *  \a MarkerLinkCovariance (ParameterDouble)\n
    *     The covariance along x, y, z axes of the link between a marker and a scan. 
+   * 
+   *  \a MaxMarkerDetectionDistance (ParameterDouble)\n
+   *     The maximum distance allowed for a marker detection, in meters. Markers detections with 
+   *     an higher distance will not be processed.
+   *     Default value is 20.0. 
    */
 
   struct LocalizationScanVertex
@@ -3089,8 +3094,14 @@ namespace karto
     /** 
      * Show additional information per test purposes
      */
-    // TODO: da eliminare!
+    // FIXME: da eliminare!
     Parameter<kt_bool> *m_pShowInfo;
+
+    /** 
+     * The maximum distance allowed for a marker detection
+     * Default value is 20.0 meters. 
+     */
+    Parameter<kt_double> *m_pMaxMarkerDetectionDistance;
 
     int count = 0; //-
 
@@ -3145,6 +3156,7 @@ namespace karto
       ar &BOOST_SERIALIZATION_NVP(m_pUseMarkers);
       ar &BOOST_SERIALIZATION_NVP(m_pMarkerLinkCovariance);
       ar &BOOST_SERIALIZATION_NVP(m_pCorrectPosesAfterNewMarker);
+      ar &BOOST_SERIALIZATION_NVP(m_pMaxMarkerDetectionDistance);
       std::cout << "**Finished serializing Mapper**\n";
     }
 
@@ -3193,6 +3205,7 @@ namespace karto
     bool getParamUseMarkers();
     double getParamMarkerLinkCovariance();
     bool getParamCorrectPosesAfterNewMarker();
+    double getParamMaxMarkerDetectionDistance();
     bool getParamShowInfo();
 
     /* Setters */
@@ -3237,6 +3250,7 @@ namespace karto
     void setParamUseMarkers(bool b);
     void setParamMarkerLinkCovariance(double d);
     void setParamCorrectPosesAfterNewMarker(bool b);
+    void setParamMaxMarkerDetectionDistance(double d);
     void setParamShowInfo(bool b);
   };
   BOOST_SERIALIZATION_ASSUME_ABSTRACT(Mapper)
