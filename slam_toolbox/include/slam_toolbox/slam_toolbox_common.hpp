@@ -90,7 +90,8 @@ protected:
     karto::Pose2& karto_pose);
   karto::LocalizedRangeScan* addScan(karto::LaserRangeFinder* laser, PosedScan& scanWPose);
   bool addLocalizedMarker(karto::LocalizedRangeScan *pScan,
-                          const apriltag_ros::AprilTagDetection &detection);
+                          const apriltag_ros::AprilTagDetection &detection,
+                          const karto::Pose3 tag_pose);
   bool updateMap();
   tf2::Stamped<tf2::Transform> setTransformFromPoses(const karto::Pose2& pose,
     const karto::Pose2& karto_pose, const ros::Time& t, const bool& update_reprocessing_transform);

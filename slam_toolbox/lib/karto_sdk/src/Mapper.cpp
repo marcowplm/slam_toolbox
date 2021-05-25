@@ -2200,7 +2200,7 @@ namespace karto
     return pMarkerEdge;
   }
 
-  void MarkerGraph::LinkMarkerToScan(LocalizedMarker *pFromMarker, LocalizedRangeScan *pToScan)
+  void MarkerGraph::LinkMarkerToScan(LocalizedMarker *pFromMarker, LocalizedRangeScan *pToScan, Pose3 tag_pose)
   {
     kt_bool isNewEdge = true;
     MarkerEdge *pMarkerEdge = AddMarkerEdge(pFromMarker, pToScan, isNewEdge);
@@ -2216,7 +2216,7 @@ namespace karto
       Eigen::Matrix<double, 6, 6> covariance = Eigen::Matrix<double, 6, 6>::Identity();
       covariance(0, 0) = covariance(1, 1) = covariance(2, 2) = m_pMapper->m_pMarkerLinkCovariance->GetValue();
 
-      pMarkerEdge->SetLabel(new MarkerLinkInfo(pFromMarker->GetCorrectedPose(), pToScan->GetCorrectedPose(), covariance));
+      pMarkerEdge->SetLabel(new MarkerLinkInfo(tag_pose, pToScan->GetCorrectedPose(), covariance));
       if (m_pMapper->m_pScanOptimizer != NULL)
       {
         m_pMapper->m_pScanOptimizer->AddConstraint(pMarkerEdge);
@@ -3536,7 +3536,7 @@ namespace karto
         // add to marker graph
         m_pMarkerGraph->AddMarkerVertex(pMarker);
 
-        m_pMarkerGraph->LinkMarkerToScan(pMarker, pScan);
+        m_pMarkerGraph->LinkMarkerToScan(pMarker, pScan, pMarker->GetCorrectedPose());
 
         if (m_pCorrectPosesAfterNewMarker->GetValue())
         {

@@ -20,6 +20,7 @@
 
 #include "slam_toolbox/slam_toolbox_common.hpp"
 #include "slam_toolbox/serialization.hpp"
+#include <eigen_conversions/eigen_msg.h> //- FIXME: eliminare insieme all'altro pezzo
 
 namespace slam_toolbox
 {
@@ -599,32 +600,39 @@ namespace slam_toolbox
     std::vector<apriltag_ros::AprilTagDetection>::const_iterator detection;
     for (detection = detection_array->detections.begin(); detection != detection_array->detections.end(); ++detection)
     {
+      // FIXME: da eliminare! Serve solo per testare al volo l'accuratezza della tag detection
+     /*  Eigen::Isometry3d trans;
+      tf::poseMsgToEigen(detection->pose.pose.pose, trans);
+      double dist = trans.translation().norm();
+      std::cout << "\t\t> Distance:  " << dist << std::endl; */
+
       karto::LocalizedMarker *marker = smapper_->getMapper()->GetMarkerById(detection->id[0]);
+
+      karto::Pose3 tag_pose; // è la posizione del tag nel mondo
+      if (!tag_assistant_->getTagPose(tag_pose, *detection))
+      {
+        return;
+      }
 
       if (marker) // il LocalizedMarker esiste già (e quindi anche il relativo MarkerVertex)
       {
         boost::mutex::scoped_lock lock(smapper_mutex_);
         // Se il MarkerEdge esiste già, non fa niente, altrimenti lo crea, aggiunge LinkInfo e aggiunge il constraint al solver
-        smapper_->getMapper()->GetMarkerGraph()->LinkMarkerToScan(marker, last_scan);
+        smapper_->getMapper()->GetMarkerGraph()->LinkMarkerToScan(marker, last_scan, tag_pose);
       }
       else // il LocalizedMarker non esiste (è la prima volta che lo vedo)
       {
-        addLocalizedMarker(last_scan, *detection);
+        addLocalizedMarker(last_scan, *detection, tag_pose);
       }
     }
   }
 
   /*****************************************************************************/
   bool SlamToolbox::addLocalizedMarker(karto::LocalizedRangeScan *scan,
-                                       const apriltag_ros::AprilTagDetection &detection)
+                                       const apriltag_ros::AprilTagDetection &detection,
+                                       const karto::Pose3 tag_pose)
   /*****************************************************************************/
   {
-    karto::Pose3 tag_pose; // è la posizione del tag nel mondo
-    if (!tag_assistant_->getTagPose(tag_pose, detection))
-    {
-      return false;
-    }
-
     karto::LocalizedMarker *marker = new karto::LocalizedMarker(
         camera_assistant_->getCamera()->GetName(), detection.id[0], tag_pose);
     marker->SetCorrectedPose(tag_pose);

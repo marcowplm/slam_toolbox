@@ -66,6 +66,6 @@ use_response_expansion: true
 
 # Parameters related to the Markers
 use_markers: true
-marker_link_covariance: 1
+marker_link_covariance: 5
 correct_poses_after_new_marker: true
 show_info: false

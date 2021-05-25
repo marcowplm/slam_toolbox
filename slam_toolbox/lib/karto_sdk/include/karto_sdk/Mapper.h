@@ -1399,7 +1399,8 @@ namespace karto
      * @param pToScan
      */
     void LinkMarkerToScan(LocalizedMarker *pFromMarker,
-                          LocalizedRangeScan *pToScan);
+                          LocalizedRangeScan *pToScan,
+                          Pose3 tag_pose);
 
   /**
    * Deletes the graph data
