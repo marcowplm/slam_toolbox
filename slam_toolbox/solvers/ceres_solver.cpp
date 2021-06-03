@@ -173,7 +173,7 @@ namespace solver_plugins
   /*****************************************************************************/
   {
     boost::mutex::scoped_lock lock(nodes_mutex_);
-    std::cout << "\n\e[1;35mCOMPUTE!  =================================================\e[0m\n";
+    std::cout << "\n\e[1;35mCOMPUTE!  =============================================================\e[0m\n";
     if (nodes3d_->size() == 0)
     {
       ROS_ERROR("CeresSolver: Ceres was called when there are no nodes."
@@ -225,7 +225,7 @@ namespace solver_plugins
       corrections_.push_back(std::make_pair(iter->first, pose));
       //- /* std::cout << "\nCorrected pose of node with ID: " << iter->first << "\n" << pose << "\n"; */
     }
-    std::cout << "\n\e[1;35m===========================================================\e[0m\n";
+    std::cout << "\n\e[1;35m=======================================================================\e[0m\n";
     return;
   }
 
@@ -354,7 +354,7 @@ namespace solver_plugins
   void CeresSolver::AddConstraint(karto::Edge<karto::LocalizedRangeScan> *pEdge)
   /*****************************************************************************/
   {
-    std::cout << "\n[Ceres] AddConstraint SCAN ---------------------------------------\n";
+    std::cout << "\n[Ceres] AddConstraint SCAN\t---------------------------------------\n";
     // get IDs in graph for this edge
     boost::mutex::scoped_lock lock(nodes_mutex_);
 
@@ -401,13 +401,13 @@ namespace solver_plugins
     Eigen::Matrix<double, 6, 6> sqrt_information = precisionMatrix3.llt().matrixL();
 
     // TODO: solo per test  -> da eliminare
-    std::cout << "\n\ncovariance_matrix 2D (x, y, heading)\n"
+    /* std::cout << "\n\ncovariance_matrix 2D (x, y, heading)\n"
               << pLinkInfo->GetCovariance() << "\n";
     std::cout << "\nsqrt_information (square root of precision matrix) (x, y, z, roll, pitch, yaw)\n"
               << sqrt_information << "\n";
     std::cout << "\n\npose3d for cost function (t_ab_measured = diff btw node1 and node2):\n"
               << "Position:\t\t" << pose3d.p.transpose() << "\n"
-              << "Orientation:\t" << pose3d.q.coeffs().transpose() << "\n";
+              << "Orientation:\t" << pose3d.q.coeffs().transpose() << "\n"; */
 
     // populate residual and parameterization for heading normalization
     ceres::CostFunction *cost_function = PoseGraph3dErrorTerm::Create(pose3d, sqrt_information);
@@ -438,7 +438,7 @@ namespace solver_plugins
   void CeresSolver::AddConstraint(karto::MarkerEdge *pMarkerEdge)
   /*****************************************************************************/
   {
-    std::cout << "\n[Ceres] AddConstraint MARKER ------------------------------------------\n";
+    std::cout << "\n[Ceres] AddConstraint MARKER\t---------------------------------------\n";
     // get IDs in graph for this edge
     boost::mutex::scoped_lock lock(nodes_mutex_);
 
@@ -476,13 +476,13 @@ namespace solver_plugins
     Eigen::Matrix<double, 6, 6> sqrt_information = precisionMatrix3.llt().matrixL();
 
     // TODO: solo per test  -> da eliminare
-    std::cout << "\n\ncovariance_matrix 3D (x, y, z, roll, pitch, yaw)\n"
+    /* std::cout << "\n\ncovariance_matrix 3D (x, y, z, roll, pitch, yaw)\n"
               << pMarkerLinkInfo->GetCovariance() << "\n";
     std::cout << "\nsqrt_information (square root of precision matrix) (x, y, z, roll, pitch, yaw)\n"
               << sqrt_information << "\n";
     std::cout << "\n\npose3d for cost function (t_ab_measured = diff btw node1 and node2):\n"
               << "Position:\t\t" << pose3d.p.transpose() << "\n"
-              << "Orientation:\t" << pose3d.q.coeffs().transpose() << "\n";
+              << "Orientation:\t" << pose3d.q.coeffs().transpose() << "\n"; */
 
     // populate residual and parameterization for heading normalization
     ceres::CostFunction *cost_function = PoseGraph3dErrorTerm::Create(pose3d, sqrt_information);
@@ -525,6 +525,9 @@ namespace solver_plugins
         std::cout << "\n>> CeresSolver::RemoveNode, node with id: "
                   << id << " removed from marker_ids_\n";
       }
+
+      problem_->RemoveParameterBlock(nodeit->second.p.data());
+      problem_->RemoveParameterBlock(nodeit->second.q.coeffs().data());
       nodes3d_->erase(nodeit);
     }
     else
