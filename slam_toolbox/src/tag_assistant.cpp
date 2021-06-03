@@ -13,7 +13,6 @@ namespace tag_assistant
   /*****************************************************************************/
   {
     nh_.getParam("map_frame", map_frame_);
-    nh_.getParam("odom_frame", odom_frame_);
     nh_.getParam("camera_frame", camera_frame_);
     tag_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("tag_visualization", 1);
     //link_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("link_visualization", 1);
@@ -27,8 +26,7 @@ namespace tag_assistant
                                      const apriltag_ros::AprilTagDetection &detection)
   /*****************************************************************************/
   {
-    // camera_ident è un "contenitore" che tf_->transform usa per tirare fuori il suo source frame,
-    // camera_rgb_optical, e il timestamp
+    // camera_ident è un "contenitore" che tf_->transform usa per tirare fuori il suo source frame e il timestamp
     geometry_msgs::TransformStamped camera_ident;
     camera_ident.header.stamp = detection.pose.header.stamp;
     camera_ident.header.frame_id = camera_frame_;
@@ -37,7 +35,7 @@ namespace tag_assistant
     try
     {
       // Ottiene la posizione della camera -> Target frame: map / Source frame: camera_rgb_optical (all'interno di camera_ident)
-      camera_pose_ = tf_->transform(camera_ident, map_frame_);
+      camera_pose_ = tf_->transform(camera_ident, map_frame_); //NB: NON usare odom_frame_ !!!
     }
     catch (tf2::TransformException e)
     {

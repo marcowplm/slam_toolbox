@@ -136,7 +136,7 @@ namespace tag_assistant
     karto::Mapper *mapper_;
     karto::ScanSolver *solver_;
 
-    std::string map_frame_, odom_frame_, camera_frame_;
+    std::string map_frame_, camera_frame_;
 
   };
 
