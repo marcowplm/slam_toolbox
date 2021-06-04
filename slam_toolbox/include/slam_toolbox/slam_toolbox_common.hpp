@@ -126,8 +126,9 @@ protected:
   std::string camera_frame_, tag_topic_;
   ros::Duration transform_timeout_, tf_buffer_dur_, minimum_time_interval_;
   int throttle_scans_;
+  int trigger_count_ = 0; //-
 
-  double resolution_, max_marker_detection_distance_;
+  double resolution_, max_marker_detection_distance_, min_trigger_time_, last_trigger_;
   bool first_measurement_, enable_interactive_mode_, use_markers_, is_camera_set_;
 
   // Book keeping

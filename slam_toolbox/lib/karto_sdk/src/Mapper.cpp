@@ -2200,14 +2200,14 @@ namespace karto
     return pMarkerEdge;
   }
 
-  void MarkerGraph::LinkMarkerToScan(LocalizedMarker *pFromMarker, LocalizedRangeScan *pToScan, Pose3 tag_pose)
+  kt_bool MarkerGraph::LinkMarkerToScan(LocalizedMarker *pFromMarker, LocalizedRangeScan *pToScan, Pose3 tag_pose)
   {
     kt_bool isNewEdge = true;
     MarkerEdge *pMarkerEdge = AddMarkerEdge(pFromMarker, pToScan, isNewEdge);
 
     if (pMarkerEdge == NULL)
     {
-      return;
+      return false;
     }
 
     // only attach marker link information if the marker edge is new
@@ -2222,6 +2222,7 @@ namespace karto
         m_pMapper->m_pScanOptimizer->AddConstraint(pMarkerEdge);
       }
     }
+    return isNewEdge;
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////
@@ -2508,6 +2509,12 @@ namespace karto
         "The maximum distance allowed for a marker detection, in meters. "
         "Markers detections with an higher distance will not be processed.",
         20.0, GetParameterManager());
+
+    m_pMinTriggerTime = new Parameter<kt_double>(
+        "MinTriggerTime",
+        "The minimum period of time between two detections of the same marker "
+        "needed to trigger an optimization.",
+        30.0, GetParameterManager());
   }
   /* Adding in getters and setters here for easy parameter access */
 
@@ -2691,6 +2698,11 @@ namespace karto
     return static_cast<double>(m_pMaxMarkerDetectionDistance->GetValue());
   }
 
+  double Mapper::getParamMinTriggerTime()
+  {
+    return static_cast<double>(m_pMinTriggerTime->GetValue());
+  }
+
   /* Setters for parameters */
   // General Parameters
   void Mapper::setParamUseScanMatching(bool b)
@@ -2865,6 +2877,11 @@ namespace karto
   void Mapper::setParamMaxMarkerDetectionDistance(double d)
   {
     m_pMaxMarkerDetectionDistance->SetValue((kt_double)d);
+  }
+
+  void Mapper::setParamMinTriggerTime(double d)
+  {
+    m_pMinTriggerTime->SetValue((kt_double)d);
   }
 
   void Mapper::Initialize(kt_double rangeThreshold)
@@ -3539,7 +3556,7 @@ namespace karto
     return ProcessAgainstNode(pScan, 0);
   }
 
-  kt_bool Mapper::ProcessMarker(LocalizedMarker *pMarker, LocalizedRangeScan *pScan)
+  kt_bool Mapper::ProcessNewMarker(LocalizedMarker *pMarker, LocalizedRangeScan *pScan)
   {
     if (pMarker != NULL)
     {

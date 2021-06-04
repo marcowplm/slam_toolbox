@@ -307,6 +307,12 @@ void SMapper::configure(const ros::NodeHandle& nh)
     mapper_->setParamMaxMarkerDetectionDistance(max_marker_detection_distance);
   }
 
+  double min_trigger_time;
+  if(nh.getParam("min_trigger_time", min_trigger_time))
+  {
+    mapper_->setParamMinTriggerTime(min_trigger_time);
+  }
+
   return;
 }
 

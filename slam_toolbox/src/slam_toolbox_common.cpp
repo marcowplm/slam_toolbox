@@ -20,7 +20,7 @@
 
 #include "slam_toolbox/slam_toolbox_common.hpp"
 #include "slam_toolbox/serialization.hpp"
-#include <eigen_conversions/eigen_msg.h> //- FIXME: eliminare insieme all'altro pezzo
+#include <eigen_conversions/eigen_msg.h>
 
 namespace slam_toolbox
 {
@@ -137,6 +137,7 @@ namespace slam_toolbox
     private_nh.param("tag_topic", tag_topic_, std::string("/tag_detections"));
     private_nh.param("use_markers", use_markers_, false);
     private_nh.param("max_marker_detection_distance", max_marker_detection_distance_, 20.0);
+    private_nh.param("min_trigger_time", min_trigger_time_, 30.0);
 
     double tmp_val;
     private_nh.param("transform_timeout", tmp_val, 0.2);
@@ -179,8 +180,10 @@ namespace slam_toolbox
 
     if (use_markers_)
     {
-      tag_detection_filter_sub_ = std::make_unique<message_filters::Subscriber<apriltag_ros::AprilTagDetectionArray>>(node, tag_topic_, 5);
-      tag_detection_filter_ = std::make_unique<tf2_ros::MessageFilter<apriltag_ros::AprilTagDetectionArray>>(*tag_detection_filter_sub_, *tf_, camera_frame_, 5, node);
+      tag_detection_filter_sub_ = 
+        std::make_unique<message_filters::Subscriber<apriltag_ros::AprilTagDetectionArray>>(node, tag_topic_, 5);
+      tag_detection_filter_ = 
+        std::make_unique<tf2_ros::MessageFilter<apriltag_ros::AprilTagDetectionArray>>(*tag_detection_filter_sub_, *tf_, camera_frame_, 5, node);
       tag_detection_filter_->registerCallback(boost::bind(&SlamToolbox::tagCallback, this, _1));
     }
   }
@@ -610,19 +613,37 @@ namespace slam_toolbox
         continue;
       }
 
-      karto::LocalizedMarker *marker = smapper_->getMapper()->GetMarkerById(detection->id[0]);
-
       karto::Pose3 tag_pose; // è la posizione del tag nel mondo
       if (!tag_assistant_->getTagPose(tag_pose, *detection))
       {
         continue;
       }
 
+      karto::LocalizedMarker *marker = smapper_->getMapper()->GetMarkerById(detection->id[0]);
       if (marker) // il LocalizedMarker esiste già (e quindi anche il relativo MarkerVertex)
       {
         boost::mutex::scoped_lock lock(smapper_mutex_);
         // Se il MarkerEdge esiste già, non fa niente, altrimenti lo crea, aggiunge LinkInfo e aggiunge il constraint al solver
-        smapper_->getMapper()->GetMarkerGraph()->LinkMarkerToScan(marker, last_scan, tag_pose);
+        bool newEdge = smapper_->getMapper()->GetMarkerGraph()->LinkMarkerToScan(marker, last_scan, tag_pose);
+        double delta_time = ros::Time::now().toSec() - marker->GetTime();
+        double delta_trigger = ros::Time::now().toSec() - last_trigger_;
+
+        /** 
+         * NB: l'optimization parte se: 
+         *     1. tra due detection dello stesso marker è passato più di min_trigger_time_
+         *     2. è passato più di min_trigger_time_ dall'ultimo trigger (indipendentemente dalla detection) [opzionale!]
+         *     3. è stato aggiunto un nuovo marker edge
+         */ 
+        if (delta_time > min_trigger_time_ /* && delta_trigger > min_trigger_time_  */ && newEdge) 
+        {
+          last_trigger_ = ros::Time::now().toSec(); // aggiorno il timestamp dell'ultimo trigger
+          std::cout << "\n\e[1;45mprocessMarker  |  ID: " << marker->GetApriltagID() 
+                    << "  Delta time: " << delta_time
+                    << "  trigger count: " << ++trigger_count_ << "\e[0m\n";
+          smapper_->getMapper()->CorrectPoses();
+        }
+        // aggiorno il timestamp dell'ultima detection di questo marker
+        marker->SetTime(ros::Time::now().toSec());  
       }
       else // il LocalizedMarker non esiste (è la prima volta che lo vedo)
       {
@@ -638,12 +659,13 @@ namespace slam_toolbox
   /*****************************************************************************/
   {
     karto::LocalizedMarker *marker = new karto::LocalizedMarker(
-        camera_assistant_->getCamera()->GetName(), detection.id[0], tag_pose);
+        camera_assistant_->getCamera()->GetName(), detection.id[0], 
+        tag_pose, ros::Time::now().toSec());
 
     boost::mutex::scoped_lock lock(smapper_mutex_);
-    if (!smapper_->getMapper()->ProcessMarker(marker, scan))
+    if (!smapper_->getMapper()->ProcessNewMarker(marker, scan))
     {
-      std::cout << "ProcessMarker FALSE!" << std::endl;
+      std::cout << "ProcessNewMarker FALSE!\n";
       return false;
     }
 

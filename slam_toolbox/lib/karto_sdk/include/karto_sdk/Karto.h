@@ -6126,10 +6126,9 @@ namespace karto
   ////////////////////////////////////////////////////////////////////////////////////////
 
   /**
-   * The LocalizedMarker contains ID and Location of a fiducial marker (AKA tag). 
-   * The odometer position is the position computed when the tag was detected for the first time.
-   * It's computed using the transform between tag and camera and the transform between camera and odometry. 
-   * The corrected position is the position calculated by the mapper (or localizer)
+   * The LocalizedMarker contains ID and Location of a fiducial marker (AKA tag).
+   * It's computed using the transform between tag and camera frame and 
+   * the transform between camera and map frame. 
    */
   class LocalizedMarker : public SensorData
   {
@@ -6142,10 +6141,12 @@ namespace karto
     /**
    * Constructs a marker from the given camera with the given ID and position
    */
-    LocalizedMarker(const Name &rSensorName, const kt_int32u &rID, const Pose3 &rPose)
+    LocalizedMarker(const Name &rSensorName, const kt_int32u &rID, 
+                    const Pose3 &rPose, const kt_double &rTime)
         : SensorData(rSensorName), m_ApriltagID(rID), m_MarkerPose(rPose)
     {
       assert(rSensorName.ToString() != "");
+      SetTime(rTime);
       std::cout << "\n\e[1;33mLocalizedMarker with ID " << rID << " created successfully!!\e[0m\n";
     }
 

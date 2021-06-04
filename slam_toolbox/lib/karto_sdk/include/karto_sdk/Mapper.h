@@ -1397,8 +1397,9 @@ namespace karto
      * Adds an edge between the marker and the scan and labels the edge with the given covariance
      * @param pFromMarker
      * @param pToScan
+     * @return True if a new marker edge is created
      */
-    void LinkMarkerToScan(LocalizedMarker *pFromMarker,
+    kt_bool LinkMarkerToScan(LocalizedMarker *pFromMarker,
                           LocalizedRangeScan *pToScan,
                           Pose3 tag_pose);
 
@@ -2599,6 +2600,11 @@ namespace karto
    *     The maximum distance allowed for a marker detection, in meters. Markers detections with 
    *     an higher distance will not be processed.
    *     Default value is 20.0. 
+   * 
+   *  \a MinTriggerTime (ParameterDouble)\n
+   *     The minimum period of time between two detections of the same marker
+   *     needed to trigger an optimization. 
+   *     Default value is 30.0 seconds. 
    */
 
   struct LocalizationScanVertex
@@ -2691,7 +2697,7 @@ namespace karto
     void AddScanToLocalizationBuffer(LocalizedRangeScan *pScan, Vertex<LocalizedRangeScan> *scan_vertex);
     void ClearLocalizationBuffer();
 
-    kt_bool ProcessMarker(LocalizedMarker *pMarker, LocalizedRangeScan *pScan);
+    kt_bool ProcessNewMarker(LocalizedMarker *pMarker, LocalizedRangeScan *pScan);
 
     /**
      * Returns all processed scans added to the mapper.
@@ -3103,6 +3109,13 @@ namespace karto
      */
     Parameter<kt_double> *m_pMaxMarkerDetectionDistance;
 
+    /** 
+     * The minimum period of time between two detections of the same marker  
+     * needed to trigger an optimization.
+     * Default value is 30.0 seconds. 
+     */
+    Parameter<kt_double> *m_pMinTriggerTime;
+
     int count = 0; //-
 
     friend class boost::serialization::access;
@@ -3157,6 +3170,7 @@ namespace karto
       ar &BOOST_SERIALIZATION_NVP(m_pMarkerLinkCovariance);
       ar &BOOST_SERIALIZATION_NVP(m_pCorrectPosesAfterNewMarker);
       ar &BOOST_SERIALIZATION_NVP(m_pMaxMarkerDetectionDistance);
+      ar &BOOST_SERIALIZATION_NVP(m_pMinTriggerTime);
       std::cout << "**Finished serializing Mapper**\n";
     }
 
@@ -3207,6 +3221,7 @@ namespace karto
     bool getParamCorrectPosesAfterNewMarker();
     double getParamMaxMarkerDetectionDistance();
     bool getParamShowInfo();
+    double getParamMinTriggerTime();
 
     /* Setters */
     // General Parameters
@@ -3252,6 +3267,7 @@ namespace karto
     void setParamCorrectPosesAfterNewMarker(bool b);
     void setParamMaxMarkerDetectionDistance(double d);
     void setParamShowInfo(bool b);
+    void setParamMinTriggerTime(double d);
   };
   BOOST_SERIALIZATION_ASSUME_ABSTRACT(Mapper)
 } // namespace karto
