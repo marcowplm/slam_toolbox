@@ -10,7 +10,7 @@
 #include "slam_toolbox/visualization_utils.hpp"
 #include "slam_toolbox/camera_utils.hpp"
 #include "tf2/utils.h"
-#include "tf2_ros/transform_broadcaster.h"
+#include "tf2_ros/transform_broadcaster.h" //- TODO: da eliminare
 #include "karto_sdk/Mapper.h"
 #include "apriltag_ros/AprilTagDetectionArray.h"
 
@@ -122,7 +122,6 @@ namespace tag_assistant
     
     bool getTagPose(karto::Pose3 &karto_pose, const apriltag_ros::AprilTagDetection &detection);
     void publishMarkerGraph();
-    void publishLinks();
 
   private:
     geometry_msgs::TransformStamped camera_pose_;
@@ -130,8 +129,7 @@ namespace tag_assistant
     tf2_ros::Buffer *tf_;
     ros::NodeHandle &nh_;
     ros::Publisher tag_publisher_;
-    ros::Publisher link_publisher_;
-    std::unique_ptr<tf2_ros::TransformBroadcaster> tfB_;
+    std::unique_ptr<tf2_ros::TransformBroadcaster> tfB_;  //- TODO: da eliminare
 
     karto::Mapper *mapper_;
     karto::ScanSolver *solver_;

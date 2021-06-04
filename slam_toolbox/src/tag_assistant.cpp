@@ -15,8 +15,6 @@ namespace tag_assistant
     nh_.getParam("map_frame", map_frame_);
     nh_.getParam("camera_frame", camera_frame_);
     tag_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("tag_visualization", 1);
-    //link_publisher_ = nh_.advertise<visualization_msgs::MarkerArray>("link_visualization", 1);
-    //tfB_ = std::make_unique<tf2_ros::TransformBroadcaster>();
     solver_ = mapper_->GetScanSolver();
   }
 
@@ -34,7 +32,7 @@ namespace tag_assistant
 
     try
     {
-      // Ottiene la posizione della camera -> Target frame: map / Source frame: camera_rgb_optical (all'interno di camera_ident)
+      // Ottiene la posizione della camera -> Target frame: map / Source frame: camera_frame (all'interno di camera_ident)
       camera_pose_ = tf_->transform(camera_ident, map_frame_); //NB: NON usare odom_frame_ !!!
     }
     catch (tf2::TransformException e)
@@ -48,7 +46,7 @@ namespace tag_assistant
     tf2::doTransform(detection.pose.pose.pose, tag_pose_, camera_pose_);
     tag_pose_karto = poseGeometryToKarto(tag_pose_);
 
-    //- Questo pezzo pubblica la tf di tag_pose rispetto a map_frame
+    //- TODO: da eliminare  --  Questo pezzo pubblica la tf di tag_pose rispetto a map_frame
     /* geometry_msgs::TransformStamped tag_pose_stamped_;
        tag_pose_stamped_.transform.rotation = tag_pose_.orientation;
        tag_pose_stamped_.transform.translation.x = tag_pose_.position.x;
@@ -116,62 +114,7 @@ namespace tag_assistant
     /* std::cout << "\n"; */
 
     tag_publisher_.publish(marray);
-    // publishLinks(); // FIXME: non funziona con la serializzazione -> da eliminare!
 
-    return;
-  }
-
-  // TODO: è qui solo per TEST - poi deve essere eliminato!
-  /*****************************************************************************/
-  void ApriltagAssistant::publishLinks()
-  /*****************************************************************************/
-  {
-    std::vector<karto::MarkerEdge *> marker_edges = mapper_->GetMarkerGraph()->GetMarkerEdges();
-
-    if (marker_edges.size() == 0)
-    {
-      return;
-    }
-
-    visualization_msgs::MarkerArray marray;
-    visualization_msgs::Marker e = vis_utils::toEdgeMarker(map_frame_, nh_.getNamespace(), 0.02);
-
-    int count = 0;
-
-    std::vector<karto::MarkerEdge *>::const_iterator edgesIter = marker_edges.cbegin();
-    for (edgesIter; edgesIter != marker_edges.end(); ++edgesIter)
-    {
-      count++;
-      karto::Pose3 mPose_karto = (*edgesIter)->GetSource()->GetLocalizedMarker()->GetMarkerPose();
-      geometry_msgs::Pose mPose = poseKartoToGeometry(mPose_karto);
-      Eigen::Isometry3d mPose_eigen = poseKartoToEigenIsometry(mPose_karto);
-
-      karto::MarkerLinkInfo *pMarkerLinkInfo = (karto::MarkerLinkInfo *)((*edgesIter)->GetLabel());
-      karto::Pose3 linkPose_karto(pMarkerLinkInfo->GetPoseDifference());
-      Eigen::Isometry3d linkPose_eigen = poseKartoToEigenIsometry(linkPose_karto);
-
-      // Applico la transform rappresentata dal link alla posizione del marker per ottenere la posizione dello scan!
-      Eigen::Isometry3d scanPose_eigen = mPose_eigen * linkPose_eigen;
-      geometry_msgs::Pose scanPose;
-      tf::poseEigenToMsg(scanPose_eigen, scanPose);
-
-      e.points.clear();
-
-      geometry_msgs::Point p = scanPose.position; // Posizione dello scan calcolata tramite transform
-      e.points.push_back(p);
-
-      p = mPose.position; // Posizione del marker
-      e.points.push_back(p);
-
-      e.id = count;
-      e.color.r = 0.25;
-      e.color.g = 0.85;
-      e.color.b = 0.75;
-
-      marray.markers.push_back(e);
-    }
-
-    link_publisher_.publish(marray);
     return;
   }
 

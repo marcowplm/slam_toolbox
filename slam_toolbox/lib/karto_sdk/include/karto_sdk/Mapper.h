@@ -3098,12 +3098,6 @@ namespace karto
     Parameter<kt_bool> *m_pCorrectPosesAfterNewMarker;
 
     /** 
-     * Show additional information per test purposes
-     */
-    // FIXME: da eliminare!
-    Parameter<kt_bool> *m_pShowInfo;
-
-    /** 
      * The maximum distance allowed for a marker detection
      * Default value is 20.0 meters. 
      */
@@ -3220,7 +3214,6 @@ namespace karto
     double getParamMarkerLinkCovariance();
     bool getParamCorrectPosesAfterNewMarker();
     double getParamMaxMarkerDetectionDistance();
-    bool getParamShowInfo();
     double getParamMinTriggerTime();
 
     /* Setters */
@@ -3266,7 +3259,6 @@ namespace karto
     void setParamMarkerLinkCovariance(double d);
     void setParamCorrectPosesAfterNewMarker(bool b);
     void setParamMaxMarkerDetectionDistance(double d);
-    void setParamShowInfo(bool b);
     void setParamMinTriggerTime(double d);
   };
   BOOST_SERIALIZATION_ASSUME_ABSTRACT(Mapper)

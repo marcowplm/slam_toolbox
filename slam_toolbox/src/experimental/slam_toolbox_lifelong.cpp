@@ -96,7 +96,7 @@ namespace slam_toolbox
     return;
   }
 
-  // FIXME: da implementare correttamente!
+  // TODO: da implementare correttamente!
   /*****************************************************************************/
   void LifelongSlamToolbox::tagCallback(
       const apriltag_ros::AprilTagDetectionArrayConstPtr &detection_array)

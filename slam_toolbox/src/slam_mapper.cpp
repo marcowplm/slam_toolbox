@@ -295,12 +295,6 @@ void SMapper::configure(const ros::NodeHandle& nh)
     mapper_->setParamCorrectPosesAfterNewMarker(correct_poses_after_new_marker);
   }
 
-  bool show_info;
-  if(nh.getParam("show_info", show_info))
-  {
-    mapper_->setParamShowInfo(show_info);
-  }
-
   double max_marker_detection_distance;
   if(nh.getParam("max_marker_detection_distance", max_marker_detection_distance))
   {

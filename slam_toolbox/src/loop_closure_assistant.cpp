@@ -50,7 +50,6 @@ namespace loop_closure_assistant
     node.setParam("interactive_mode", interactive_mode_);
     marker_publisher_ = node.advertise<visualization_msgs::MarkerArray>(
         "karto_graph_visualization", 1);
-    // edges_publisher_ = node.advertise<visualization_msgs::MarkerArray>("karto_edges_visualization", 1);
     node.param("map_frame", map_frame_, std::string("map"));
     node.param("enable_interactive_mode", enable_interactive_mode_, false);
   }
@@ -192,61 +191,7 @@ namespace loop_closure_assistant
     // if disabled, clears out old markers
     interactive_server_->applyChanges();
     marker_publisher_.publish(marray);
-    // publishEdges(); // FIXME: non funziona con la serializzazione -> da eliminare!
 
-    return;
-  }
-
-  // TODO: è qui solo per TEST - poi deve essere eliminato!
-  /*****************************************************************************/
-  void LoopClosureAssistant::publishEdges()
-  /*****************************************************************************/
-  {
-    std::vector<karto::Edge<karto::LocalizedRangeScan>*> edges = mapper_->GetGraph()->GetEdges();
-
-    if (edges.size() == 0)
-    {
-      return;
-    }
-
-    visualization_msgs::MarkerArray marray;
-    visualization_msgs::Marker e = vis_utils::toEdgeMarker(map_frame_, "slam_toolbox", 0.02);
-
-    int count = 0;
-    std::vector<karto::Edge<karto::LocalizedRangeScan>*>::const_iterator edgesIter = edges.cbegin();
-    for (edgesIter; edgesIter != edges.end(); ++edgesIter)
-    {
-      count++;
-      karto::Pose2 sourcePose_karto = (*edgesIter)->GetSource()->GetObject()->GetCorrectedPose();
-      geometry_msgs::Pose sourcePose = tag_assistant::poseKartoToGeometry(sourcePose_karto);
-      Eigen::Isometry3d sourcePose_eigen = tag_assistant::poseKartoToEigenIsometry(sourcePose_karto);
-    
-      karto::LinkInfo *pLinkInfo = (karto::LinkInfo *)((*edgesIter)->GetLabel());
-      karto::Pose2 linkPose_karto(pLinkInfo->GetPoseDifference());
-      Eigen::Isometry3d linkPose_eigen = tag_assistant::poseKartoToEigenIsometry(linkPose_karto);
-
-      // Applico la transform rappresentata dal link alla posizione del source scan per ottenere la posizione del target scan!
-      Eigen::Isometry3d targetPose_eigen = sourcePose_eigen * linkPose_eigen;
-      geometry_msgs::Pose targetPose;
-      tf::poseEigenToMsg(targetPose_eigen, targetPose);
-
-      e.points.clear();
-
-      geometry_msgs::Point p = targetPose.position; // Posizione del target scan calcolata tramite transform
-      e.points.push_back(p);
-
-      p = sourcePose.position; // Posizione del source scan
-      e.points.push_back(p);
-
-      e.id = count;
-      e.color.r = 0.25;
-      e.color.g = 0.80;
-      e.color.b = 0.85;
-
-      marray.markers.push_back(e);
-    }
-
-    edges_publisher_.publish(marray);
     return;
   }
 

@@ -30,7 +30,6 @@ namespace solver_plugins
     nh.getParam("ceres_loss_function", loss_fn);
     nh.getParam("mode", mode);
     nh.getParam("debug_logging", debug_logging_);
-    nh.getParam("show_info", show_info_);
 
     corrections_.clear();
     first_node3d_ = nodes3d_->end();
@@ -663,7 +662,7 @@ namespace solver_plugins
     boost::mutex::scoped_lock l(constraints_mutex_);
 
     // NB: Questo pezzo di codice serve solo a stampare il vettore di liste constraints_
-    if (show_info_ && (constraints_.size() != 0))
+    /* if (constraints_.size() != 0)
     {
         std::cout << "\n>>>>>>>>>>> Constraints:\n";
         std::map<int, std::list<int>>::const_iterator constrIter = constraints_.cbegin();
@@ -677,7 +676,7 @@ namespace solver_plugins
           }
           std::cout << "\n";
         }
-    }
+    } */
     return constraints_;
   }
 

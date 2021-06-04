@@ -2499,11 +2499,6 @@ namespace karto
         "is created.",
         true, GetParameterManager());
 
-    m_pShowInfo = new Parameter<kt_bool>(
-        "ShowInfo",
-        "Show additional information per test purposes.",
-        true, GetParameterManager());
-
     m_pMaxMarkerDetectionDistance = new Parameter<kt_double>(
         "MaxMarkerDetectionDistance",
         "The maximum distance allowed for a marker detection, in meters. "
@@ -2688,11 +2683,6 @@ namespace karto
     return static_cast<bool>(m_pCorrectPosesAfterNewMarker->GetValue());
   }
 
-  bool Mapper::getParamShowInfo()
-  {
-    return static_cast<bool>(m_pShowInfo->GetValue());
-  }
-
   double Mapper::getParamMaxMarkerDetectionDistance()
   {
     return static_cast<double>(m_pMaxMarkerDetectionDistance->GetValue());
@@ -2867,11 +2857,6 @@ namespace karto
   void Mapper::setParamCorrectPosesAfterNewMarker(bool b)
   {
     m_pCorrectPosesAfterNewMarker->SetValue((kt_bool)b);
-  }
-
-  void Mapper::setParamShowInfo(bool b)
-  {
-    m_pShowInfo->SetValue((kt_bool)b);
   }
 
   void Mapper::setParamMaxMarkerDetectionDistance(double d)

@@ -48,7 +48,6 @@ namespace loop_closure_assistant
     void clearMovedNodes();
     void processInteractiveFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback);
     void publishGraph();
-    void publishEdges();
 
   private:
     bool manualLoopClosureCallback(slam_toolbox_msgs::LoopClosure::Request &req, slam_toolbox_msgs::LoopClosure::Response &resp);
@@ -59,7 +58,7 @@ namespace loop_closure_assistant
 
     std::unique_ptr<tf2_ros::TransformBroadcaster> tfB_;
     laser_utils::ScanHolder *scan_holder_;
-    ros::Publisher scan_publisher_, marker_publisher_, edges_publisher_;
+    ros::Publisher scan_publisher_, marker_publisher_;
     ros::ServiceServer ssClear_manual_, ssLoopClosure_, ssInteractive_;
     boost::mutex moved_nodes_mutex_;
     std::map<int, Eigen::Vector3d> moved_nodes_;
