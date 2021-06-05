@@ -1,0 +1,21 @@
+<launch>
+
+  <arg name="camera" value="/camera/rgb"/>
+  <arg name="apriltag_ns" value="apriltag_ros_continuous_node"/>
+
+  <param name="~image_transport" value="compressed"/>   <!-- indica ad Apriltag di usare il flusso immagine compresso -->
+
+  <include file="$(find apriltag_ros)/launch/continuous_detection.launch">
+    <arg name="camera_name" value="$(arg camera)"/>
+    <arg name="image_topic" value="image_raw"/>        
+    <arg name="camera_frame" value="camera_rgb_optical_frame"/>
+  </include>
+
+  <rosparam command="load" file="$(find my_thesis)/config/tags_turtlebot3.yaml" ns="$(arg apriltag_ns)"/> 
+  <rosparam command="load" file="$(find my_thesis)/config/settings.yaml" ns="$(arg apriltag_ns)"/>
+
+  <node pkg="slam_toolbox" type="sync_slam_toolbox_node" name="slam_toolbox" output="screen">
+    <rosparam command="load" file="$(find slam_toolbox)/config/mapper_params_offline_turtlebot3.yaml" />
+  </node>
+
+</launch>
