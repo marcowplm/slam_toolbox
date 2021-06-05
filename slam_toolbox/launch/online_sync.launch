@@ -11,8 +11,8 @@
     <arg name="camera_frame" value="camera_link"/>    <!-- <arg name="camera_frame" value="camera_rgb_optical_frame"/> per Turtlebot3 -->
   </include>
 
-  <rosparam command="load" file="$(find my_sim)/config/tags.yaml" ns="$(arg apriltag_ns)"/> 
-  <rosparam command="load" file="$(find my_sim)/config/settings.yaml" ns="$(arg apriltag_ns)"/>
+  <rosparam command="load" file="$(find my_thesis)/config/tags.yaml" ns="$(arg apriltag_ns)"/> 
+  <rosparam command="load" file="$(find my_thesis)/config/settings.yaml" ns="$(arg apriltag_ns)"/>
 
   <node pkg="slam_toolbox" type="sync_slam_toolbox_node" name="slam_toolbox" output="screen">
     <rosparam command="load" file="$(find slam_toolbox)/config/mapper_params_online_sync.yaml" />

@@ -1,3 +1,4 @@
 snap_ws/*
 build/*
 .vscode/*
+config/*
