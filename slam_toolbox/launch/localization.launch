@@ -10,8 +10,8 @@
     <arg name="camera_frame" value="camera_link"/>
   </include>
 
-  <rosparam command="load" file="$(find my_thesis)/config/tags.yaml" ns="$(arg apriltag_ns)"/> 
-  <rosparam command="load" file="$(find my_thesis)/config/settings.yaml" ns="$(arg apriltag_ns)"/>
+  <rosparam command="load" file="$(find slam_toolbox)/config/apriltag_tags.yaml" ns="$(arg apriltag_ns)"/> 
+  <rosparam command="load" file="$(find slam_toolbox)/config/apriltag_settings.yaml" ns="$(arg apriltag_ns)"/>
 
   <node pkg="slam_toolbox" type="localization_slam_toolbox_node" name="slam_toolbox" output="screen">
     <rosparam command="load" file="$(find slam_toolbox)/config/mapper_params_localization.yaml" />

@@ -1,0 +1,3 @@
+<launch>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find slam_toolbox)/config/rviz_config_jobot.rviz"/>
+</launch>

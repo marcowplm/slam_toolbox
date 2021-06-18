@@ -66,7 +66,7 @@ use_response_expansion: true
 
 # Parameters related to the Markers
 use_markers: true
-marker_link_covariance: 5
+marker_link_covariance: 1
 correct_poses_after_new_marker: true
 max_marker_detection_distance: 20.0
 min_trigger_time: 30.0
